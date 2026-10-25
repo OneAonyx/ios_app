@@ -1,0 +1,20 @@
+# Von XcodeGen erzeugt (Quelle ist project.yml)
+*.xcodeproj/
+*.xcworkspace/
+App/Supporting/Info.plist
+App/Supporting/Tagwerk.entitlements
+Widgets/Info.plist
+Widgets/TagwerkWidgets.entitlements
+
+# Build-Ausgaben
+build/
+DerivedData/
+.build/
+.swiftpm/
+*.ipa
+*.xcarchive
+*.xcresult
+
+# System
+.DS_Store
+*.swp

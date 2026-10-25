@@ -1,0 +1,29 @@
+name: Core (Linux)
+
+# Günstiger Linux-Lauf: testet die gesamte Fachlogik in TagwerkCore.
+on:
+  push:
+    paths:
+      - "Packages/TagwerkCore/**"
+      - ".github/workflows/core.yml"
+  pull_request:
+    paths:
+      - "Packages/TagwerkCore/**"
+      - ".github/workflows/core.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: swift:6.2-noble
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tests (Swift Testing)
+        working-directory: Packages/TagwerkCore
+        run: swift test

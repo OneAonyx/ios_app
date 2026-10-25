@@ -1,0 +1,87 @@
+name: iOS (Build, UI-Tests, Screenshots)
+
+# Baut App und Widget im Simulator, führt die Screenshot-Tests aus und lädt
+# Screenshots und Build-Log als Artefakte hoch. Läuft nur bei Änderungen am Code,
+# weil macOS-Minuten im Free-Plan zehnfach zählen.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "Packages/TagwerkCore/Tests/**"
+      - ".github/workflows/core.yml"
+      - ".github/workflows/release.yml"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode wählen
+        run: Scripts/ci/select_xcode.sh
+
+      - name: XcodeGen installieren
+        run: brew install xcodegen
+
+      - name: Projekt erzeugen
+        run: xcodegen generate
+
+      - name: Simulator wählen
+        id: sim
+        run: echo "udid=$(python3 Scripts/ci/pick_simulator.py)" >> "$GITHUB_OUTPUT"
+
+      - name: Build & UI-Tests
+        run: |
+          mkdir -p build
+          set +e
+          xcodebuild test \
+            -project Tagwerk.xcodeproj \
+            -scheme Tagwerk \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -resultBundlePath build/Tests.xcresult \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            > build/xcodebuild.log 2>&1
+          status=$?
+          set -e
+          grep -E "error:|\*\* (BUILD|TEST) (SUCCEEDED|FAILED) \*\*|Test Case .*(passed|failed)|Executed [0-9]+ test" build/xcodebuild.log | head -300 || true
+          exit $status
+
+      - name: Screenshots exportieren
+        if: always()
+        run: |
+          mkdir -p build/screenshots
+          if [ -d build/Tests.xcresult ]; then
+            xcrun xcresulttool export attachments --path build/Tests.xcresult --output-path build/screenshots || true
+            python3 Scripts/ci/rename_attachments.py build/screenshots || true
+          fi
+          ls -la build/screenshots || true
+
+      - name: Screenshots hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: build/screenshots
+          if-no-files-found: ignore
+
+      - name: Build-Log hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: build/xcodebuild.log
+          if-no-files-found: ignore

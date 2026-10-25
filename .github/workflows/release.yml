@@ -1,0 +1,98 @@
+name: Release (IPA für SideStore)
+
+# Baut eine unsignierte IPA und versieht sie mit einer Ad-hoc-Signatur samt
+# Berechtigungen (HealthKit, App Group). SideStore liest diese Berechtigungen
+# und signiert die App mit deiner Apple-ID neu.
+#
+# Auslösen: Git-Tag `v0.1.0` pushen oder manuell unter „Actions“ starten.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ipa:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode wählen
+        run: Scripts/ci/select_xcode.sh
+
+      - name: XcodeGen installieren
+        run: brew install xcodegen
+
+      - name: Projekt erzeugen
+        run: xcodegen generate
+
+      - name: Version bestimmen
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "marketing=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "marketing=0.1.0" >> "$GITHUB_OUTPUT"
+          fi
+          echo "build=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Archiv bauen (ohne Signatur)
+        run: |
+          mkdir -p build
+          set +e
+          xcodebuild archive \
+            -project Tagwerk.xcodeproj \
+            -scheme Tagwerk \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Tagwerk.xcarchive \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            MARKETING_VERSION="${{ steps.version.outputs.marketing }}" \
+            CURRENT_PROJECT_VERSION="${{ steps.version.outputs.build }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            > build/archive.log 2>&1
+          status=$?
+          set -e
+          grep -E "error:|\*\* ARCHIVE (SUCCEEDED|FAILED) \*\*" build/archive.log | head -200 || true
+          exit $status
+
+      - name: Ad-hoc-Signatur mit Berechtigungen
+        run: Scripts/ci/adhoc_sign.sh build/Tagwerk.xcarchive/Products/Applications/Tagwerk.app
+
+      - name: IPA packen
+        run: |
+          rm -rf build/ipa && mkdir -p build/ipa/Payload
+          cp -R build/Tagwerk.xcarchive/Products/Applications/Tagwerk.app build/ipa/Payload/
+          (cd build/ipa && zip -qry ../Tagwerk.ipa Payload)
+          ls -la build/Tagwerk.ipa
+
+      - name: IPA als Artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tagwerk-ipa
+          path: build/Tagwerk.ipa
+
+      - name: Archiv-Log hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-log
+          path: build/archive.log
+          if-no-files-found: ignore
+
+      - name: GitHub-Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/Tagwerk.ipa
+          body: |
+            Tagwerk ${{ steps.version.outputs.marketing }} (Build ${{ steps.version.outputs.build }})
+
+            Installation: `Tagwerk.ipa` auf dem iPhone laden und in SideStore öffnen.
+            Anleitung: docs/SIDELOAD.md

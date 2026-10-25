@@ -1,0 +1,147 @@
+# XcodeGen-Projektbeschreibung. Die .xcodeproj wird im CI erzeugt:
+#   xcodegen generate
+# Siehe docs/ARCHITECTURE.md.
+
+name: Tagwerk
+
+options:
+  bundleIdPrefix: de.tagwerk
+  deploymentTarget:
+    iOS: "26.0"
+  developmentLanguage: de
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Phase 0: Swift-5-Modus für App und Widget (Nebenläufigkeit als Warnung).
+    # TagwerkCore läuft bereits im Swift-6-Modus. Umstellung in Phase 1.
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: targeted
+    TARGETED_DEVICE_FAMILY: "1"
+    SUPPORTS_MACCATALYST: NO
+    SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+    SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+
+packages:
+  TagwerkCore:
+    path: Packages/TagwerkCore
+  TagwerkKit:
+    path: Packages/TagwerkKit
+
+targets:
+  Tagwerk:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - "Supporting/Info.plist"
+    dependencies:
+      - package: TagwerkCore
+      - package: TagwerkKit
+      - target: TagwerkWidgets
+    info:
+      path: App/Supporting/Info.plist
+      properties:
+        CFBundleDisplayName: Tagwerk
+        CFBundleDevelopmentRegion: de
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        CFBundleURLTypes:
+          - CFBundleURLName: de.tagwerk.app
+            CFBundleURLSchemes:
+              - tagwerk
+        LSApplicationQueriesSchemes:
+          - shortcuts
+        NSSupportsLiveActivities: true
+        # Backups sind in der Dateien-App sichtbar (ab Phase 1).
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSHealthShareUsageDescription: "Tagwerk liest Gesundheitsdaten wie Schritte, Gewicht und Schlaf, um sie in deinem Tagesüberblick zu zeigen."
+        NSHealthUpdateUsageDescription: "Tagwerk speichert Workouts, Gewicht, Wasser, Symptome und Stimmung in Apple Health."
+        NSAlarmKitUsageDescription: "Tagwerk stellt Wecker für wichtige Medikamente, damit du sie auch im Stummmodus nicht verpasst."
+    entitlements:
+      path: App/Supporting/Tagwerk.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.security.application-groups:
+          - group.de.tagwerk.app
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.tagwerk.app
+        PRODUCT_NAME: Tagwerk
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  TagwerkWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+        excludes:
+          - "Info.plist"
+    dependencies:
+      - package: TagwerkCore
+      - package: TagwerkKit
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Tagwerk
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widgets/TagwerkWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.de.tagwerk.app
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.tagwerk.app.widgets
+        PRODUCT_NAME: TagwerkWidgets
+        APPLICATION_EXTENSION_API_ONLY: YES
+
+  TagwerkUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: Tagwerk
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.tagwerk.app.uitests
+        TEST_TARGET_NAME: Tagwerk
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Tagwerk:
+    build:
+      targets:
+        Tagwerk: all
+        TagwerkUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - TagwerkUITests
+    archive:
+      config: Release
