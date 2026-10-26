@@ -4,10 +4,12 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Phase 1 – Heute, Aufgaben, Agenda.** Aufgaben mit Listen, Wiederholungen, Erinnerungen,
-Unteraufgaben und „Fokus 3“, deutsche Schnellerfassung („morgen 10 Uhr Zahnarzt“), Agenda und
-Woche mit Kalenderterminen, tägliche Datensicherung, Siri-Befehle. Phase 0 (Systemcheck) ist
-abgeschlossen. Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
+**Stand: Phase 2 – Medikamente.** Einnahmepläne (täglich, Wochentage, alle N Tage, Stundentakt,
+bei Bedarf, Zyklus, Ausschleichen), Erinnerungen mit „Genommen“-Knopf oder als Wecker, Vorrat mit
+Nachfüll-Hinweis, Einnahmetreue mit Monatskalender, Widget mit Abhak-Knopf, Kontrollzentrum und
+Siri. Dazu aus Phase 1: Aufgaben mit Listen, Wiederholungen und „Fokus 3“, deutsche
+Schnellerfassung, Agenda und Woche mit Kalenderterminen, tägliche Datensicherung.
+Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Schnellstart
 
@@ -16,6 +18,8 @@ abgeschlossen. Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | Neueste App-Version (`Tagwerk.ipa`) | [Releases](https://github.com/OneAonyx/ios_app/releases/latest) |
 | App aufs iPhone bringen | [`docs/SIDELOAD.md`](docs/SIDELOAD.md) |
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
+| Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
+| Phase 2 auf dem iPhone testen | [`docs/PHASE2-CHECKLIST.md`](docs/PHASE2-CHECKLIST.md) |
 | Phase-0-Tests durchführen | [`docs/PHASE0-CHECKLIST.md`](docs/PHASE0-CHECKLIST.md) |
 | Phase-0-Ergebnis | [`docs/PHASE0-ERGEBNIS.md`](docs/PHASE0-ERGEBNIS.md) |
 | Kurzbefehl für Claude einrichten | [`docs/CLAUDE-BRIDGE.md`](docs/CLAUDE-BRIDGE.md) |
@@ -48,11 +52,12 @@ docker run --rm -v "$PWD/Packages/TagwerkCore:/pkg" -w /pkg swift:6.2-noble swif
 ## Struktur
 
 ```
-App/                 App-Target (SwiftUI): Heute, Systemcheck, Einstellungen, App Intents
-Widgets/             Einzige Extension: Widgets, Live Activities (später auch Controls)
+App/                 App-Target (SwiftUI): Heute, Planer, Gesundheit, Einstellungen, App Intents
+Shared/              Intents, die App und Widget gemeinsam brauchen (Abhaken aus dem Widget)
+Widgets/             Einzige Extension: Widgets, Live Activities, Kontrollzentrum
 UITests/             Screenshot-Tests für das CI
 Packages/TagwerkCore Fachlogik, plattformunabhängig, unter Linux getestet
-Packages/TagwerkKit  Design-System und iOS-Dienste (Health, Wecker, Mitteilungen, App Group)
+Packages/TagwerkKit  Datenmodell (SwiftData), Design-System und iOS-Dienste (Wecker, Mitteilungen, App Group)
 Scripts/ci/          Hilfsskripte für die Workflows
 docs/                Plan, Anleitungen, Architektur
 ```

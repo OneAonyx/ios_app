@@ -43,6 +43,8 @@ public enum MedicationActions {
         }
         if status == .taken { adjustStock(medication, by: -dose.amount) }
         save(context)
+        // Schon angezeigte Mitteilungen dieser Einnahme aus der Mitteilungszentrale nehmen.
+        MedicationNotifications.removeNotifications(forDose: dose.id)
     }
 
     public static func take(_ entry: DoseEntry, medication: Medication, at moment: Date = .now, in context: ModelContext) {

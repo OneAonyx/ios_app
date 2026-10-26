@@ -173,7 +173,7 @@ struct TodayDosesCard: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(today.items, id: \.entry.id) { item in
+                    ForEach(today.items) { item in
                         DoseRow(entry: item.entry, medication: item.medication, now: now)
                     }
                 }

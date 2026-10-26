@@ -173,15 +173,22 @@ struct DoseRow: View {
     }
 }
 
+/// Eine Einnahme mit ihrem Medikament.
+struct DayDoseItem: Identifiable {
+    let entry: DoseEntry
+    let medication: Medication
+    var id: String { entry.id }
+}
+
 /// Einnahmen mehrerer Medikamente an einem Tag, nach Uhrzeit sortiert.
 struct DayDoses {
-    let items: [(entry: DoseEntry, medication: Medication)]
+    let items: [DayDoseItem]
 
     init(medications: [Medication], day: Date, now: Date, calendar: Calendar) {
         items = medications
             .filter(\.isActive)
             .flatMap { medication in
-                medication.entries(on: day, now: now, calendar: calendar).map { (entry: $0, medication: medication) }
+                medication.entries(on: day, now: now, calendar: calendar).map { DayDoseItem(entry: $0, medication: medication) }
             }
             .sorted { lhs, rhs in
                 if lhs.entry.dose.date != rhs.entry.dose.date { return lhs.entry.dose.date < rhs.entry.dose.date }

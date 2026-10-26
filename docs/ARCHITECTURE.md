@@ -48,7 +48,7 @@
 | `TagwerkStore` | `…/Models/TagwerkStore.swift` | Speicher im App-Group-Container, sonst App-Container |
 | `TaskActions` | `…/Models/TaskActions.swift` | Alle Änderungen an Aufgaben (App, Mitteilungen, Siri) |
 | `CalendarService` | `…/Services/CalendarService.swift` | EventKit lesen/schreiben |
-| `TaskReminderScheduler` | `…/Services/TaskReminderScheduler.swift` | Mitteilungen rollierend (72 h, max. 60) |
+| `ReminderScheduler` (bis 0.2: `TaskReminderScheduler`) | `…/Services/ReminderScheduler.swift` | Mitteilungen rollierend (72 h, max. 60) |
 | `BackupService` | `…/Services/BackupService.swift` | JSON-Sicherung in `Documents/Backups` |
 
 Die Logik dahinter (Wiederholungen, Parser, Listen, Agenda, Backup-Format, Erinnerungsplanung)
@@ -60,6 +60,46 @@ liegt testbar in `TagwerkCore`.
 - App, Widget und TagwerkKit bleiben vorerst im Swift-5-Sprachmodus. Ohne Mac kostet jeder
   Compiler-Fehler einen CI-Lauf; die Umstellung auf Swift 6 folgt, wenn die Oberfläche steht.
   `TagwerkCore` läuft bereits im Swift-6-Modus.
+
+## Phase 2: Medikamente
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Zeitpläne, Einnahmen, Treue, Vorrat, Bei Bedarf | `TagwerkCore/Medication/` | reine Logik, unter Linux getestet (`MedicationTests.swift`) |
+| `TagwerkSchemaV2` | `TagwerkKit/…/Models/SchemaV2.swift` | `Medication`, `DoseLog`; Aufgaben-Modelle aus V1 übernommen |
+| `TagwerkMigrationPlan` | ebenda | V1 → V2 als leichte Migration (nur neue Tabellen) |
+| `TagwerkStore` | `…/Models/TagwerkStore.swift` | kopiert die Datenbank vor jeder Schema-Änderung (`Tagwerk-vor-v2.store`) |
+| `MedicationActions` | `…/Models/MedicationActions.swift` | Abhaken, Auslassen, Rückgängig, Bei Bedarf, Vorrat, Nachschub-Aufgabe |
+| `ReminderScheduler` | `…/Services/ReminderScheduler.swift` | Aufgaben und Medikamente gemeinsam, Medikamente zuerst |
+| `MedicationSnapshotWriter`, `DoseActionCenter` | `…/Services/MedicationSharing.swift` | Widget-Daten im App-Group-Speicher, Einnahmen von außerhalb |
+| `MedicationAlarmScheduler` | `App/Services/` | AlarmKit-Wecker rollierend (48 h), Knopf „Genommen“ |
+| `TakeDoseIntent`, `TakeNextDoseIntent` | `Shared/MedicationIntents.swift` | in App **und** Widget kompiliert |
+
+**Eine Einnahme von außerhalb der App** (Widget, Kontrollzentrum, Wecker, Siri, Mitteilung):
+
+```
+Knopf im Widget ──► TakeDoseIntent (LiveActivityIntent)
+                        │  iOS führt ihn im App-Prozess aus
+                        ▼
+                DoseActionCenter.submit
+                 ├─ App läuft:  AppModel.handleDoseAction
+                 │              → DoseLog speichern, Vorrat, Mitteilungen + Wecker
+                 │                abbestellen, Widget-Daten neu, alles neu planen
+                 └─ sonst:      Warteschlange (App Group) + Widget sofort abgehakt
+                                → App übernimmt beim nächsten Öffnen
+```
+
+Jede geplante Einnahme hat eine feste Kennung `DoseID` = `<Medikament>|<Unix-Sekunden>`.
+Daraus entstehen die Mitteilungs-IDs (`med.…`, `medlate.…`, `medsnooze.…`) und die Wecker-UUID
+(`StableUUID`), damit alle Stellen dieselbe Einnahme wiederfinden.
+
+**Hintergrundaktualisierung** (`BGAppRefreshTask` `de.tagwerk.app.refresh`) plant Mitteilungen
+und Wecker auch ohne Öffnen der App nach.
+
+**Selbsttest im CI:** Was unter Linux nicht testbar ist (Migration einer echten V1-Datenbank,
+Medikamenten-Aktionen, Sicherung mit Medikamenten, Widget-Daten), prüft `App/Features/Support/SelfTest.swift`.
+Der UI-Test `testSelfTest` startet die App mit `-selfTest` und erwartet „Alle … bestanden“.
+Ein eigenes Unit-Test-Target hätte die Pakete ein zweites Mal gelinkt (doppelte SwiftData-Klassen).
 
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
@@ -74,6 +114,7 @@ liegt testbar in `TagwerkCore`.
 |---|---|
 | `tagwerk://systemcheck` | öffnet den Systemcheck |
 | `tagwerk://neu` | öffnet die Schnellerfassung |
+| `tagwerk://gesundheit` | öffnet den Tab „Gesundheit“ (Medikamenten-Widget) |
 | `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Tagwerk Claude“ |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
 
