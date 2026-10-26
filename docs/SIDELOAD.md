@@ -9,7 +9,7 @@ erhalten.
 - iPhone mit iOS 26 oder neuer (dein iPhone 15 passt)
 - deine Apple-ID (kostenlos)
 - **einmalig** einen Computer (Windows, Linux oder Mac) und ein USB-Kabel für die SideStore-Einrichtung
-- Zugang zum GitHub-Repo `tagwerk-ios` (für den Download der App)
+- das GitHub-Repo [OneAonyx/ios_app](https://github.com/OneAonyx/ios_app) (öffentlich, kein Login nötig)
 
 ## 1. Entwicklermodus einschalten
 
@@ -29,8 +29,8 @@ Folge der offiziellen Anleitung auf **[docs.sidestore.io](https://docs.sidestore
 
 ## 3. Tagwerk installieren
 
-1. Auf dem iPhone in Safari das Repo öffnen und bei GitHub angemeldet sein (das Repo ist privat).
-2. **Releases** → neueste Version → `Tagwerk.ipa` laden.
+1. Auf dem iPhone in Safari **[github.com/OneAonyx/ios_app/releases/latest](https://github.com/OneAonyx/ios_app/releases/latest)** öffnen.
+2. Unter „Assets“ `Tagwerk.ipa` antippen und laden.
 3. Die Datei in der Dateien-App antippen → **Teilen** → **SideStore**.
    Alternativ in SideStore: „Meine Apps“ → **+** → `Tagwerk.ipa` wählen.
 4. Falls iOS beim ersten Start meldet, dass dem Entwickler nicht vertraut wird:

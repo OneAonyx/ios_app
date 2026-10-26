@@ -12,6 +12,7 @@ auf deinem iPhone funktioniert. Der vollständige Plan steht in [`docs/PLAN.md`]
 
 | Was | Wo |
 |---|---|
+| Neueste App-Version (`Tagwerk.ipa`) | [Releases](https://github.com/OneAonyx/ios_app/releases/latest) |
 | App aufs iPhone bringen | [`docs/SIDELOAD.md`](docs/SIDELOAD.md) |
 | Phase-0-Tests durchführen | [`docs/PHASE0-CHECKLIST.md`](docs/PHASE0-CHECKLIST.md) |
 | Kurzbefehl für Claude einrichten | [`docs/CLAUDE-BRIDGE.md`](docs/CLAUDE-BRIDGE.md) |
