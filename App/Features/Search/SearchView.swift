@@ -1,7 +1,9 @@
 import SwiftUI
 import TagwerkKit
 
+/// Globale Suche, geöffnet über die Lupe auf „Heute“.
 struct SearchView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var query = ""
 
     var body: some View {
@@ -14,7 +16,18 @@ struct SearchView: View {
                 }
             }
             .navigationTitle("Suche")
-            .searchable(text: $query, prompt: "Aufgaben, Lebensmittel, Übungen …")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(
+                text: $query,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "Aufgaben, Lebensmittel, Übungen …"
+            )
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") { dismiss() }
+                        .accessibilityIdentifier("search.done")
+                }
+            }
         }
     }
 }

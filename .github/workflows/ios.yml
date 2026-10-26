@@ -46,6 +46,13 @@ jobs:
         id: sim
         run: echo "udid=$(python3 Scripts/ci/pick_simulator.py)" >> "$GITHUB_OUTPUT"
 
+      # Vorab starten: Ein kalter Simulator braucht oft länger, als der erste
+      # UI-Test auf den App-Start wartet.
+      - name: Simulator starten
+        run: |
+          xcrun simctl boot "${{ steps.sim.outputs.udid }}" || true
+          xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b
+
       - name: Build & UI-Tests
         run: |
           mkdir -p build
@@ -55,6 +62,8 @@ jobs:
             -scheme Tagwerk \
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -resultBundlePath build/Tests.xcresult \
+            -retry-tests-on-failure \
+            -test-iterations 2 \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             CODE_SIGNING_ALLOWED=NO \

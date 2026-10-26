@@ -8,7 +8,7 @@ schicken.
 
 | # | Test | So geht's | Erwartet |
 |---|---|---|---|
-| 0 | Installation | App per SideStore installieren ([SIDELOAD.md](SIDELOAD.md)) | App startet, Tab-Leiste mit Heute, Planer, Training, Ernährung, Gesundheit, Suche |
+| 0 | Installation | App per SideStore installieren ([SIDELOAD.md](SIDELOAD.md)) | App startet, Tab-Leiste mit Heute, Planer, Training, Ernährung, Gesundheit. Suche über die Lupe oben auf „Heute“ |
 | 1 | Installation & Signatur | „Tests 1–3 starten“ | ✅ mit „Kostenlose Apple-ID (7 Tage), noch X Tage“. Zeigt auch, ob die Signatur Health-Recht und App Group enthält |
 | 2 | Apple Health | läuft bei „Tests 1–3“ mit, Health-Dialog bestätigen | ✅ „heute N Schritte gelesen“ **oder** ❌ mit Fehler (dann ist Health mit der kostenlosen ID nicht möglich) |
 | 3 | Widget-Daten (App Group) | läuft mit. Danach das Widget **„Tagwerk Systemcheck“** auf den Home-Bildschirm legen | Widget zeigt dieselbe Nummer wie die App (z. B. #1). Dann „Hat geklappt“ tippen |

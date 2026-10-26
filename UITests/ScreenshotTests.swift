@@ -43,17 +43,29 @@ final class ScreenshotTests: XCTestCase {
         }
 
         tapTab("Heute", in: app)
+
+        let search = app.buttons["today.search"]
+        if search.waitForExistence(timeout: 3) {
+            search.tap()
+            snap(app, "06-suche-\(suffix)")
+            tapIfPresent(app.buttons["search.done"])
+        }
+
         openSystemCheck(in: app)
         snap(app, "07-systemcheck-\(suffix)")
 
-        let back = app.navigationBars["Systemcheck"].buttons.element(boundBy: 0)
-        if back.exists {
-            back.tap()
-        }
+        tapIfPresent(app.navigationBars["Systemcheck"].buttons.element(boundBy: 0))
         let settings = app.buttons["today.settings"]
         if settings.waitForExistence(timeout: 3) {
             settings.tap()
             snap(app, "08-einstellungen-\(suffix)")
+        }
+    }
+
+    @MainActor
+    private func tapIfPresent(_ element: XCUIElement) {
+        if element.waitForExistence(timeout: 3) {
+            element.tap()
         }
     }
 

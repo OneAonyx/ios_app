@@ -62,7 +62,7 @@ tagwerk-ios/
 ├── project.yml                     # XcodeGen: App-Target + 1 Widget-Extension
 ├── App/
 │   ├── TagwerkApp.swift            # Einstieg, ModelContainer, Dependency-Setup
-│   ├── RootView.swift              # TabView (5 Tabs + Suche)
+│   ├── RootView.swift              # TabView (5 Tabs), Suche als Lupe auf „Heute“
 │   ├── Features/
 │   │   ├── Today/                  # Heute-Dashboard
 │   │   ├── Planner/                # Aufgaben, Agenda, Woche
@@ -160,7 +160,7 @@ tagwerk-ios/
 | **Training** | Nächste Einheit, Pläne, Verlauf, Bibliothek, Körper |
 | **Ernährung** | Tagebuch, Histamin-Tageslast, Lebensmittel-Lexikon, Einkauf, Rezepte |
 | **Gesundheit** | Medikamente, Symptome, Check-ins, Health-Daten, Berichte |
-| 🔍 **Suche** (eigener Such-Tab) | Durchsucht Aufgaben, Lebensmittel, Übungen, Medikamente, Rezepte |
+| 🔍 **Suche** (Lupe oben auf „Heute“) | Durchsucht Aufgaben, Lebensmittel, Übungen, Medikamente, Rezepte. *Kein eigener Tab: Auf dem iPhone passen nur 5 Einträge in die Leiste, ein sechster landet unter „Mehr“ (im ersten CI-Lauf gesehen).* |
 
 - **Tab-Bar-Zubehör** (`tabViewBottomAccessory`): Während eines Trainings sitzt über der Tab-Leiste ein Mini-Player, ähnlich wie bei Apple Music: „Push · 34:12 · Pause 1:15“. Ein Tipp darauf öffnet die Session.
 - **Schnellerfassung:** Ein „+“ in der Toolbar jedes Tabs öffnet ein universelles Sheet mit Texterkennung, z. B. „morgen 10 uhr zahnarzt“ → Termin/Aufgabe, „ibu 400“ → Bedarfsmedikament, „kopfschmerz 3“ → Symptom. Der Parser liegt in `TagwerkCore/DateParsing` und erkennt: heute, morgen, übermorgen, Mo–So, „nächste Woche“, „in 2 Std“, Uhrzeiten, „jeden Montag“.

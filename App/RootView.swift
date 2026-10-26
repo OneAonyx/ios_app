@@ -22,13 +22,15 @@ struct RootView: View {
             Tab(TagwerkModule.health.title, systemImage: TagwerkModule.health.systemImage, value: TagwerkModule.health) {
                 PlaceholderTab(module: .health)
             }
-            Tab(value: TagwerkModule.search, role: .search) {
-                SearchView()
-            }
+            // Keine eigene Such-Tab: Beim iPhone passen nur 5 Einträge in die Leiste,
+            // ein sechster landet unter „Mehr“. Die Suche sitzt als Lupe auf „Heute“.
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .sheet(isPresented: $app.isShowingSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $app.isShowingSearch) {
+            SearchView()
         }
     }
 }

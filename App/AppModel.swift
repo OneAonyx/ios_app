@@ -11,6 +11,7 @@ final class AppModel {
 
     var selectedTab: TagwerkModule = .today
     var isShowingSettings = false
+    var isShowingSearch = false
     var isShowingSystemCheck = false
 
     let systemCheck = SystemCheckModel()
@@ -19,6 +20,7 @@ final class AppModel {
 
     func openSystemCheck() {
         isShowingSettings = false
+        isShowingSearch = false
         selectedTab = .today
         isShowingSystemCheck = true
     }

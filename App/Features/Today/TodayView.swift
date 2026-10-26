@@ -22,7 +22,15 @@ struct TodayView: View {
             .navigationTitle("Heute")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        app.isShowingSearch = true
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                    }
+                    .accessibilityLabel("Suche")
+                    .accessibilityIdentifier("today.search")
+
                     Button {
                         app.isShowingSettings = true
                     } label: {
