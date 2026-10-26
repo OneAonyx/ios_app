@@ -190,6 +190,10 @@ final class ScreenshotTests: XCTestCase {
     @MainActor
     private func tapTab(_ title: String, in app: XCUIApplication) {
         let tabButton = app.tabBars.buttons[title]
+        // Nach dem Scrollen ist die Tab-Leiste eingeklappt: zurückscrollen, bis sie wieder da ist.
+        for _ in 0..<3 where !(tabButton.exists && tabButton.isHittable) {
+            app.swipeDown()
+        }
         if tabButton.waitForExistence(timeout: 3) {
             tabButton.tap()
         } else {

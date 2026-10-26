@@ -282,18 +282,15 @@ private struct ExercisePage: View {
                         TrainingActions.addSet(toSlot: slot, of: session, in: context)
                         app.workout.updateActivity(session: session, catalog: catalog)
                     } label: {
-                        Label("Satz", systemImage: "plus")
-                            .frame(maxWidth: .infinity, minHeight: TouchTarget.standard)
+                        actionLabel("Satz", systemImage: "plus")
                     }
                     Button {
                         TrainingActions.addSet(toSlot: slot, of: session, kind: .drop, in: context)
                     } label: {
-                        Label("Drop-Satz", systemImage: "arrow.down.right")
-                            .frame(maxWidth: .infinity, minHeight: TouchTarget.standard)
+                        actionLabel("Drop-Satz", systemImage: "arrow.down.right")
                     }
                     Button(action: onSwap) {
-                        Label("Tauschen", systemImage: "arrow.triangle.swap")
-                            .frame(maxWidth: .infinity, minHeight: TouchTarget.standard)
+                        actionLabel("Tauschen", systemImage: "arrow.triangle.swap")
                     }
                     .accessibilityIdentifier("workout.swap")
                 }
@@ -340,6 +337,17 @@ private struct ExercisePage: View {
             .compactMap { session.exerciseID(inSlot: $0) }
             .map { catalog.name(for: $0) }
         return partners.isEmpty ? nil : partners.joined(separator: ", ")
+    }
+
+    /// Symbol über dem Text, damit „Drop-Satz“ und „Tauschen“ nicht umbrechen.
+    private func actionLabel(_ title: String, systemImage: String) -> some View {
+        VStack(spacing: 2) {
+            Image(systemName: systemImage)
+            Text(title)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, minHeight: TouchTarget.standard)
     }
 }
 
@@ -651,11 +659,16 @@ struct SessionSummaryView: View {
                     Text(title)
                         .foregroundStyle(.secondary)
                 }
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.s) {
+                LazyVGrid(columns: [GridItem(.flexible(), alignment: .top), GridItem(.flexible(), alignment: .top)], spacing: Spacing.s) {
                     StatTile(title: "Dauer", value: summary.durationLabel)
                     StatTile(title: "Sätze", value: "\(summary.workingSets)")
-                    StatTile(title: "Volumen", value: summary.volumeLabel)
-                    StatTile(title: "Vergleich", value: changeText, detail: "zur letzten gleichen Einheit")
+                    StatTile(
+                        title: "Volumen", value: summary.volume > 0 ? summary.volumeLabel : "–",
+                        detail: summary.volume > 0 ? nil : "nur Körpergewicht"
+                    )
+                    if summary.volumeChange != nil {
+                        StatTile(title: "Vergleich", value: changeText, detail: "zur letzten gleichen Einheit")
+                    }
                 }
                 if !summary.records.isEmpty {
                     Card {

@@ -58,9 +58,14 @@ public struct ExercisePerformance: Sendable, Hashable {
         workingSets.filter { $0.weight > 0 }.map(\.estimatedOneRepMax).max()
     }
 
-    /// „80 × 8 · 80 × 8 · 80 × 7“
+    /// „80 × 8 · 80 × 8 · 80 × 7“, ohne Gewicht „9 · 9 · 8 Wdh.“, gemischt „KG × 9 · 5 × 8“.
     public var summary: String {
-        workingSets.map { "\(WeightFormat.kg($0.weight)) × \($0.reps)" }.joined(separator: " · ")
+        let sets = workingSets
+        guard !sets.isEmpty else { return "" }
+        if sets.allSatisfy({ $0.weight == 0 }) {
+            return sets.map { String($0.reps) }.joined(separator: " · ") + " Wdh."
+        }
+        return sets.map { "\($0.weight == 0 ? "KG" : WeightFormat.kg($0.weight)) × \($0.reps)" }.joined(separator: " · ")
     }
 }
 
@@ -369,7 +374,8 @@ public struct SessionSummary: Sendable, Hashable {
     ) -> SessionSummary {
         let working = sets.filter { $0.kind != .warmup }
         let volume = working.reduce(0) { $0 + $1.volume }
-        let change = previousVolume.flatMap { $0 > 0 ? (volume - $0) / $0 : nil }
+        // Ohne Gewicht (nur Körpergewicht) gibt es nichts Sinnvolles zu vergleichen.
+        let change = volume > 0 ? previousVolume.flatMap { $0 > 0 ? (volume - $0) / $0 : nil } : nil
         return SessionSummary(
             duration: max(0, end.timeIntervalSince(start)),
             workingSets: working.count,
@@ -382,6 +388,7 @@ public struct SessionSummary: Sendable, Hashable {
     /// „1:12 Std.“ bzw. „48 Min.“
     public var durationLabel: String {
         let minutes = Int(duration / 60)
+        if minutes < 1 { return "unter 1 Min." }
         if minutes < 60 { return "\(minutes) Min." }
         return String(format: "%d:%02d Std.", minutes / 60, minutes % 60)
     }

@@ -431,7 +431,7 @@ public enum TrainingActions {
     /// Bei Supersätzen geht es nach kurzer Pause (15 s) mit der Partnerübung weiter,
     /// die volle Pause folgt erst nach der Runde.
     public static func next(after set: SetLog, in session: WorkoutSession) -> (set: SetLog?, restSeconds: Int) {
-        let pending = session.sortedSets.filter { !$0.isDone }
+        let pending = session.sortedSets.filter { !$0.isDone && $0.stableID != set.stableID }
         if let group = set.superset, !group.isEmpty {
             let groupSlots = session.slots.filter { slot in session.sets(inSlot: slot).contains { $0.superset == group } }
             if let position = groupSlots.firstIndex(of: set.slot), groupSlots.count > 1 {

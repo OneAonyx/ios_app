@@ -119,6 +119,7 @@ private struct NextWorkoutCard: View {
 
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var moduleOverride: Bool?
 
     var body: some View {
@@ -163,13 +164,23 @@ private struct NextWorkoutCard: View {
                                         .foregroundStyle(.tertiary)
                                         .frame(width: 14)
                                 }
-                                Text(catalog.name(for: item.exerciseID))
+                                let name = Text(catalog.name(for: item.exerciseID))
                                     .font(.subheadline)
                                     .foregroundStyle(item.isOptional ? Color.secondary : Color.primary)
-                                Spacer(minLength: Spacing.xs)
-                                Text(prescription(item, cycle: cycle))
+                                let sets = Text(prescription(item, cycle: cycle))
                                     .font(.caption.monospacedDigit())
                                     .foregroundStyle(.secondary)
+                                // Bei sehr großer Schrift Sätze unter den Namen, sonst rechts daneben.
+                                if typeSize.isAccessibilitySize {
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        name
+                                        sets
+                                    }
+                                } else {
+                                    name
+                                    Spacer(minLength: Spacing.xs)
+                                    sets
+                                }
                             }
                         }
                     }

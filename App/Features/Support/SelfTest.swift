@@ -147,8 +147,14 @@ enum SelfTest {
         let working = second.sets(inSlot: 0).filter { $0.kind == .working }
         try check(working.first?.weight == 82.5, "Vorschlag: \(working.first?.weight ?? -1) kg statt 82,5")
         try check(warmups.map(\.weight) == [42.5, 57.5, 70], "Aufwärmen: \(warmups.map(\.weight))")
+        // Wie in der App: erst abhaken, dann den nächsten Satz holen.
+        TrainingActions.complete(working[0], weight: 82.5, reps: 8, rir: 2, in: context)
         let next = TrainingActions.next(after: working[0], in: second)
-        try check(next.set?.stableID == working[1].stableID && next.restSeconds == 150, "Nächster Satz/Pause falsch")
+        let nextLabel = next.set.map { "\($0.kind.rawValue) \($0.setIndex) in \($0.slot)" } ?? "keiner"
+        try check(
+            next.set?.stableID == working[1].stableID && next.restSeconds == 150,
+            "Nächster Satz \(nextLabel), Pause \(next.restSeconds) s statt Satz 2, 150 s"
+        )
         TrainingActions.discard(second, in: context)
         try check(TrainingActions.activeSession(in: context) == nil, "Verworfene Einheit läuft noch")
 

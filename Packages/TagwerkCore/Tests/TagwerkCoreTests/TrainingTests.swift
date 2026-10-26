@@ -152,6 +152,8 @@ struct ProgressionTests {
         #expect(WeightFormat.round(56, to: 2.5) == 55)
         #expect(WeightFormat.roundDown(78.6, to: 2.5) == 77.5)
         #expect(perf(20, [(80, 8), (80, 7)]).summary == "80 × 8 · 80 × 7")
+        #expect(perf(20, [(0, 9), (0, 8)]).summary == "9 · 8 Wdh.")
+        #expect(perf(20, [(0, 9), (5, 8)]).summary == "KG × 9 · 5 × 8")
     }
 }
 
@@ -181,6 +183,9 @@ struct TrainingStatsTests {
         let short = SessionSummary.make(start: date(2026, 10, 26, 18), end: date(2026, 10, 26, 18, 48), sets: [], records: [], previousVolume: nil)
         #expect(short.durationLabel == "48 Min.")
         #expect(short.volumeChange == nil)
+        let bodyweight = SessionSummary.make(start: date(2026, 10, 26, 18), end: date(2026, 10, 26, 18).addingTimeInterval(30), sets: [LoggedSet(weight: 0, reps: 9)], records: [], previousVolume: 900)
+        #expect(bodyweight.volumeChange == nil)
+        #expect(bodyweight.durationLabel == "unter 1 Min.")
     }
 
     @Test func stagnationAndEarlyDeload() {
