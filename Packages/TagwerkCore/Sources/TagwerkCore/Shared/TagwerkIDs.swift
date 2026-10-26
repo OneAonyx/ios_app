@@ -36,6 +36,10 @@ public enum SharedKeys {
     public static let medicationSnapshot = "tagwerk.widget.medication.snapshot"
     /// Einnahmen, die Widget oder Kontrollzentrum abgehakt haben, bis die App sie übernimmt.
     public static let pendingDoseActions = "tagwerk.medication.pendingActions"
+    /// Nächste Einheit und laufendes Training für Widget, Kontrollzentrum und Siri.
+    public static let trainingSnapshot = "tagwerk.widget.training.snapshot"
+    /// Befehle aus der Live Activity (Pause verlängern/überspringen), bis die App sie übernimmt.
+    public static let pendingWorkoutCommands = "tagwerk.training.pendingCommands"
 }
 
 /// Kennungen der Widgets und Steuerelemente.
@@ -43,6 +47,8 @@ public enum WidgetKinds {
     public static let systemCheck = "TagwerkSystemCheck"
     public static let medication = "TagwerkMedicationWidget"
     public static let medicationControl = "de.tagwerk.control.medication"
+    public static let training = "TagwerkTrainingWidget"
+    public static let trainingControl = "de.tagwerk.control.training"
 }
 
 /// Kennungen für Mitteilungen und ihre Aktionsknöpfe.

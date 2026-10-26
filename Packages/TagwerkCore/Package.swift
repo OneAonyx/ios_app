@@ -12,7 +12,11 @@ let package = Package(
         .library(name: "TagwerkCore", targets: ["TagwerkCore"]),
     ],
     targets: [
-        .target(name: "TagwerkCore"),
+        .target(
+            name: "TagwerkCore",
+            // Übungsbibliothek und Startplan (JSON), auch unter Linux testbar.
+            resources: [.process("Resources")]
+        ),
         .testTarget(name: "TagwerkCoreTests", dependencies: ["TagwerkCore"]),
     ]
 )
