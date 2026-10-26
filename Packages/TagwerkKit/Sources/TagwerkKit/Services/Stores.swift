@@ -11,7 +11,7 @@ public enum WidgetDataStore {
         public var errorDescription: String? {
             switch self {
             case .appGroupUnavailable:
-                "Kein gemeinsamer Speicher: Die Signatur enthält keine App-Group-Berechtigung."
+                "Kein gemeinsamer Speicher für „\(AppGroup.identifier)“: Die Signatur enthält diese App Group nicht."
             case .readBackMismatch:
                 "Der geschriebene Wert konnte nicht wieder gelesen werden."
             }

@@ -2,18 +2,22 @@ import Foundation
 
 /// Findet die App-Group-ID, die zur Laufzeit wirklich gilt.
 ///
-/// SideStore und AltStore benennen App Groups beim Signieren mit einer
-/// kostenlosen Apple-ID um (z. B. `group.de.tagwerk.app.ABCDE12345`) und
-/// schreiben die neuen IDs in den Info.plist-Schlüssel `ALTAppGroups`.
-/// Ohne Sideloading gilt die feste ID.
+/// Beim Signieren mit einer kostenlosen Apple-ID werden App Groups umbenannt
+/// (z. B. `group.de.tagwerk.app.ABCDE12345`). SideStore und AltStore schreiben die
+/// neuen IDs in den Info.plist-Schlüssel `ALTAppGroups`. Andere Werkzeuge wie iloader
+/// tun das nicht, dort steht die ID nur im eingebetteten Provisioning-Profil.
+/// Deshalb werden beide Quellen geprüft. Ohne Umbenennung gilt die feste ID.
 public enum AppGroupResolver {
     public static let sideloadInfoKey = "ALTAppGroups"
 
     public static func resolve(
         infoDictionary: [String: Any]?,
+        profileAppGroups: [String] = [],
         defaultIdentifier: String = TagwerkIDs.appGroup
     ) -> String {
-        let candidates = infoDictionary?[sideloadInfoKey] as? [String] ?? []
+        let sideloaded = infoDictionary?[sideloadInfoKey] as? [String] ?? []
+        // Platzhalter wie `group.*` sind keine nutzbaren IDs.
+        let candidates = (sideloaded + profileAppGroups).filter { !$0.contains("*") }
         if let match = candidates.first(where: {
             $0 == defaultIdentifier || $0.hasPrefix(defaultIdentifier + ".")
         }) {

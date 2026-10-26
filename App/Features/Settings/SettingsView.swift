@@ -20,7 +20,8 @@ struct SettingsView: View {
                     LabeledContent("Bundle-ID", value: AppInfo.bundleIdentifier)
                     LabeledContent("Signatur", value: SigningInfo.describe())
                     LabeledContent("Widget-Daten", value: AppGroup.isAvailable ? "verfügbar" : "nicht verfügbar")
-                    LabeledContent("Installiert über", value: AppGroup.isSideloaded ? "SideStore/AltStore" : "Xcode, TestFlight oder Simulator")
+                    LabeledContent("App Group", value: AppGroup.identifier)
+                    LabeledContent("Installiert über", value: AppGroup.isSideloaded ? "kostenlose Apple-ID (SideStore/iloader)" : "Xcode, TestFlight oder Simulator")
                 }
 
                 Section {

@@ -36,6 +36,18 @@ Folge der offiziellen Anleitung auf **[docs.sidestore.io](https://docs.sidestore
 4. Falls iOS beim ersten Start meldet, dass dem Entwickler nicht vertraut wird:
    Einstellungen → Allgemein → **VPN & Geräteverwaltung** → deine Apple-ID → **Vertrauen**.
 
+### Alternative: direkt mit iloader vom PC (wenn die SideStore-Anmeldung scheitert)
+
+Die Anmeldung in SideStore auf dem iPhone schlägt derzeit oft fehl (Apple-seitig, z. B. Fehler
+`-80045`). iloader am PC kann Tagwerk direkt installieren:
+
+1. `Tagwerk.ipa` aus den [Releases](https://github.com/OneAonyx/ios_app/releases/latest) auf den PC laden.
+2. iPhone per USB anschließen, iloader öffnen, mit der Apple-ID anmelden.
+3. Die Option zum Installieren einer eigenen App/IPA wählen und `Tagwerk.ipa` auswählen.
+
+Die Daten bleiben bei einem Update erhalten, solange dieselbe Apple-ID genutzt wird (gleiche Bundle-ID).
+Auffrischen alle 7 Tage geht dann ebenfalls über iloader am PC.
+
 ## 4. Alle 7 Tage auffrischen
 
 - In SideStore: „Meine Apps“ → **Refresh All**.

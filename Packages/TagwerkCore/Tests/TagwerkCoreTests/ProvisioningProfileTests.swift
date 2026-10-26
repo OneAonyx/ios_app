@@ -139,6 +139,29 @@ struct AppGroupResolverTests {
         #expect(AppGroupResolver.resolve(infoDictionary: info) == "group.renamed.XYZ")
     }
 
+    /// iloader schreibt kein `ALTAppGroups`, die umbenannte ID steht nur im Profil
+    /// (so auf dem iPhone im ersten Systemcheck gesehen).
+    @Test func usesRenamedGroupFromProfile() {
+        let resolved = AppGroupResolver.resolve(
+            infoDictionary: [:],
+            profileAppGroups: ["group.de.tagwerk.app.L6STM8N2CH"]
+        )
+        #expect(resolved == "group.de.tagwerk.app.L6STM8N2CH")
+    }
+
+    @Test func infoPlistWinsOverProfileAndWildcardsAreIgnored() {
+        let info: [String: Any] = ["ALTAppGroups": ["group.de.tagwerk.app.FROMINFO"]]
+        #expect(
+            AppGroupResolver.resolve(infoDictionary: info, profileAppGroups: ["group.de.tagwerk.app.FROMPROFILE"])
+                == "group.de.tagwerk.app.FROMINFO"
+        )
+        #expect(AppGroupResolver.resolve(infoDictionary: nil, profileAppGroups: ["group.*"]) == TagwerkIDs.appGroup)
+    }
+
+    @Test func paidProfileKeepsFixedGroup() {
+        #expect(AppGroupResolver.resolve(infoDictionary: nil, profileAppGroups: [TagwerkIDs.appGroup]) == TagwerkIDs.appGroup)
+    }
+
     @Test func doesNotMatchSimilarPrefix() {
         let info: [String: Any] = ["ALTAppGroups": ["group.de.tagwerk.application", "group.de.tagwerk.app"]]
         #expect(AppGroupResolver.resolve(infoDictionary: info) == "group.de.tagwerk.app")

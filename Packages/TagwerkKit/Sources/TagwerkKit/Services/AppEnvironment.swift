@@ -4,13 +4,15 @@ import UIKit
 
 /// Gemeinsamer Speicher von App und Widget.
 ///
-/// Die ID wird zur Laufzeit aufgelöst, weil SideStore sie beim Signieren umbenennt.
-/// In der Widget-Extension wird zusätzlich die Info.plist der Haupt-App gelesen,
-/// falls SideStore `ALTAppGroups` nur dort eingetragen hat.
+/// Die ID wird einmal zur Laufzeit aufgelöst, weil sie beim Signieren mit einer
+/// kostenlosen Apple-ID umbenannt wird. Quellen: `ALTAppGroups` in der Info.plist
+/// (SideStore/AltStore) und das eingebettete Provisioning-Profil (z. B. iloader).
+/// In der Widget-Extension wird zusätzlich die Info.plist der Haupt-App gelesen.
 public enum AppGroup {
-    public static var identifier: String {
-        AppGroupResolver.resolve(infoDictionary: mergedInfoDictionary())
-    }
+    public static let identifier: String = AppGroupResolver.resolve(
+        infoDictionary: mergedInfoDictionary(),
+        profileAppGroups: SigningInfo.loadProfile()?.appGroups ?? []
+    )
 
     public static var containerURL: URL? {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
@@ -24,8 +26,10 @@ public enum AppGroup {
         isAvailable ? UserDefaults(suiteName: identifier) : nil
     }
 
+    /// `true` bei Installation über SideStore, AltStore oder iloader mit kostenloser Apple-ID.
     public static var isSideloaded: Bool {
         AppGroupResolver.isSideloaded(infoDictionary: mergedInfoDictionary())
+            || SigningInfo.currentStatus().kind == .freeAppleID
     }
 
     static func mergedInfoDictionary() -> [String: Any] {
