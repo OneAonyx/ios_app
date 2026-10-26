@@ -22,6 +22,10 @@ concurrency:
   group: ios-${{ github.ref }}
   cancel-in-progress: true
 
+# Schreibrecht nur für den Ergebnis-Branch `ci-ios`.
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
     runs-on: macos-26
@@ -85,3 +89,9 @@ jobs:
           name: xcodebuild-log
           path: build/xcodebuild.log
           if-no-files-found: ignore
+
+      - name: Ergebnisse auf Branch ci-ios ablegen
+        if: always() && github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: Scripts/ci/publish_results.sh ios "${{ job.status }}"

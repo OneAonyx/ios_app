@@ -86,6 +86,12 @@ jobs:
           path: build/archive.log
           if-no-files-found: ignore
 
+      - name: Ergebnisse auf Branch ci-release ablegen
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: Scripts/ci/publish_results.sh release "${{ job.status }}"
+
       - name: GitHub-Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
