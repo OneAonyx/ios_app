@@ -130,9 +130,14 @@ private struct OverviewCard: View {
     let eventCount: Int
     let showsEvents: Bool
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
+        // Bei sehr großer Schrift steht der Ring über dem Text statt daneben.
+        let large = typeSize.isAccessibilitySize
+        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.s)) : AnyLayout(HStackLayout(spacing: Spacing.m))
         Card {
-            HStack(spacing: Spacing.m) {
+            layout {
                 ProgressRing(fraction: progress.fraction, tint: ModuleAccent.tasks, lineWidth: 9) {
                     VStack(spacing: 0) {
                         Text("\(progress.done)")
@@ -141,8 +146,10 @@ private struct OverviewCard: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                    .minimumScaleFactor(0.6)
+                    .padding(Spacing.xs)
                 }
-                .frame(width: 72, height: 72)
+                .frame(width: large ? 110 : 72, height: large ? 110 : 72)
 
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text(headline)

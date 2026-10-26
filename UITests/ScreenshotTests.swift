@@ -84,7 +84,7 @@ final class ScreenshotTests: XCTestCase {
                 field.typeText("Zahn")
             }
             snap(app, "08-suche-\(suffix)")
-            tapIfPresent(app.buttons["search.done"])
+            dismissSheet(in: app, doneIdentifier: "search.done")
         }
 
         // Einstellungen
@@ -116,14 +116,31 @@ final class ScreenshotTests: XCTestCase {
 
     @MainActor
     private func openTask(named title: String, in app: XCUIApplication) {
-        tapIfPresent(app.staticTexts[title].firstMatch)
+        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", title)).firstMatch
+        if !tapIfPresent(row) {
+            tapIfPresent(app.staticTexts[title].firstMatch)
+        }
         _ = app.textFields["editor.title"].waitForExistence(timeout: 3)
+    }
+
+    /// Schließt ein Sheet: zuerst über den „Fertig“-Knopf, sonst Suche abbrechen und
+    /// erneut versuchen, zuletzt per Wischen nach unten.
+    @MainActor
+    private func dismissSheet(in app: XCUIApplication, doneIdentifier: String) {
+        if tapIfPresent(app.buttons[doneIdentifier]) { return }
+        for label in ["Abbrechen", "Cancel", "Schließen", "Close"] {
+            tapIfPresent(app.buttons[label].firstMatch, timeout: 1)
+        }
+        if tapIfPresent(app.buttons[doneIdentifier], timeout: 2) { return }
+        let window = app.windows.firstMatch
+        window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12))
+            .press(forDuration: 0.1, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
     }
 
     @MainActor
     @discardableResult
-    private func tapIfPresent(_ element: XCUIElement) -> Bool {
-        guard element.waitForExistence(timeout: 4), element.isHittable else { return false }
+    private func tapIfPresent(_ element: XCUIElement, timeout: TimeInterval = 4) -> Bool {
+        guard element.waitForExistence(timeout: timeout), element.isHittable else { return false }
         element.tap()
         return true
     }

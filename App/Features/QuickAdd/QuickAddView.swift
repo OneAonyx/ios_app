@@ -64,7 +64,8 @@ struct QuickAddView: View {
             }
             .padding(Spacing.m)
             .background(Color.tagwerkPage)
-            .navigationTitle("Neue Aufgabe")
+            // Kein Titel: Neben „Abbrechen“ und „Hinzufügen“ würde er abgeschnitten,
+            // und das Textfeld sagt schon, worum es geht.
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -110,14 +111,12 @@ struct QuickAddView: View {
     }
 
     private func chips(for entry: QuickEntry) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.xs) {
-                ForEach(entry.chips, id: \.self) { chip in
-                    chipView(symbol: symbol(for: chip.kind), text: chip.label, tint: tint(for: chip.kind))
-                }
-                if entry.listName == nil, let presetList {
-                    chipView(symbol: presetList.symbol, text: presetList.name, tint: ListColor.color(named: presetList.colorName))
-                }
+        FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs) {
+            ForEach(entry.chips, id: \.self) { chip in
+                chipView(symbol: symbol(for: chip.kind), text: chip.label, tint: tint(for: chip.kind))
+            }
+            if entry.listName == nil, let presetList {
+                chipView(symbol: presetList.symbol, text: presetList.name, tint: ListColor.color(named: presetList.colorName))
             }
         }
     }

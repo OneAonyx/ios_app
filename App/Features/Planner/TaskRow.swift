@@ -42,6 +42,8 @@ struct TaskRow: View {
     @Environment(\.modelContext) private var context
     @Environment(AppModel.self) private var app
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         HStack(alignment: .center, spacing: Spacing.xxs) {
             CompletionButton(isDone: task.isDone, priority: task.priority) {
@@ -52,46 +54,54 @@ struct TaskRow: View {
             }
             .sensoryFeedback(.success, trigger: task.isDone) { _, isDone in isDone }
 
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: Spacing.xxs) {
-                    if task.priority > 0 {
-                        Text(String(repeating: "!", count: task.priority))
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(task.priority == 3 ? Color.red : Color.orange)
+            // Ein eigener Knopf für „öffnen“: zuverlässig antippbar und für VoiceOver klar.
+            Button {
+                onOpen(task)
+            } label: {
+                HStack(spacing: Spacing.xs) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
+                            if task.priority > 0 {
+                                Text(String(repeating: "!", count: task.priority))
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(task.priority == 3 ? Color.red : Color.orange)
+                            }
+                            Text(task.title.isEmpty ? "Ohne Titel" : task.title)
+                                .strikethrough(task.isDone)
+                                .foregroundStyle(task.isDone ? Color.secondary : Color.primary)
+                                .lineLimit(typeSize.isAccessibilitySize ? 5 : 2)
+                        }
+                        metaLine
                     }
-                    Text(task.title.isEmpty ? "Ohne Titel" : task.title)
-                        .strikethrough(task.isDone)
-                        .foregroundStyle(task.isDone ? Color.secondary : Color.primary)
-                        .lineLimit(2)
+                    Spacer(minLength: Spacing.xs)
+                    if task.isFlagged {
+                        Image(systemName: "flag.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .accessibilityLabel("Markiert")
+                    }
                 }
-                metaLine
+                .contentShape(Rectangle())
             }
-            Spacer(minLength: Spacing.xs)
-            if task.isFlagged {
-                Image(systemName: "flag.fill")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                    .accessibilityLabel("Markiert")
-            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Öffnet die Aufgabe")
         }
-        .contentShape(Rectangle())
-        .onTapGesture { onOpen(task) }
-        .accessibilityAddTraits(.isButton)
     }
 
+    /// Zusatzinfos brechen um statt abgeschnitten zu werden (wichtig bei großer Schrift).
     @ViewBuilder
     private var metaLine: some View {
         let parts = metaParts
         if !parts.isEmpty {
-            HStack(spacing: Spacing.xs) {
+            FlowLayout(spacing: Spacing.xs, lineSpacing: 2) {
                 ForEach(parts, id: \.text) { part in
                     Label(part.text, systemImage: part.symbol)
                         .labelStyle(.titleAndIcon)
                         .foregroundStyle(part.color)
+                        .lineLimit(1)
                 }
             }
             .font(.caption)
-            .lineLimit(1)
         }
     }
 

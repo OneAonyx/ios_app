@@ -50,6 +50,58 @@ public extension Color {
     }
 }
 
+/// Ordnet Elemente nebeneinander an und bricht in die nächste Zeile um, wenn der Platz
+/// nicht reicht (z. B. Chips oder Zusatzinfos unter einer Aufgabe bei großer Schrift).
+public struct FlowLayout: Layout {
+    public var spacing: CGFloat
+    public var lineSpacing: CGFloat
+
+    public init(spacing: CGFloat = 8, lineSpacing: CGFloat = 4) {
+        self.spacing = spacing
+        self.lineSpacing = lineSpacing
+    }
+
+    public func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var widest: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            let width = min(size.width, maxWidth)
+            if x > 0, x + width > maxWidth {
+                y += rowHeight + lineSpacing
+                x = 0
+                rowHeight = 0
+            }
+            x += width
+            widest = max(widest, x)
+            x += spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+        return CGSize(width: proposal.width ?? widest, height: y + rowHeight)
+    }
+
+    public func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        var y = bounds.minY
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            let width = min(size.width, bounds.width)
+            if x > bounds.minX, x + width > bounds.maxX {
+                y += rowHeight + lineSpacing
+                x = bounds.minX
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(width: width, height: size.height))
+            x += width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+    }
+}
+
 /// Fortschrittsring, z. B. „3 von 5 Aufgaben erledigt“.
 public struct ProgressRing<Label: View>: View {
     private let fraction: Double
