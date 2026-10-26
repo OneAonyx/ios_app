@@ -28,7 +28,8 @@ enum MedicationAlarmScheduler {
         }
 
         let manager = AlarmManager.shared
-        let scheduledIDs = Set(manager.alarms.map(\.id.uuidString))
+        // Liste der gestellten Wecker; im Fehlerfall leer (dann wird neu gestellt).
+        let scheduledIDs = Set(((try? manager.alarms) ?? []).map(\.id.uuidString))
         var stored = storedAlarms()
 
         // Nicht mehr gewünschte oder geänderte Wecker abbestellen.
