@@ -58,7 +58,7 @@ struct TodayView: View {
                     NextUpCard(item: nextUp, now: now, task: source.task(for: nextUp))
                 }
                 if doses.total > 0 {
-                    TodayDosesCard(today: doses, now: now, title: "Medikamente")
+                    TodayDosesCard(today: doses, now: now, title: "Medikamente", collapsesResolved: true)
                 }
                 FocusCard(tasks: focusTasks, allTasks: tasks, onPick: { isPickingFocus = true })
                 DueTodayCard(tasks: otherTasks, allTasks: tasks, hasFocus: !focusTasks.isEmpty)

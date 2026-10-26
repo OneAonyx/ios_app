@@ -89,8 +89,10 @@ struct WeekView: View {
                             .background(ModuleAccent.today.opacity(0.15), in: Capsule())
                     }
                     Spacer()
-                    if !day.isEmpty {
-                        Text("\(day.count)")
+                    // Anzahl ohne Einnahmen (die stehen zusammengefasst darunter).
+                    let entries = day.count - day.timed.filter { $0.kind == .medication }.count
+                    if entries > 0 {
+                        Text("\(entries)")
                             .font(.caption.monospacedDigit())
                             .foregroundStyle(.secondary)
                     }
@@ -113,7 +115,9 @@ struct WeekView: View {
                             app.openMedications()
                         } label: {
                             Label {
-                                Text("\(doses.filter(\.isDone).count) von \(doses.count) Einnahmen")
+                                Text(day.date > now
+                                    ? (doses.count == 1 ? "1 Einnahme" : "\(doses.count) Einnahmen")
+                                    : "\(doses.filter(\.isDone).count) von \(doses.count) Einnahmen")
                                     .foregroundStyle(.secondary)
                             } icon: {
                                 Image(systemName: doses.allSatisfy(\.isDone) ? "checkmark.circle.fill" : "pills.fill")

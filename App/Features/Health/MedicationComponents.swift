@@ -80,6 +80,7 @@ enum DoseStateText {
 }
 
 /// Eine geplante Einnahme: Uhrzeit, Medikament, Menge, Zustand, Abhaken.
+/// Bei sehr großer Schrift stehen Name und Details unter Uhrzeit und Knopf.
 struct DoseRow: View {
     let entry: DoseEntry
     let medication: Medication
@@ -91,84 +92,120 @@ struct DoseRow: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        let calendar = AppModel.calendar
-        HStack(spacing: Spacing.s) {
-            Text(GermanCalendar.time(entry.dose.date, calendar: calendar))
-                .font(.subheadline.monospacedDigit().weight(.semibold))
-                .foregroundStyle(entry.isResolved ? Color.secondary : Color.primary)
-                .frame(minWidth: 46, alignment: .leading)
-            if showsName {
-                MedicationIcon(symbol: medication.symbol, colorName: medication.colorName, size: 32)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(showsName ? medication.displayName : medication.form.amountLabel(entry.dose.amount))
-                    .font(.body)
-                    .strikethrough(entry.state == .skipped)
-                    .foregroundStyle(entry.isResolved ? Color.secondary : Color.primary)
-                    .lineLimit(typeSize.isAccessibilitySize ? 4 : 2)
-                FlowLayout(spacing: Spacing.xs, lineSpacing: 2) {
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    HStack(spacing: Spacing.s) {
+                        timeText
+                        if showsName {
+                            MedicationIcon(symbol: medication.symbol, colorName: medication.colorName, size: 32)
+                        }
+                        Spacer(minLength: 0)
+                        checkButton
+                    }
+                    texts
+                }
+            } else {
+                HStack(spacing: Spacing.s) {
+                    timeText
+                        .frame(minWidth: 46, alignment: .leading)
                     if showsName {
-                        Text(medication.detail(for: entry.dose.amount))
-                            .foregroundStyle(.secondary)
-                    } else if let hint = medication.timing.hint {
-                        Text(hint).foregroundStyle(.secondary)
+                        MedicationIcon(symbol: medication.symbol, colorName: medication.colorName, size: 32)
                     }
-                    if let state = DoseStateText.label(for: entry, now: now, calendar: calendar) {
-                        Text(state.text)
-                            .fontWeight(.medium)
-                            .foregroundStyle(state.color)
-                    }
+                    texts
+                    Spacer(minLength: 0)
+                    checkButton
                 }
-                .font(.caption)
             }
-            Spacer(minLength: 0)
-            DoseCheckButton(state: entry.state) {
-                withAnimation(.snappy) {
-                    if entry.isResolved {
-                        MedicationActions.undo(entry, medication: medication, in: context)
-                    } else {
-                        MedicationActions.take(entry, medication: medication, in: context)
-                    }
-                }
-                app.medicationsChanged()
-            }
-            .sensoryFeedback(.success, trigger: entry.state) { _, state in state == .taken }
         }
         .contentShape(Rectangle())
-        .contextMenu {
-            if !entry.isResolved || entry.state == .skipped {
-                Button {
-                    MedicationActions.take(entry, medication: medication, in: context)
-                    app.medicationsChanged()
-                } label: {
-                    Label("Genommen", systemImage: "checkmark.circle")
-                }
-            }
-            if entry.state != .skipped {
-                Button {
-                    MedicationActions.skip(entry, medication: medication, in: context)
-                    app.medicationsChanged()
-                } label: {
-                    Label("Auslassen", systemImage: "minus.circle")
-                }
-            }
-            if entry.isResolved {
-                Button {
-                    MedicationActions.undo(entry, medication: medication, in: context)
-                    app.medicationsChanged()
-                } label: {
-                    Label("Zurücksetzen", systemImage: "arrow.uturn.backward")
-                }
-            }
-        }
+        .contextMenu { menu }
         .accessibilityElement(children: .combine)
         .accessibilityAction(named: entry.isResolved ? "Zurücksetzen" : "Genommen") {
-            if entry.isResolved {
-                MedicationActions.undo(entry, medication: medication, in: context)
-            } else {
-                MedicationActions.take(entry, medication: medication, in: context)
+            toggle()
+        }
+    }
+
+    private var timeText: some View {
+        Text(GermanCalendar.time(entry.dose.date, calendar: AppModel.calendar))
+            .font(.subheadline.monospacedDigit().weight(.semibold))
+            .foregroundStyle(entry.isResolved ? Color.secondary : Color.primary)
+    }
+
+    private var texts: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(showsName ? (medication.name.isEmpty ? medication.displayName : medication.name) : medication.form.amountLabel(entry.dose.amount))
+                .font(.body)
+                .strikethrough(entry.state == .skipped)
+                .foregroundStyle(entry.isResolved ? Color.secondary : Color.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            FlowLayout(spacing: Spacing.xs, lineSpacing: 2) {
+                ForEach(detailParts, id: \.self) { part in
+                    Text(part).foregroundStyle(.secondary)
+                }
+                if let state = DoseStateText.label(for: entry, now: now, calendar: AppModel.calendar) {
+                    Text(state.text)
+                        .fontWeight(.medium)
+                        .foregroundStyle(state.color)
+                }
             }
-            app.medicationsChanged()
+            .font(.caption)
+        }
+    }
+
+    /// „10.000 HDU“, „1 Kapsel“, „vor dem Essen“ – einzeln, damit sie sauber umbrechen.
+    private var detailParts: [String] {
+        var parts: [String] = []
+        if showsName {
+            let dosage = medication.dosage.trimmingCharacters(in: .whitespaces)
+            if !dosage.isEmpty { parts.append(dosage) }
+            parts.append(medication.form.amountLabel(entry.dose.amount))
+        }
+        if let hint = medication.timing.hint { parts.append(hint) }
+        return parts
+    }
+
+    private var checkButton: some View {
+        DoseCheckButton(state: entry.state) {
+            withAnimation(.snappy) { toggle() }
+        }
+        .sensoryFeedback(.success, trigger: entry.state) { _, state in state == .taken }
+    }
+
+    private func toggle() {
+        if entry.isResolved {
+            MedicationActions.undo(entry, medication: medication, in: context)
+        } else {
+            MedicationActions.take(entry, medication: medication, in: context)
+        }
+        app.medicationsChanged()
+    }
+
+    @ViewBuilder
+    private var menu: some View {
+        if !entry.isResolved || entry.state == .skipped {
+            Button {
+                MedicationActions.take(entry, medication: medication, in: context)
+                app.medicationsChanged()
+            } label: {
+                Label("Genommen", systemImage: "checkmark.circle")
+            }
+        }
+        if entry.state != .skipped {
+            Button {
+                MedicationActions.skip(entry, medication: medication, in: context)
+                app.medicationsChanged()
+            } label: {
+                Label("Auslassen", systemImage: "minus.circle")
+            }
+        }
+        if entry.isResolved {
+            Button {
+                MedicationActions.undo(entry, medication: medication, in: context)
+                app.medicationsChanged()
+            } label: {
+                Label("Zurücksetzen", systemImage: "arrow.uturn.backward")
+            }
         }
     }
 }

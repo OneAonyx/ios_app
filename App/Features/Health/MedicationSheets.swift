@@ -149,11 +149,12 @@ struct RefillSheet: View {
 }
 
 /// Monatskalender mit dem Einnahme-Status je Tag.
+///
+/// Ein festes `Grid` statt `LazyVGrid`: Es misst seine Höhe zuverlässig, und Kopfzeile und
+/// Tage kommen sich bei den IDs nicht in die Quere.
 struct AdherenceCalendar: View {
     let days: [DayAdherence]
     let month: Date
-
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
 
     var body: some View {
         let calendar = AppModel.calendar
@@ -162,21 +163,38 @@ struct AdherenceCalendar: View {
         let byDay = Dictionary(days.map { (calendar.startOfDay(for: $0.date), $0) }, uniquingKeysWith: { lhs, _ in lhs })
         let count = calendar.range(of: .day, in: .month, for: first)?.count ?? 30
         let today = calendar.startOfDay(for: .now)
+        // Zellen: nil = leer, sonst Tag des Monats (1…).
+        let cells: [Int?] = Array(repeating: nil, count: leading) + (1...count).map { Optional($0) }
+        let weeks: [[Int?]] = stride(from: 0, to: cells.count, by: 7).map { start in
+            let row = Array(cells[start..<min(start + 7, cells.count)])
+            return row + Array(repeating: nil, count: 7 - row.count)
+        }
 
         VStack(spacing: Spacing.xs) {
-            LazyVGrid(columns: columns, spacing: 6) {
-                ForEach(GermanCalendar.weekdayOrder, id: \.self) { weekday in
-                    Text(GermanCalendar.shortWeekdays[weekday - 1])
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
+            Grid(horizontalSpacing: 6, verticalSpacing: 6) {
+                GridRow {
+                    ForEach(GermanCalendar.weekdayOrder, id: \.self) { weekday in
+                        Text(GermanCalendar.shortWeekdays[weekday - 1])
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
                 }
-                ForEach((0..<leading).map { -1 - $0 }, id: \.self) { _ in
-                    Color.clear.frame(height: 30)
-                }
-                ForEach(0..<count, id: \.self) { offset in
-                    let day = calendar.date(byAdding: .day, value: offset, to: first) ?? first
-                    let status = byDay[calendar.startOfDay(for: day)]?.status ?? .none
-                    DayCell(number: offset + 1, status: status, isToday: calendar.isDate(day, inSameDayAs: today))
+                ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
+                    GridRow {
+                        ForEach(0..<7, id: \.self) { column in
+                            if let number = week[column] {
+                                let day = calendar.date(byAdding: .day, value: number - 1, to: first) ?? first
+                                DayCell(
+                                    number: number,
+                                    status: byDay[calendar.startOfDay(for: day)]?.status ?? .none,
+                                    isToday: calendar.isDate(day, inSameDayAs: today)
+                                )
+                            } else {
+                                Color.clear.frame(maxWidth: .infinity, minHeight: 32)
+                            }
+                        }
+                    }
                 }
             }
             HStack(spacing: Spacing.s) {
@@ -198,13 +216,14 @@ struct AdherenceCalendar: View {
             Text("\(number)")
                 .font(.caption.monospacedDigit().weight(isToday ? .bold : .regular))
                 .foregroundStyle(foreground)
-                .frame(maxWidth: .infinity, minHeight: 30)
+                .frame(width: 32, height: 32)
                 .background(background, in: Circle())
                 .overlay {
                     if isToday {
                         Circle().strokeBorder(ModuleAccent.today, lineWidth: 2)
                     }
                 }
+                .frame(maxWidth: .infinity)
                 .accessibilityLabel("\(number). \(statusText)")
         }
 

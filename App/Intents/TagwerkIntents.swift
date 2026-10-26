@@ -47,7 +47,7 @@ struct TodaySummaryIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let now = Date.now
         let calendar = AppModel.calendar
-        let tasks = (try? AppModel.shared.context.fetch(FetchDescriptor<TaskItem>(predicate: #Predicate { !$0.isDone }))) ?? []
+        let tasks = ((try? AppModel.shared.context.fetch(FetchDescriptor<TaskItem>())) ?? []).filter { !$0.isDone }
         let today = TaskOrdering.sorted(
             tasks.filter { SmartList.today.includes($0.facts, now: now, calendar: calendar) },
             facts: \.facts, now: now, calendar: calendar

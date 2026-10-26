@@ -156,8 +156,15 @@ struct TodayDosesCard: View {
     let today: DayDoses
     let now: Date
     var title = "Heute"
+    /// Erledigte Einnahmen zu einer Zeile zusammenfassen (auf „Heute“).
+    var collapsesResolved = false
+
+    @State private var showsResolved = false
 
     var body: some View {
+        let resolved = today.items.filter { $0.entry.isResolved }
+        let collapse = collapsesResolved && !showsResolved && !resolved.isEmpty && resolved.count < today.items.count
+        let visible = collapse ? today.items.filter { !$0.entry.isResolved } : today.items
         Card {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack {
@@ -173,7 +180,18 @@ struct TodayDosesCard: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(today.items) { item in
+                    if collapse {
+                        Button {
+                            withAnimation(.snappy) { showsResolved = true }
+                        } label: {
+                            Label(resolved.count == 1 ? "1 Einnahme erledigt" : "\(resolved.count) Einnahmen erledigt", systemImage: "checkmark.circle.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(.green)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.vertical, Spacing.xxs)
+                    }
+                    ForEach(visible) { item in
                         DoseRow(entry: item.entry, medication: item.medication, now: now)
                     }
                 }
@@ -198,7 +216,7 @@ private struct AsNeededCard: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(medication.displayName)
                                 .lineLimit(2)
-                            Text(check.statusLine)
+                            Text(statusText(check))
                                 .font(.caption)
                                 .foregroundStyle(check.isAllowed ? Color.secondary : Color.orange)
                         }
@@ -211,6 +229,11 @@ private struct AsNeededCard: View {
                 }
             }
         }
+    }
+
+    private func statusText(_ check: AsNeededCheck) -> String {
+        guard let next = check.nextAllowed else { return check.statusLine }
+        return "\(check.statusLine) · \(AsNeededGuard.nextAllowedLabel(next, now: now, calendar: AppModel.calendar).replacingOccurrences(of: "Wieder", with: "wieder"))"
     }
 }
 
@@ -231,32 +254,32 @@ private struct AdherenceWeekCard: View {
         Card {
             VStack(alignment: .leading, spacing: Spacing.s) {
                 SectionHeader("Letzte 7 Tage", systemImage: "chart.bar.fill", tint: ModuleAccent.medication)
-                HStack(alignment: .center, spacing: Spacing.m) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(summary.percentLabel)
-                            .font(.system(.title, design: .rounded, weight: .bold))
-                        Text("genommen")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 0)
-                    HStack(spacing: 6) {
-                        ForEach(days) { day in
-                            VStack(spacing: 4) {
-                                Circle()
-                                    .fill(color(for: day.status))
-                                    .frame(width: 22, height: 22)
-                                    .overlay {
-                                        if day.status == .pending || day.status == .none {
-                                            Circle().strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1)
-                                        }
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
+                    Text(summary.percentLabel)
+                        .font(.system(.title, design: .rounded, weight: .bold))
+                    Text("genommen")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                HStack(spacing: 0) {
+                    ForEach(days) { day in
+                        VStack(spacing: 4) {
+                            Circle()
+                                .fill(color(for: day.status))
+                                .frame(width: 24, height: 24)
+                                .overlay {
+                                    if day.status == .pending || day.status == .none {
+                                        Circle().strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1)
                                     }
-                                Text(GermanCalendar.shortWeekdays[calendar.component(.weekday, from: day.date) - 1])
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .accessibilityElement(children: .combine)
+                                }
+                            Text(GermanCalendar.shortWeekdays[calendar.component(.weekday, from: day.date) - 1])
+                                .font(.caption2)
+                                .foregroundStyle(calendar.isDate(day.date, inSameDayAs: now) ? ModuleAccent.today : Color.secondary)
+                                .lineLimit(1)
+                                .fixedSize()
                         }
+                        .frame(maxWidth: .infinity)
+                        .accessibilityElement(children: .combine)
                     }
                 }
                 if summary.missed + summary.skipped > 0 {

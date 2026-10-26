@@ -68,7 +68,7 @@ public struct FlowLayout: Layout {
         var rowHeight: CGFloat = 0
         var widest: CGFloat = 0
         for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
+            let size = Self.measure(subview, maxWidth: maxWidth)
             let width = min(size.width, maxWidth)
             if x > 0, x + width > maxWidth {
                 y += rowHeight + lineSpacing
@@ -88,7 +88,7 @@ public struct FlowLayout: Layout {
         var y = bounds.minY
         var rowHeight: CGFloat = 0
         for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
+            let size = Self.measure(subview, maxWidth: bounds.width)
             let width = min(size.width, bounds.width)
             if x > bounds.minX, x + width > bounds.maxX {
                 y += rowHeight + lineSpacing
@@ -99,6 +99,14 @@ public struct FlowLayout: Layout {
             x += width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+    }
+
+    /// Natürliche Größe; ist ein Element breiter als die Zeile, darf es umbrechen
+    /// (statt mit „…“ abgeschnitten zu werden).
+    private static func measure(_ subview: LayoutSubview, maxWidth: CGFloat) -> CGSize {
+        let natural = subview.sizeThatFits(.unspecified)
+        guard natural.width > maxWidth, maxWidth.isFinite else { return natural }
+        return subview.sizeThatFits(ProposedViewSize(width: maxWidth, height: nil))
     }
 }
 

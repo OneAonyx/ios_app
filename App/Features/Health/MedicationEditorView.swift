@@ -107,7 +107,7 @@ struct MedicationEditorView: View {
                     manageSection
                 }
             }
-            .navigationTitle(medication == nil ? "Neues Medikament" : "Bearbeiten")
+            .navigationTitle(medication == nil ? "Medikament" : "Bearbeiten")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
