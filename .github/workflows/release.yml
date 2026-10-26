@@ -97,6 +97,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: build/Tagwerk.ipa
+          # Tags mit Bindestrich (z. B. v0.1.0-rc.1) sind Vorabversionen und
+          # zählen nicht als „neueste Version“.
+          prerelease: ${{ contains(github.ref_name, '-') }}
           body: |
             Tagwerk ${{ steps.version.outputs.marketing }} (Build ${{ steps.version.outputs.build }})
 
