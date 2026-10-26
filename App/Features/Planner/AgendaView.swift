@@ -8,14 +8,18 @@ struct AgendaSource {
     let tasks: [TaskItem]
     let medications: [Medication]
     /// Trainingstage und Einheiten (schon für den Zeitraum berechnet).
-    var training: (WorkoutPlan?, [WorkoutSession]) = (nil, [])
+    let training: (WorkoutPlan?, [WorkoutSession])
     let calendarService: CalendarService
     let showEvents: Bool
     let hiddenCalendarIDs: Set<String>
 
-    init(tasks: [TaskItem], medications: [Medication] = [], calendarService: CalendarService, showEvents: Bool, hiddenCalendarIDsText: String) {
+    init(
+        tasks: [TaskItem], medications: [Medication] = [], training: (WorkoutPlan?, [WorkoutSession]) = (nil, []),
+        calendarService: CalendarService, showEvents: Bool, hiddenCalendarIDsText: String
+    ) {
         self.tasks = tasks
         self.medications = medications
+        self.training = training
         self.calendarService = calendarService
         self.showEvents = showEvents
         self.hiddenCalendarIDs = Set(hiddenCalendarIDsText.split(separator: "\n").map(String.init))
@@ -60,8 +64,10 @@ struct AgendaView: View {
     var body: some View {
         let now = Date.now
         let calendar = AppModel.calendar
-        var source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
-        source.training = (plans.last(where: \.isActive) ?? plans.last, workouts)
+        let source = AgendaSource(
+            tasks: tasks, medications: medications, training: (plans.last(where: \.isActive) ?? plans.last, workouts),
+            calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs
+        )
         let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: dayCount, to: start) ?? now
         let days = AgendaBuilder.build(items: source.items(from: start, to: end), from: now, days: dayCount, now: now, calendar: calendar)

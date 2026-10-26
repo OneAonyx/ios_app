@@ -21,8 +21,10 @@ struct WeekView: View {
         let thisMonday = AgendaBuilder.startOfWeek(containing: now, calendar: calendar)
         let monday = calendar.date(byAdding: .day, value: 7 * weekOffset, to: thisMonday) ?? thisMonday
         let sunday = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
-        var source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
-        source.training = (plans.last(where: \.isActive) ?? plans.last, workouts)
+        let source = AgendaSource(
+            tasks: tasks, medications: medications, training: (plans.last(where: \.isActive) ?? plans.last, workouts),
+            calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs
+        )
         let days = AgendaBuilder.build(items: source.items(from: monday, to: sunday), from: monday, days: 7, now: now, calendar: calendar)
 
         ScrollView {

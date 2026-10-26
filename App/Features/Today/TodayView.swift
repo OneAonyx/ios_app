@@ -36,8 +36,10 @@ struct TodayView: View {
         let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: 1, to: start) ?? now
         let plan = plans.last(where: \.isActive) ?? plans.last
-        var source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
-        source.training = (plan, workouts)
+        let source = AgendaSource(
+            tasks: tasks, medications: medications, training: (plan, workouts),
+            calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs
+        )
         let todayItems = source.items(from: start, to: end, now: now)
         let doses = DayDoses(medications: medications.filter { $0.schedule.isScheduled }, day: now, now: now, calendar: calendar)
         let events = todayItems.filter { $0.kind == .event }.sorted { $0.start < $1.start }
