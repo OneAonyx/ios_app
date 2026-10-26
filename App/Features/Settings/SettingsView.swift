@@ -184,7 +184,7 @@ private struct BackupSection: View {
         pendingRestoreURL = nil
         do {
             let summary = try BackupService.restore(from: url, context: context, calendar: AppModel.calendar)
-            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen."
+            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente."
             app.tasksChanged()
         } catch {
             message = error.localizedDescription
@@ -238,12 +238,12 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 1
+    private let currentPhase = 2
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
-        Phase(id: 1, title: "Heute, Aufgaben, Agenda", detail: "Aufgaben, Schnellerfassung, Kalender, Datensicherung.", systemImage: "checklist"),
-        Phase(id: 2, title: "Medikamente", detail: "Einnahmepläne, Erinnerungen mit Knöpfen, Wecker, Vorrat.", systemImage: "pills"),
+        Phase(id: 1, title: "Heute, Aufgaben, Agenda", detail: "Abgeschlossen: Aufgaben, Schnellerfassung, Kalender, Datensicherung.", systemImage: "checklist"),
+        Phase(id: 2, title: "Medikamente", detail: "Einnahmepläne, Erinnerungen mit Knöpfen, Wecker, Vorrat, Widget, Kontrollzentrum, Siri.", systemImage: "pills"),
         Phase(id: 3, title: "Training", detail: "Dein Oberkörper-4er-Plan, Satz-Tracking, Pausen-Timer.", systemImage: "dumbbell"),
         Phase(id: 4, title: "Ernährung & Histamin", detail: "Lexikon, Scanner, Tagebuch, Auslöser-Analyse.", systemImage: "fork.knife"),
         Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Wochenrückblick, Arztbericht, Claude über Kurzbefehl.", systemImage: "sparkles"),

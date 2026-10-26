@@ -3,27 +3,36 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Gemeinsame Datenquelle für Agenda, Woche und „Heute“: Aufgaben + Kalendertermine.
+/// Gemeinsame Datenquelle für Agenda, Woche und „Heute“: Aufgaben, Einnahmen, Kalendertermine.
 struct AgendaSource {
     let tasks: [TaskItem]
+    let medications: [Medication]
     let calendarService: CalendarService
     let showEvents: Bool
     let hiddenCalendarIDs: Set<String>
 
-    init(tasks: [TaskItem], calendarService: CalendarService, showEvents: Bool, hiddenCalendarIDsText: String) {
+    init(tasks: [TaskItem], medications: [Medication] = [], calendarService: CalendarService, showEvents: Bool, hiddenCalendarIDsText: String) {
         self.tasks = tasks
+        self.medications = medications
         self.calendarService = calendarService
         self.showEvents = showEvents
         self.hiddenCalendarIDs = Set(hiddenCalendarIDsText.split(separator: "\n").map(String.init))
     }
 
     @MainActor
-    func items(from start: Date, to end: Date) -> [AgendaItem] {
+    func items(from start: Date, to end: Date, now: Date = .now) -> [AgendaItem] {
         // Liest den Zähler, damit Ansichten bei Kalenderänderungen neu zeichnen.
         _ = calendarService.changeCounter
         let taskItems = tasks.compactMap { $0.agendaItem() }
-        guard showEvents else { return taskItems }
-        return taskItems + calendarService.items(from: start, to: end, hiddenCalendarIDs: hiddenCalendarIDs)
+        let doseItems = medications.flatMap { $0.agendaItems(from: start, to: end, now: now, calendar: AppModel.calendar) }
+        guard showEvents else { return taskItems + doseItems }
+        return taskItems + doseItems + calendarService.items(from: start, to: end, hiddenCalendarIDs: hiddenCalendarIDs)
+    }
+
+    /// Medikament einer Einnahme in Agenda oder Woche.
+    func medication(for item: AgendaItem) -> Medication? {
+        guard item.kind == .medication, let parsed = DoseID.parse(String(item.id.dropFirst("dose-".count))) else { return nil }
+        return medications.first { $0.stableID == parsed.medicationID }
     }
 
     func task(for item: AgendaItem) -> TaskItem? {
@@ -37,6 +46,7 @@ struct AgendaView: View {
     @Environment(AppModel.self) private var app
     @Environment(CalendarService.self) private var calendarService
     @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
+    @Query(sort: \Medication.sortIndex) private var medications: [Medication]
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
 
@@ -45,7 +55,7 @@ struct AgendaView: View {
     var body: some View {
         let now = Date.now
         let calendar = AppModel.calendar
-        let source = AgendaSource(tasks: tasks, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        let source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
         let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: dayCount, to: start) ?? now
         let days = AgendaBuilder.build(items: source.items(from: start, to: end), from: now, days: dayCount, now: now, calendar: calendar)
@@ -114,6 +124,9 @@ struct AgendaRow: View {
                     app.tasksChanged()
                 }
                 .frame(width: 28)
+            } else if item.kind == .medication {
+                DoseToggleButton(item: item)
+                    .frame(width: 28)
             } else {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(Color(hex: item.colorHex))
@@ -143,6 +156,8 @@ struct AgendaRow: View {
         .onTapGesture {
             if let task {
                 onOpenTask(task)
+            } else if item.kind == .medication {
+                app.openMedications()
             } else if let url = CalendarService.calendarAppURL(for: item.start) {
                 openURL(url)
             }
@@ -167,6 +182,29 @@ struct AgendaRow: View {
             }
         }
         .frame(width: 52, alignment: .trailing)
+    }
+}
+
+/// Abhak-Knopf für eine Einnahme in Agenda, Woche und „Als Nächstes“.
+struct DoseToggleButton: View {
+    let item: AgendaItem
+
+    @Environment(\.modelContext) private var context
+    @Environment(AppModel.self) private var app
+
+    var body: some View {
+        Button {
+            MedicationActions.toggleTaken(doseID: String(item.id.dropFirst("dose-".count)), in: context, calendar: AppModel.calendar)
+            app.medicationsChanged()
+        } label: {
+            Image(systemName: item.isDone ? "checkmark.circle.fill" : "pills.circle")
+                .font(.system(size: 22))
+                .foregroundStyle(item.isDone ? Color.green : ModuleAccent.medication)
+                .frame(width: TouchTarget.standard, height: TouchTarget.standard)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(item.isDone ? "Einnahme zurücksetzen" : "Einnahme abhaken")
     }
 }
 

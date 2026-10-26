@@ -10,11 +10,18 @@ struct AlarmLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: AlarmAttributes<TagwerkAlarmMetadata>.self) { context in
             HStack(spacing: 12) {
-                Image(systemName: "alarm.fill")
+                Image(systemName: context.attributes.metadata?.purpose == "medication" ? "pills.fill" : "alarm.fill")
                     .font(.title2)
                     .foregroundStyle(context.attributes.tintColor)
-                Text(context.attributes.presentation.alert.title)
-                    .font(.headline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(context.attributes.presentation.alert.title)
+                        .font(.headline)
+                    if let detail = context.attributes.metadata?.detail {
+                        Text(detail)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Spacer()
             }
             .padding()

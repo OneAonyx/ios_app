@@ -14,7 +14,7 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.2.0"
+    MARKETING_VERSION: "0.3.0"
     CURRENT_PROJECT_VERSION: "1"
     # Phase 0: Swift-5-Modus für App und Widget (Nebenläufigkeit als Warnung).
     # TagwerkCore läuft bereits im Swift-6-Modus. Umstellung in Phase 1.
@@ -44,6 +44,8 @@ targets:
       - path: App
         excludes:
           - "Supporting/Info.plist"
+      # Gemeinsame Intents (Widget-Knöpfe, Wecker, Kontrollzentrum).
+      - path: Shared
     dependencies:
       - package: TagwerkCore
       - package: TagwerkKit
@@ -69,6 +71,11 @@ targets:
         LSApplicationQueriesSchemes:
           - shortcuts
         NSSupportsLiveActivities: true
+        # Hintergrundaktualisierung hält Medikamenten-Erinnerungen aktuell (ab Phase 2).
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - de.tagwerk.app.refresh
         # Backups sind in der Dateien-App sichtbar (ab Phase 1).
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
@@ -97,6 +104,7 @@ targets:
       - path: Widgets
         excludes:
           - "Info.plist"
+      - path: Shared
     dependencies:
       - package: TagwerkCore
       - package: TagwerkKit

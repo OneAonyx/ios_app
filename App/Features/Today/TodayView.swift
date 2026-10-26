@@ -8,6 +8,7 @@ struct TodayView: View {
     @Environment(AppModel.self) private var app
     @Environment(CalendarService.self) private var calendarService
     @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
+    @Query(sort: \Medication.sortIndex) private var medications: [Medication]
     @AppStorage(SettingsKeys.userName) private var userName = ""
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
@@ -32,8 +33,9 @@ struct TodayView: View {
         let calendar = AppModel.calendar
         let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: 1, to: start) ?? now
-        let source = AgendaSource(tasks: tasks, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
-        let todayItems = source.items(from: start, to: end)
+        let source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        let todayItems = source.items(from: start, to: end, now: now)
+        let doses = DayDoses(medications: medications.filter { $0.schedule.isScheduled }, day: now, now: now, calendar: calendar)
         let events = todayItems.filter { $0.kind == .event }.sorted { $0.start < $1.start }
         let progress = TodayProgress.compute(tasks.map(\.facts), now: now, calendar: calendar)
         let todayTasks = TaskOrdering.sorted(
@@ -51,9 +53,12 @@ struct TodayView: View {
                 if let storeError = app.storeError {
                     WarningCard(title: "Speicherproblem", message: storeError)
                 }
-                OverviewCard(progress: progress, eventCount: events.count, showsEvents: showEvents && calendarService.canRead)
+                OverviewCard(progress: progress, doses: doses, eventCount: events.count, showsEvents: showEvents && calendarService.canRead)
                 if let nextUp {
                     NextUpCard(item: nextUp, now: now, task: source.task(for: nextUp))
+                }
+                if doses.total > 0 {
+                    TodayDosesCard(today: doses, now: now, title: "Medikamente")
                 }
                 FocusCard(tasks: focusTasks, allTasks: tasks, onPick: { isPickingFocus = true })
                 DueTodayCard(tasks: otherTasks, allTasks: tasks, hasFocus: !focusTasks.isEmpty)
@@ -127,6 +132,7 @@ private struct TodayHeader: View {
 
 private struct OverviewCard: View {
     let progress: TodayProgress
+    let doses: DayDoses
     let eventCount: Int
     let showsEvents: Bool
 
@@ -136,20 +142,17 @@ private struct OverviewCard: View {
         // Bei sehr großer Schrift steht der Ring über dem Text statt daneben.
         let large = typeSize.isAccessibilitySize
         let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.s)) : AnyLayout(HStackLayout(spacing: Spacing.m))
+        let ringSize: CGFloat = large ? 100 : (doses.total > 0 ? 60 : 72)
         Card {
             layout {
-                ProgressRing(fraction: progress.fraction, tint: ModuleAccent.tasks, lineWidth: 9) {
-                    VStack(spacing: 0) {
-                        Text("\(progress.done)")
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                        Text("von \(progress.total)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                HStack(spacing: Spacing.s) {
+                    ring(done: progress.done, total: progress.total, fraction: progress.fraction, tint: ModuleAccent.tasks, label: "Aufgaben")
+                        .frame(width: ringSize, height: ringSize)
+                    if doses.total > 0 {
+                        ring(done: doses.done, total: doses.total, fraction: doses.fraction, tint: ModuleAccent.medication, label: "Einnahmen")
+                            .frame(width: ringSize, height: ringSize)
                     }
-                    .minimumScaleFactor(0.6)
-                    .padding(Spacing.xs)
                 }
-                .frame(width: large ? 110 : 72, height: large ? 110 : 72)
 
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text(headline)
@@ -163,6 +166,21 @@ private struct OverviewCard: View {
         }
     }
 
+    private func ring(done: Int, total: Int, fraction: Double, tint: Color, label: String) -> some View {
+        ProgressRing(fraction: fraction, tint: tint, lineWidth: 8) {
+            VStack(spacing: 0) {
+                Text("\(done)")
+                    .font(.system(.title3, design: .rounded, weight: .bold))
+                Text("von \(total)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .minimumScaleFactor(0.5)
+            .padding(Spacing.xs)
+        }
+        .accessibilityLabel("\(label): \(done) von \(total)")
+    }
+
     private var headline: String {
         if progress.total == 0 { return "Heute ist nichts fällig" }
         if progress.open == 0 { return "Alles erledigt" }
@@ -173,6 +191,10 @@ private struct OverviewCard: View {
         var parts: [String] = []
         if progress.done > 0 {
             parts.append("\(progress.done) erledigt")
+        }
+        if doses.total > 0 {
+            let open = doses.total - doses.done
+            parts.append(open == 0 ? "Medikamente erledigt" : (open == 1 ? "1 Einnahme offen" : "\(open) Einnahmen offen"))
         }
         if showsEvents {
             parts.append(eventCount == 1 ? "1 Termin" : "\(eventCount) Termine")
@@ -194,10 +216,7 @@ private struct NextUpCard: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 SectionHeader("Als Nächstes", systemImage: "arrow.forward.circle", tint: ModuleAccent.today)
                 HStack(spacing: Spacing.s) {
-                    IconBadge(
-                        systemImage: item.kind == .event ? "calendar" : "checklist",
-                        tint: item.kind == .event ? Color(hex: item.colorHex) : ModuleAccent.tasks
-                    )
+                    IconBadge(systemImage: symbol, tint: tint)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.title)
                             .font(.headline)
@@ -207,6 +226,9 @@ private struct NextUpCard: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
+                    if item.kind == .medication {
+                        DoseToggleButton(item: item)
+                    }
                 }
             }
         }
@@ -214,9 +236,27 @@ private struct NextUpCard: View {
         .onTapGesture {
             if let task {
                 app.editingTask = task
+            } else if item.kind == .medication {
+                app.openMedications()
             } else if let url = CalendarService.calendarAppURL(for: item.start) {
                 openURL(url)
             }
+        }
+    }
+
+    private var symbol: String {
+        switch item.kind {
+        case .event: "calendar"
+        case .task: "checklist"
+        case .medication: "pills.fill"
+        }
+    }
+
+    private var tint: Color {
+        switch item.kind {
+        case .event: Color(hex: item.colorHex)
+        case .task: ModuleAccent.tasks
+        case .medication: ModuleAccent.medication
         }
     }
 
@@ -228,9 +268,10 @@ private struct NextUpCard: View {
             return "Jetzt"
         }
         let minutes = Int(item.start.timeIntervalSince(now) / 60)
-        if minutes < 60 { return "\(start) · in \(max(minutes, 1)) Min." }
+        let detail = item.kind == .medication ? (item.subtitle.map { " · \($0)" } ?? "") : ""
+        if minutes < 60 { return "\(start) · in \(max(minutes, 1)) Min.\(detail)" }
         let hours = minutes / 60
-        return "\(start) · in \(hours) Std."
+        return "\(start) · in \(hours) Std.\(detail)"
     }
 }
 

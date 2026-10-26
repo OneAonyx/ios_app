@@ -9,19 +9,28 @@ struct TagwerkApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(model)
-                .environment(model.calendarService)
-                .modelContainer(model.container)
-                .preferredColorScheme(LaunchOptions.forcedColorScheme)
-                .onOpenURL { url in
-                    model.handle(url: url)
+            Group {
+                if LaunchOptions.selfTest {
+                    SelfTestView()
+                } else {
+                    RootView()
                 }
+            }
+            .environment(model)
+            .environment(model.calendarService)
+            .modelContainer(model.container)
+            .preferredColorScheme(LaunchOptions.forcedColorScheme)
+            .onOpenURL { url in
+                model.handle(url: url)
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 model.appBecameActive()
             }
+        }
+        .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {
+            await BackgroundRefresh.run()
         }
     }
 }
@@ -38,5 +47,10 @@ enum LaunchOptions {
     /// Onboarding im UI-Test gezielt zeigen.
     static var showOnboarding: Bool {
         ProcessInfo.processInfo.arguments.contains("-showOnboarding")
+    }
+
+    /// Selbsttest statt der normalen Oberfläche (nur UI-Tests im CI).
+    static var selfTest: Bool {
+        ProcessInfo.processInfo.arguments.contains("-selfTest")
     }
 }

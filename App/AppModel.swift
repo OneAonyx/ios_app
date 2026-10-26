@@ -28,8 +28,13 @@ final class AppModel {
     var quickAddList: TaskList?
     /// Aufgabe, deren Editor gerade offen ist.
     var editingTask: TaskItem?
+    /// Medikament, dessen Editor gerade offen ist (`isAddingMedication` für ein neues).
+    var editingMedication: Medication?
+    var isAddingMedication = false
+    /// Navigation im Tab „Gesundheit“ (Medikament-IDs).
+    var healthPath: [String] = []
 
-    @ObservationIgnored private var reminderTask: Task<Void, Never>?
+    @ObservationIgnored private var refreshTask: Task<Void, Never>?
 
     private init() {
         var error: String?
@@ -47,6 +52,14 @@ final class AppModel {
         }
         self.container = container
         self.storeError = error
+
+        // Einnahmen aus Widget, Kontrollzentrum, Wecker und Mitteilung direkt verarbeiten.
+        DoseActionCenter.handler = { action in
+            await AppModel.shared.handleDoseAction(action)
+        }
+        DoseActionCenter.refreshSnapshot = {
+            AppModel.shared.writeMedicationSnapshot()
+        }
     }
 
     private static func makeFallbackContainer() -> ModelContainer {
@@ -71,7 +84,16 @@ final class AppModel {
         isShowingQuickAdd = true
     }
 
-    /// `tagwerk://claude/…` (Rücksprung aus Kurzbefehle), `tagwerk://systemcheck`, `tagwerk://neu`.
+    func openMedications() {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        isShowingSettings = false
+        editingTask = nil
+        selectedTab = .health
+    }
+
+    /// `tagwerk://claude/…` (Rücksprung aus Kurzbefehle), `tagwerk://systemcheck`, `tagwerk://neu`,
+    /// `tagwerk://gesundheit` (aus dem Medikamenten-Widget).
     func handle(url: URL) {
         if let callback = ClaudeCallback.parse(url) {
             openSystemCheck()
@@ -85,6 +107,8 @@ final class AppModel {
         case "neu", "new":
             selectedTab = .today
             openQuickAdd()
+        case "gesundheit", "medikamente", "health":
+            openMedications()
         default:
             break
         }
@@ -94,21 +118,84 @@ final class AppModel {
 
     /// Nach jeder Änderung an Aufgaben: Erinnerungen neu planen (gebündelt).
     func tasksChanged() {
-        reminderTask?.cancel()
-        reminderTask = Task { [weak self] in
+        scheduleRefresh()
+    }
+
+    /// Nach jeder Änderung an Medikamenten oder Einnahmen: Widgets, Erinnerungen, Wecker.
+    func medicationsChanged() {
+        writeMedicationSnapshot()
+        scheduleRefresh()
+    }
+
+    private func scheduleRefresh() {
+        refreshTask?.cancel()
+        refreshTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(600))
             guard let self, !Task.isCancelled else { return }
-            await TaskReminderScheduler.reschedule(context: self.context, calendar: Self.calendar)
+            await self.refreshNow()
         }
     }
 
-    /// Beim Öffnen der App: Kalenderrechte prüfen, Erinnerungen planen, täglich sichern.
+    /// Plant alles neu: Nachschub-Aufgaben, Widget-Daten, Wecker, Mitteilungen.
+    func refreshNow() async {
+        let now = Date.now
+        let calendar = Self.calendar
+        if storeError == nil {
+            MedicationActions.ensureRefillTasks(in: context, now: now, calendar: calendar)
+        }
+        writeMedicationSnapshot(now: now)
+        let alarmsActive = AlarmProbe.isAuthorized && !AppInfo.isUITesting
+        if alarmsActive {
+            await MedicationAlarmScheduler.reschedule(medications: MedicationActions.fetchAll(in: context), now: now, calendar: calendar)
+        }
+        await ReminderScheduler.reschedule(context: context, now: now, calendar: calendar, alarmsActive: alarmsActive)
+    }
+
+    func writeMedicationSnapshot(now: Date = .now) {
+        guard !AppInfo.isUITesting else { return }
+        MedicationSnapshotWriter.write(context: context, now: now, calendar: Self.calendar)
+    }
+
+    /// Einnahme von außerhalb (Widget, Kontrollzentrum, Wecker, Mitteilung, Siri).
+    func handleDoseAction(_ action: PendingDoseAction) async {
+        MedicationActions.record(
+            doseID: action.doseID,
+            status: action.kind == .taken ? .taken : .skipped,
+            at: action.at,
+            in: context,
+            calendar: Self.calendar
+        )
+        MedicationNotifications.removeNotifications(forDose: action.doseID)
+        MedicationAlarmScheduler.cancel(doseID: action.doseID)
+        // Sofort, nicht gebündelt: Bei einem Hintergrundstart bleibt nur wenig Zeit.
+        refreshTask?.cancel()
+        await refreshNow()
+    }
+
+    /// Beim Öffnen der App: Abgehaktes aus Widgets übernehmen, Kalenderrechte prüfen,
+    /// alles neu planen, täglich sichern.
     func appBecameActive() {
+        if storeError == nil {
+            let processed = MedicationActions.processPendingActions(in: context, calendar: Self.calendar)
+            if processed > 0 {
+                writeMedicationSnapshot()
+            }
+        }
         calendarService.refreshAccess()
-        tasksChanged()
+        scheduleRefresh()
         if storeError == nil, !AppInfo.isUITesting {
             BackupService.autoBackupIfNeeded(context: context, calendar: Self.calendar)
         }
         systemCheck.refreshOnActivate()
+        BackgroundRefresh.schedule()
+    }
+
+    /// Hintergrundaktualisierung: hält Mitteilungen und Wecker auch ohne Öffnen der App aktuell.
+    func backgroundRefresh() async {
+        if storeError == nil {
+            MedicationActions.processPendingActions(in: context, calendar: Self.calendar)
+        }
+        await refreshNow()
+        BackgroundRefresh.schedule()
     }
 }

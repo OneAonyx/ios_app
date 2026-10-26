@@ -12,6 +12,10 @@ public struct BackupDocument: Codable, Sendable, Equatable {
     public var tasks: [TaskRecord]
     /// Einfache Einstellungen (Name, Kalenderauswahl …) als Schlüssel/Wert.
     public var settings: [String: String]
+    /// Ab Version 0.3. Fehlt in älteren Sicherungen.
+    public var medications: [MedicationRecord]?
+    /// Ab Version 0.3. Fehlt in älteren Sicherungen.
+    public var doseLogs: [DoseLogRecord]?
 
     public init(
         format: String = BackupDocument.currentFormat,
@@ -19,7 +23,9 @@ public struct BackupDocument: Codable, Sendable, Equatable {
         appVersion: String,
         lists: [TaskListRecord],
         tasks: [TaskRecord],
-        settings: [String: String] = [:]
+        settings: [String: String] = [:],
+        medications: [MedicationRecord]? = nil,
+        doseLogs: [DoseLogRecord]? = nil
     ) {
         self.format = format
         self.createdAt = createdAt
@@ -27,6 +33,100 @@ public struct BackupDocument: Codable, Sendable, Equatable {
         self.lists = lists
         self.tasks = tasks
         self.settings = settings
+        self.medications = medications
+        self.doseLogs = doseLogs
+    }
+}
+
+public struct MedicationRecord: Codable, Sendable, Equatable {
+    public var stableID: String
+    public var name: String
+    public var dosage: String
+    public var form: String
+    public var colorName: String
+    public var symbol: String
+    public var timing: String
+    public var schedule: MedicationSchedule
+    public var startDate: Date
+    public var endDate: Date?
+    public var stock: Double?
+    public var refillThresholdDays: Int
+    public var autoRefillTask: Bool
+    public var reminderStyle: String
+    public var isActive: Bool
+    public var notes: String
+    public var createdAt: Date
+    public var sortIndex: Double
+
+    public init(
+        stableID: String,
+        name: String,
+        dosage: String = "",
+        form: String = MedicationForm.tablet.rawValue,
+        colorName: String = "teal",
+        symbol: String = "pills.fill",
+        timing: String = MealTiming.none.rawValue,
+        schedule: MedicationSchedule,
+        startDate: Date,
+        endDate: Date? = nil,
+        stock: Double? = nil,
+        refillThresholdDays: Int = 7,
+        autoRefillTask: Bool = false,
+        reminderStyle: String = ReminderStyle.notification.rawValue,
+        isActive: Bool = true,
+        notes: String = "",
+        createdAt: Date,
+        sortIndex: Double = 0
+    ) {
+        self.stableID = stableID
+        self.name = name
+        self.dosage = dosage
+        self.form = form
+        self.colorName = colorName
+        self.symbol = symbol
+        self.timing = timing
+        self.schedule = schedule
+        self.startDate = startDate
+        self.endDate = endDate
+        self.stock = stock
+        self.refillThresholdDays = refillThresholdDays
+        self.autoRefillTask = autoRefillTask
+        self.reminderStyle = reminderStyle
+        self.isActive = isActive
+        self.notes = notes
+        self.createdAt = createdAt
+        self.sortIndex = sortIndex
+    }
+}
+
+public struct DoseLogRecord: Codable, Sendable, Equatable {
+    public var stableID: String
+    public var medicationID: String
+    public var scheduledAt: Date?
+    public var takenAt: Date?
+    public var status: String
+    public var amount: Double
+    public var note: String
+    public var createdAt: Date
+
+    public init(
+        stableID: String,
+        medicationID: String,
+        scheduledAt: Date?,
+        takenAt: Date?,
+        status: String,
+        amount: Double,
+        note: String = "",
+        createdAt: Date
+    ) {
+        self.stableID = stableID
+        self.medicationID = medicationID
+        self.scheduledAt = scheduledAt
+        self.takenAt = takenAt
+        self.status = status
+        self.amount = amount
+        self.note = note
+        self.createdAt = createdAt
     }
 }
 

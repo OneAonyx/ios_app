@@ -3,10 +3,12 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Suche über Aufgaben (Titel, Notizen, Liste). Weitere Bereiche folgen mit ihren Phasen.
+/// Suche über Aufgaben (Titel, Notizen, Liste) und Medikamente. Weitere Bereiche folgen mit ihren Phasen.
 struct SearchView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \TaskItem.createdAt, order: .reverse) private var tasks: [TaskItem]
+    @Query(sort: \Medication.name) private var medications: [Medication]
+    @Environment(AppModel.self) private var app
     @State private var query = ""
     @State private var editingTask: TaskItem?
 
@@ -19,9 +21,28 @@ struct SearchView: View {
         }
         let open = matches.filter { !$0.isDone }
         let done = matches.filter(\.isDone)
+        let medicationMatches = trimmed.isEmpty ? [] : medications.filter { medication in
+            medication.name.localizedStandardContains(trimmed)
+                || medication.dosage.localizedStandardContains(trimmed)
+                || medication.notes.localizedStandardContains(trimmed)
+        }
 
         NavigationStack {
             List {
+                if !medicationMatches.isEmpty {
+                    Section("Medikamente") {
+                        ForEach(medicationMatches) { medication in
+                            Button {
+                                dismiss()
+                                app.openMedications()
+                                app.healthPath = [medication.stableID]
+                            } label: {
+                                MedicationSummaryRow(medication: medication, now: .now)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
                 if !open.isEmpty {
                     Section("Offen") {
                         ForEach(open) { task in
@@ -42,15 +63,15 @@ struct SearchView: View {
                     ContentUnavailableView(
                         "Suche",
                         systemImage: "magnifyingglass",
-                        description: Text("Durchsucht Aufgaben, Notizen und Listen. Medikamente, Übungen und Lebensmittel kommen mit ihren Phasen dazu.")
+                        description: Text("Durchsucht Aufgaben, Notizen, Listen und Medikamente. Übungen und Lebensmittel kommen mit ihren Phasen dazu.")
                     )
-                } else if matches.isEmpty {
+                } else if matches.isEmpty && medicationMatches.isEmpty {
                     ContentUnavailableView.search(text: trimmed)
                 }
             }
             .navigationTitle("Suche")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Aufgaben, Notizen, Listen …")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Aufgaben, Medikamente …")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fertig") { dismiss() }

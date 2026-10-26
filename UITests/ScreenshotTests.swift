@@ -27,6 +27,22 @@ final class ScreenshotTests: XCTestCase {
         snap(app, "01-heute-grosse-schrift")
         openTask(named: "Steuerunterlagen sortieren", in: app)
         snap(app, "07-editor-grosse-schrift")
+        tapIfPresent(app.buttons["editor.done"])
+        tapTab("Gesundheit", in: app)
+        snap(app, "11-gesundheit-grosse-schrift")
+    }
+
+    /// Prüft im Simulator, was unter Linux nicht geht: Migration, Medikamenten-Aktionen, Sicherung.
+    @MainActor
+    func testSelfTest() {
+        let app = launch(extraArguments: ["-forceLight", "-selfTest"])
+        let summary = app.staticTexts["selftest.summary"]
+        XCTAssertTrue(summary.waitForExistence(timeout: 20))
+        let finished = NSPredicate(format: "label BEGINSWITH 'Alle' OR label BEGINSWITH 'Fehlgeschlagen'")
+        expectation(for: finished, evaluatedWith: summary)
+        waitForExpectations(timeout: 30)
+        snap(app, "15-selbsttest")
+        XCTAssertTrue(summary.label.hasPrefix("Alle"), summary.label)
     }
 
     @MainActor
@@ -92,6 +108,28 @@ final class ScreenshotTests: XCTestCase {
             snap(app, "09-einstellungen-\(suffix)")
             tapIfPresent(app.buttons["settings.done"])
         }
+
+        // Gesundheit: Übersicht, Medikament, Editor, neues Medikament
+        tapTab("Gesundheit", in: app)
+        snap(app, "11-gesundheit-\(suffix)")
+        let dao = app.buttons["medication.DAO-Enzym"]
+        if scrollTo(dao, in: app), tapIfPresent(dao) {
+            snap(app, "12-medikament-\(suffix)")
+            if tapIfPresent(app.buttons["medDetail.edit"]) {
+                snap(app, "13-medikament-bearbeiten-\(suffix)")
+                tapIfPresent(app.buttons["Abbrechen"].firstMatch)
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        if tapIfPresent(app.buttons["health.add"]) {
+            let name = app.textFields["medEditor.name"]
+            if name.waitForExistence(timeout: 3) {
+                name.tap()
+                name.typeText("Magnesium")
+            }
+            snap(app, "14-neues-medikament-\(suffix)")
+            tapIfPresent(app.buttons["Abbrechen"].firstMatch)
+        }
     }
 
     // MARK: - Hilfen
@@ -135,6 +173,17 @@ final class ScreenshotTests: XCTestCase {
         let window = app.windows.firstMatch
         window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12))
             .press(forDuration: 0.1, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)))
+    }
+
+    /// Wischt nach oben, bis das Element sichtbar und antippbar ist.
+    @MainActor
+    @discardableResult
+    private func scrollTo(_ element: XCUIElement, in app: XCUIApplication, attempts: Int = 5) -> Bool {
+        for _ in 0..<attempts {
+            if element.exists && element.isHittable { return true }
+            app.swipeUp()
+        }
+        return element.exists && element.isHittable
     }
 
     @MainActor

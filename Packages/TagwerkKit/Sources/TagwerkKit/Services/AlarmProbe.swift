@@ -5,10 +5,24 @@ import SwiftUI
 
 /// Zusatzdaten zu einem Tagwerk-Wecker. App und Widget-Extension müssen denselben Typ nutzen.
 public struct TagwerkAlarmMetadata: AlarmMetadata {
+    /// „systemcheck“ oder „medication“.
     public var purpose: String
+    /// Bei Medikamenten: die Einnahme (`DoseID`).
+    public var doseID: String?
+    /// Bei Medikamenten: z. B. „Ibuprofen 400 mg · 1 Tablette“.
+    public var detail: String?
 
-    public init(purpose: String = "systemcheck") {
+    public init(purpose: String = "systemcheck", doseID: String? = nil, detail: String? = nil) {
         self.purpose = purpose
+        self.doseID = doseID
+        self.detail = detail
+    }
+}
+
+extension AlarmProbe {
+    /// Wecker sind erlaubt.
+    public static var isAuthorized: Bool {
+        AlarmManager.shared.authorizationState == .authorized
     }
 }
 

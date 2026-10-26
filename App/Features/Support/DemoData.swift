@@ -58,6 +58,52 @@ enum DemoData {
             context.insert(subtask)
             subtask.task = gift
         }
+        seedMedications(into: context, now: now, calendar: calendar)
         try? context.save()
+    }
+
+    /// Medikamente mit Verlauf der letzten Tage (für Einnahmetreue und Kalender).
+    private static func seedMedications(into context: ModelContext, now: Date, calendar: Calendar) {
+        let start = calendar.date(byAdding: .day, value: -20, to: calendar.startOfDay(for: now)) ?? now
+
+        func medication(
+            _ name: String, dosage: String, form: MedicationForm, schedule: MedicationSchedule,
+            color: ListColor, symbol: String? = nil, timing: MealTiming = .none,
+            style: ReminderStyle = .notification, stock: Double? = nil, sortIndex: Double
+        ) -> Medication {
+            let item = Medication(name: name, dosage: dosage, form: form, schedule: schedule, startDate: start, sortIndex: sortIndex, createdAt: start)
+            item.colorName = color.rawValue
+            if let symbol { item.symbol = symbol }
+            item.timing = timing
+            item.reminderStyle = style
+            item.stock = stock
+            context.insert(item)
+            return item
+        }
+
+        let vitamin = medication("Vitamin D3", dosage: "1000 IE", form: .tablet, schedule: .daily([DoseTime(hour: 8)]), color: .orange, symbol: "sun.max.fill", stock: 54, sortIndex: 0)
+        let dao = medication(
+            "DAO-Enzym", dosage: "10.000 HDU", form: .capsule,
+            schedule: .daily([DoseTime(hour: 7, minute: 45), DoseTime(hour: 12, minute: 15), DoseTime(hour: 18, minute: 45)]),
+            color: .teal, timing: .beforeMeal, style: .alarm, stock: 38, sortIndex: 1
+        )
+        let cetirizin = medication("Cetirizin", dosage: "10 mg", form: .tablet, schedule: .daily([DoseTime(hour: 21)]), color: .purple, timing: .bedtime, stock: 4, sortIndex: 2)
+        let ibuprofen = medication("Ibuprofen", dosage: "400 mg", form: .tablet, schedule: .asNeeded(maxPerDay: 3, minGapHours: 6), color: .red, stock: 18, sortIndex: 3)
+
+        // Verlauf: meist genommen, ab und zu verpasst oder ausgelassen.
+        for (medIndex, item) in [vitamin, dao, cetirizin].enumerated() {
+            let doses = item.scheduledDoses(from: start, to: now, calendar: calendar)
+            for (index, dose) in doses.enumerated() where dose.date < now.addingTimeInterval(-DoseTiming.lateAfter) {
+                let pattern = (index + medIndex * 3) % 13
+                if pattern == 4 { continue }
+                let status: DoseStatus = pattern == 9 ? .skipped : .taken
+                let log = DoseLog(scheduledAt: dose.date, takenAt: status == .taken ? dose.date.addingTimeInterval(Double(index % 4) * 240) : nil, status: status, amount: dose.amount, createdAt: dose.date)
+                context.insert(log)
+                log.medication = item
+            }
+        }
+        let headache = DoseLog(scheduledAt: nil, takenAt: now.addingTimeInterval(-3 * 3_600), status: .taken, amount: 1, note: "Kopfschmerzen", createdAt: now.addingTimeInterval(-3 * 3_600))
+        context.insert(headache)
+        headache.medication = ibuprofen
     }
 }

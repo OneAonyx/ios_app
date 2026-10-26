@@ -6,11 +6,17 @@ public struct ReminderCandidate: Sendable, Equatable, Hashable {
     public enum Kind: String, Sendable, Hashable {
         case task
         case medication
+        /// Nachfrage, wenn eine Einnahme nach 30 Min. noch offen ist.
+        case medicationFollowUp
+        /// Vorrat wird knapp.
+        case refill
 
         /// Höherer Wert = wichtiger.
         public var rank: Int {
             switch self {
             case .medication: 10
+            case .medicationFollowUp: 8
+            case .refill: 5
             case .task: 0
             }
         }

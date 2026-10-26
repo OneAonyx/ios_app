@@ -25,6 +25,8 @@ public enum BackupService {
     public static func makeDocument(context: ModelContext, now: Date = .now) throws -> BackupDocument {
         let lists = try context.fetch(FetchDescriptor<TaskList>(sortBy: [SortDescriptor(\.sortIndex)]))
         let tasks = try context.fetch(FetchDescriptor<TaskItem>(sortBy: [SortDescriptor(\.createdAt)]))
+        let medications = try context.fetch(FetchDescriptor<Medication>(sortBy: [SortDescriptor(\.sortIndex)]))
+        let doseLogs = try context.fetch(FetchDescriptor<DoseLog>(sortBy: [SortDescriptor(\.createdAt)]))
         let defaults = UserDefaults.standard
         var settings: [String: String] = [:]
         for key in SettingsKeys.backedUp {
@@ -56,7 +58,26 @@ public enum BackupService {
                     }
                 )
             },
-            settings: settings
+            settings: settings,
+            medications: medications.map { medication in
+                MedicationRecord(
+                    stableID: medication.stableID, name: medication.name, dosage: medication.dosage,
+                    form: medication.formRaw, colorName: medication.colorName, symbol: medication.symbol,
+                    timing: medication.timingRaw, schedule: medication.schedule, startDate: medication.startDate,
+                    endDate: medication.endDate, stock: medication.stock,
+                    refillThresholdDays: medication.refillThresholdDays, autoRefillTask: medication.autoRefillTask,
+                    reminderStyle: medication.reminderStyleRaw, isActive: medication.isActive, notes: medication.notes,
+                    createdAt: medication.createdAt, sortIndex: medication.sortIndex
+                )
+            },
+            doseLogs: doseLogs.compactMap { log in
+                guard let medicationID = log.medication?.stableID else { return nil }
+                return DoseLogRecord(
+                    stableID: log.stableID, medicationID: medicationID, scheduledAt: log.scheduledAt,
+                    takenAt: log.takenAt, status: log.statusRaw, amount: log.amount, note: log.note,
+                    createdAt: log.createdAt
+                )
+            }
         )
     }
 
@@ -98,9 +119,11 @@ public enum BackupService {
     public struct RestoreSummary: Equatable {
         public let lists: Int
         public let tasks: Int
+        public let medications: Int
     }
 
-    /// Ersetzt alle Aufgaben und Listen durch den Inhalt der Sicherung.
+    /// Ersetzt alle Aufgaben, Listen und Medikamente durch den Inhalt der Sicherung.
+    /// Ältere Sicherungen ohne Medikamente lassen die vorhandenen Medikamente stehen.
     /// Vorher wird automatisch eine Sicherung des aktuellen Stands angelegt.
     @discardableResult
     public static func restore(from url: URL, context: ModelContext, now: Date = .now, calendar: Calendar) throws -> RestoreSummary {
@@ -120,6 +143,14 @@ public enum BackupService {
         }
         for list in try context.fetch(FetchDescriptor<TaskList>()) {
             context.delete(list)
+        }
+        if document.medications != nil {
+            for log in try context.fetch(FetchDescriptor<DoseLog>()) {
+                context.delete(log)
+            }
+            for medication in try context.fetch(FetchDescriptor<Medication>()) {
+                context.delete(medication)
+            }
         }
         try context.save()
 
@@ -157,6 +188,38 @@ public enum BackupService {
             }
         }
 
+        var medicationsByID: [String: Medication] = [:]
+        for record in document.medications ?? [] {
+            let medication = Medication(
+                name: record.name, dosage: record.dosage, form: MedicationForm(rawValue: record.form) ?? .other,
+                schedule: record.schedule, startDate: record.startDate, sortIndex: record.sortIndex,
+                stableID: record.stableID, createdAt: record.createdAt
+            )
+            medication.formRaw = record.form
+            medication.colorName = record.colorName
+            medication.symbol = record.symbol
+            medication.timingRaw = record.timing
+            medication.endDate = record.endDate
+            medication.stock = record.stock
+            medication.refillThresholdDays = record.refillThresholdDays
+            medication.autoRefillTask = record.autoRefillTask
+            medication.reminderStyleRaw = record.reminderStyle
+            medication.isActive = record.isActive
+            medication.notes = record.notes
+            context.insert(medication)
+            medicationsByID[record.stableID] = medication
+        }
+        for record in document.doseLogs ?? [] {
+            guard let medication = medicationsByID[record.medicationID] else { continue }
+            let log = DoseLog(
+                scheduledAt: record.scheduledAt, takenAt: record.takenAt,
+                status: DoseStatus(rawValue: record.status) ?? .taken, amount: record.amount,
+                note: record.note, stableID: record.stableID, createdAt: record.createdAt
+            )
+            context.insert(log)
+            log.medication = medication
+        }
+
         let defaults = UserDefaults.standard
         for (key, value) in document.settings where SettingsKeys.backedUp.contains(key) {
             switch key {
@@ -170,6 +233,6 @@ public enum BackupService {
         }
 
         try context.save()
-        return RestoreSummary(lists: document.lists.count, tasks: document.tasks.count)
+        return RestoreSummary(lists: document.lists.count, tasks: document.tasks.count, medications: document.medications?.count ?? 0)
     }
 }

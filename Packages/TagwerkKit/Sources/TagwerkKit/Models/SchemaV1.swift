@@ -9,7 +9,8 @@ import TagwerkCore
 /// - jede Eigenschaft optional oder mit Standardwert
 /// - alle Beziehungen optional, keine `.deny`-Löschregel
 ///
-/// Neue Bereiche (Medikamente, Training …) kommen als neue Schema-Versionen dazu.
+/// Neue Bereiche kommen als neue Schema-Versionen dazu (V2: Medikamente, siehe `SchemaV2.swift`).
+/// Unveränderte Modelle werden in späteren Versionen weiterverwendet.
 public enum TagwerkSchemaV1: VersionedSchema {
     public static let versionIdentifier = Schema.Version(1, 0, 0)
 
@@ -115,21 +116,6 @@ public enum TagwerkSchemaV1: VersionedSchema {
             self.isDone = isDone
             self.sortIndex = sortIndex
         }
-    }
-}
-
-/// Die aktuelle Schema-Version für den Rest der App.
-public typealias TaskItem = TagwerkSchemaV1.TaskItem
-public typealias Subtask = TagwerkSchemaV1.Subtask
-public typealias TaskList = TagwerkSchemaV1.TaskList
-
-public enum TagwerkMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] {
-        [TagwerkSchemaV1.self]
-    }
-
-    public static var stages: [MigrationStage] {
-        []
     }
 }
 

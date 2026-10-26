@@ -28,9 +28,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        let categoryID = response.notification.request.content.categoryIdentifier
+        let content = response.notification.request.content
+        let categoryID = content.categoryIdentifier
         let actionID = response.actionIdentifier
-        let taskID = response.notification.request.content.userInfo[NotificationIDs.taskIDKey] as? String
+        let taskID = content.userInfo[NotificationIDs.taskIDKey] as? String
+        let doseID = content.userInfo[NotificationIDs.doseIDKey] as? String
+        let medicationID = content.userInfo[NotificationIDs.medicationIDKey] as? String
 
         if categoryID == NotificationIDs.Category.task, let taskID {
             await MainActor.run {
@@ -39,10 +42,39 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             return
         }
 
+        if categoryID == NotificationIDs.Category.medication, let doseID {
+            await Self.handleMedicationAction(actionID, doseID: doseID, title: content.title, body: content.body)
+            return
+        }
+
+        if medicationID != nil {
+            // Nachfüll-Hinweis angetippt.
+            await MainActor.run {
+                AppModel.shared.openMedications()
+            }
+            return
+        }
+
         let record = NotificationActionRecord(actionIdentifier: actionID)
         SystemCheckStore.recordNotificationAction(record)
         await MainActor.run {
             AppModel.shared.systemCheck.handleNotificationAction(record)
+        }
+    }
+
+    @MainActor
+    private static func handleMedicationAction(_ actionID: String, doseID: String, title: String, body: String) async {
+        switch actionID {
+        case NotificationIDs.Action.taken:
+            await DoseActionCenter.submit(PendingDoseAction(doseID: doseID, kind: .taken, at: .now, source: "notification"))
+        case NotificationIDs.Action.skip:
+            await DoseActionCenter.submit(PendingDoseAction(doseID: doseID, kind: .skipped, at: .now, source: "notification"))
+        case NotificationIDs.Action.snooze10:
+            await MedicationNotifications.snooze(doseID: doseID, title: title, body: body, minutes: 10)
+        case UNNotificationDefaultActionIdentifier:
+            AppModel.shared.openMedications()
+        default:
+            break
         }
     }
 

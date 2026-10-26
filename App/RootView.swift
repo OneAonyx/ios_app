@@ -22,7 +22,7 @@ struct RootView: View {
                 PlaceholderTab(module: .nutrition)
             }
             Tab(TagwerkModule.health.title, systemImage: TagwerkModule.health.systemImage, value: TagwerkModule.health) {
-                PlaceholderTab(module: .health)
+                HealthView()
             }
             // Keine eigene Such-Tab: Beim iPhone passen nur 5 Einträge in die Leiste,
             // ein sechster landet unter „Mehr“. Die Suche sitzt als Lupe auf „Heute“.
@@ -39,6 +39,12 @@ struct RootView: View {
         }
         .sheet(item: $app.editingTask) { task in
             TaskEditorView(task: task)
+        }
+        .sheet(item: $app.editingMedication) { medication in
+            MedicationEditorView(medication: medication)
+        }
+        .sheet(isPresented: $app.isAddingMedication) {
+            MedicationEditorView(medication: nil)
         }
         .fullScreenCover(isPresented: onboardingBinding) {
             OnboardingView()

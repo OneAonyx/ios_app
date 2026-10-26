@@ -8,6 +8,7 @@ struct WeekView: View {
     @Environment(AppModel.self) private var app
     @Environment(CalendarService.self) private var calendarService
     @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
+    @Query(sort: \Medication.sortIndex) private var medications: [Medication]
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
     @State private var weekOffset = 0
@@ -18,7 +19,7 @@ struct WeekView: View {
         let thisMonday = AgendaBuilder.startOfWeek(containing: now, calendar: calendar)
         let monday = calendar.date(byAdding: .day, value: 7 * weekOffset, to: thisMonday) ?? thisMonday
         let sunday = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
-        let source = AgendaSource(tasks: tasks, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        let source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
         let days = AgendaBuilder.build(items: source.items(from: monday, to: sunday), from: monday, days: 7, now: now, calendar: calendar)
 
         ScrollView {
@@ -94,15 +95,34 @@ struct WeekView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                if day.isEmpty {
+                let doses = day.timed.filter { $0.kind == .medication }
+                let others = (day.allDay + day.timed).filter { $0.kind != .medication }
+                if others.isEmpty && doses.isEmpty {
                     Text("frei")
                         .font(.footnote)
                         .foregroundStyle(.tertiary)
                 } else {
-                    ForEach(day.allDay + day.timed) { item in
+                    ForEach(others) { item in
                         AgendaRow(item: item, task: source.task(for: item), compact: true) { task in
                             app.editingTask = task
                         }
+                    }
+                    if !doses.isEmpty {
+                        // Einnahmen zusammengefasst, damit die Woche übersichtlich bleibt.
+                        Button {
+                            app.openMedications()
+                        } label: {
+                            Label {
+                                Text("\(doses.filter(\.isDone).count) von \(doses.count) Einnahmen")
+                                    .foregroundStyle(.secondary)
+                            } icon: {
+                                Image(systemName: doses.allSatisfy(\.isDone) ? "checkmark.circle.fill" : "pills.fill")
+                                    .foregroundStyle(doses.allSatisfy(\.isDone) ? Color.green : ModuleAccent.medication)
+                            }
+                            .font(.footnote)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.leading, Spacing.xxs)
                     }
                 }
             }

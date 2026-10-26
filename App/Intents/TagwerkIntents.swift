@@ -71,6 +71,19 @@ struct TodaySummaryIntent: AppIntent {
     }
 }
 
+/// „Habe ich heute meine Tabletten genommen?“
+struct MedicationStatusIntent: AppIntent {
+    static let title: LocalizedStringResource = "Medikamente heute"
+    static let description = IntentDescription("Sagt, welche Einnahmen heute erledigt und welche noch offen sind.")
+    static let openAppWhenRun: Bool = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let snapshot = DoseActionCenter.currentSnapshot()
+        return .result(dialog: IntentDialog(stringLiteral: snapshot.statusSentence(now: .now, calendar: AppModel.calendar)))
+    }
+}
+
 /// Letzte Aktion im Kurzbefehl „Tagwerk Claude“: übergibt Claudes Antwort an Tagwerk.
 struct ImportClaudeResponseIntent: AppIntent {
     static let title: LocalizedStringResource = "Claude-Antwort übernehmen"
@@ -121,6 +134,25 @@ struct TagwerkShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Heute",
             systemImageName: "sun.max"
+        )
+        AppShortcut(
+            intent: TakeNextDoseIntent(),
+            phrases: [
+                "Medikament in \(.applicationName) abhaken",
+                "Tablette in \(.applicationName) genommen",
+                "\(.applicationName) Medikament genommen",
+            ],
+            shortTitle: "Medikament genommen",
+            systemImageName: "pills.fill"
+        )
+        AppShortcut(
+            intent: MedicationStatusIntent(),
+            phrases: [
+                "Habe ich heute meine Tabletten in \(.applicationName) genommen",
+                "\(.applicationName) Medikamente heute",
+            ],
+            shortTitle: "Medikamente heute",
+            systemImageName: "pills"
         )
         AppShortcut(
             intent: OpenSystemCheckIntent(),

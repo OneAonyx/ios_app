@@ -66,7 +66,7 @@ public enum TagwerkModule: String, CaseIterable, Identifiable, Hashable, Sendabl
         case .nutrition:
             ["Histamin-Lexikon mit Bewertung 0–3", "Barcode- und Zutatenlisten-Scan", "Ernährungstagebuch", "Einkaufsliste und Rezepte"]
         case .health:
-            ["Medikamente mit Erinnerungen und Wecker", "Einnahmeplan-Kalender", "Symptomtagebuch", "Apple-Health-Daten"]
+            ["Symptomtagebuch (Phase 4)", "Check-ins und Wochenrückblick (Phase 5)", "Apple-Health-Daten (mit Developer-Account)"]
         case .search:
             ["Aufgaben, Lebensmittel, Übungen, Medikamente und Rezepte durchsuchen"]
         }

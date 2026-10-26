@@ -32,6 +32,17 @@ public enum SharedKeys {
     public static let pendingClaudeResponse = "tagwerk.claude.pendingResponse"
     public static let systemCheckResults = "tagwerk.systemcheck.results"
     public static let notificationActionLog = "tagwerk.systemcheck.notificationAction"
+    /// Medikamente von heute und morgen für Widgets, Siri und das Kontrollzentrum.
+    public static let medicationSnapshot = "tagwerk.widget.medication.snapshot"
+    /// Einnahmen, die Widget oder Kontrollzentrum abgehakt haben, bis die App sie übernimmt.
+    public static let pendingDoseActions = "tagwerk.medication.pendingActions"
+}
+
+/// Kennungen der Widgets und Steuerelemente.
+public enum WidgetKinds {
+    public static let systemCheck = "TagwerkSystemCheck"
+    public static let medication = "TagwerkMedicationWidget"
+    public static let medicationControl = "de.tagwerk.control.medication"
 }
 
 /// Kennungen für Mitteilungen und ihre Aktionsknöpfe.
@@ -52,6 +63,21 @@ public enum NotificationIDs {
 
     /// Schlüssel in `userInfo` einer Aufgaben-Mitteilung.
     public static let taskIDKey = "taskID"
+    /// Schlüssel in `userInfo` einer Medikamenten-Mitteilung (siehe `DoseID`).
+    public static let doseIDKey = "doseID"
+    public static let medicationIDKey = "medicationID"
+
+    /// Präfixe der Mitteilungs-IDs. Beim Neuplanen werden nur diese ersetzt.
+    public enum Prefix {
+        public static let task = "task."
+        public static let medication = "med."
+        public static let medicationFollowUp = "medlate."
+        public static let snooze = "medsnooze."
+        public static let refill = "refill."
+
+        /// Werden bei jedem Neuplanen komplett ersetzt (Schlummern bleibt bestehen).
+        public static let managed = [task, medication, medicationFollowUp, refill]
+    }
 
     public static let systemCheckRequest = "tagwerk.systemcheck.notification"
 }

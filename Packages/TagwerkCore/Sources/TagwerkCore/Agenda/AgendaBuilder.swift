@@ -1,11 +1,12 @@
 import Foundation
 
-/// Ein Eintrag in Agenda oder Wochenansicht: Kalendertermin oder Aufgabe.
-/// Später kommen Medikamente und Trainings dazu.
+/// Ein Eintrag in Agenda oder Wochenansicht: Kalendertermin, Aufgabe oder Einnahme.
+/// Später kommen Trainings dazu.
 public struct AgendaItem: Sendable, Equatable, Identifiable, Hashable {
     public enum Kind: String, Sendable, Hashable {
         case event
         case task
+        case medication
     }
 
     public var id: String
