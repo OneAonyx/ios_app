@@ -4,9 +4,10 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Phase 0 – Fundament & Systemcheck.** Die App hat das Tab-Gerüst, das Design-System
-und einen Systemcheck mit 6 Tests. Er klärt, was mit einer kostenlosen Apple-ID per SideStore
-auf deinem iPhone funktioniert. Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
+**Stand: Phase 1 – Heute, Aufgaben, Agenda.** Aufgaben mit Listen, Wiederholungen, Erinnerungen,
+Unteraufgaben und „Fokus 3“, deutsche Schnellerfassung („morgen 10 Uhr Zahnarzt“), Agenda und
+Woche mit Kalenderterminen, tägliche Datensicherung, Siri-Befehle. Phase 0 (Systemcheck) ist
+abgeschlossen. Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Schnellstart
 
@@ -14,6 +15,7 @@ auf deinem iPhone funktioniert. Der vollständige Plan steht in [`docs/PLAN.md`]
 |---|---|
 | Neueste App-Version (`Tagwerk.ipa`) | [Releases](https://github.com/OneAonyx/ios_app/releases/latest) |
 | App aufs iPhone bringen | [`docs/SIDELOAD.md`](docs/SIDELOAD.md) |
+| Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Phase-0-Tests durchführen | [`docs/PHASE0-CHECKLIST.md`](docs/PHASE0-CHECKLIST.md) |
 | Phase-0-Ergebnis | [`docs/PHASE0-ERGEBNIS.md`](docs/PHASE0-ERGEBNIS.md) |
 | Kurzbefehl für Claude einrichten | [`docs/CLAUDE-BRIDGE.md`](docs/CLAUDE-BRIDGE.md) |

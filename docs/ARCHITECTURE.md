@@ -40,6 +40,27 @@
 | `AlarmPresentation.Alert` mit `#available(iOS 26.1, *)` | Ab 26.1 stellt iOS den Stopp-Knopf selbst, der alte Initializer ist veraltet |
 | Mindest-iOS 26.0 | AlarmKit, Medications-API, Liquid Glass |
 
+## Phase 1: Datenmodell und Dienste
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| `TagwerkSchemaV1` | `Packages/TagwerkKit/…/Models/SchemaV1.swift` | `TaskItem`, `Subtask`, `TaskList` |
+| `TagwerkStore` | `…/Models/TagwerkStore.swift` | Speicher im App-Group-Container, sonst App-Container |
+| `TaskActions` | `…/Models/TaskActions.swift` | Alle Änderungen an Aufgaben (App, Mitteilungen, Siri) |
+| `CalendarService` | `…/Services/CalendarService.swift` | EventKit lesen/schreiben |
+| `TaskReminderScheduler` | `…/Services/TaskReminderScheduler.swift` | Mitteilungen rollierend (72 h, max. 60) |
+| `BackupService` | `…/Services/BackupService.swift` | JSON-Sicherung in `Documents/Backups` |
+
+Die Logik dahinter (Wiederholungen, Parser, Listen, Agenda, Backup-Format, Erinnerungsplanung)
+liegt testbar in `TagwerkCore`.
+
+**Abweichungen vom Plan:**
+- Das Schema enthält nur die Phase-1-Modelle. Weitere Bereiche kommen als neue Schema-Versionen
+  dazu (Hinzufügen von Modellen ist eine leichte Migration). Das hält jede Phase für sich testbar.
+- App, Widget und TagwerkKit bleiben vorerst im Swift-5-Sprachmodus. Ohne Mac kostet jeder
+  Compiler-Fehler einen CI-Lauf; die Umstellung auf Swift 6 folgt, wenn die Oberfläche steht.
+  `TagwerkCore` läuft bereits im Swift-6-Modus.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
@@ -52,6 +73,7 @@
 | URL | Wirkung |
 |---|---|
 | `tagwerk://systemcheck` | öffnet den Systemcheck |
+| `tagwerk://neu` | öffnet die Schnellerfassung |
 | `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Tagwerk Claude“ |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
 
