@@ -27,13 +27,14 @@ im CI aus [`project.yml`](project.yml).
 |---|---|---|---|
 | `core.yml` | Linux | Änderungen an `TagwerkCore` | Logiktests |
 | `ios.yml` | macOS | Push auf `main` | Build, UI-Tests, Screenshots (Artefakt `screenshots`) |
-| `release.yml` | macOS | Tag `v*` oder manuell | `Tagwerk.ipa` als GitHub-Release für SideStore |
+| `release.yml` | macOS | manuell („Run workflow“) oder Tag `v*` | `Tagwerk.ipa` als GitHub-Release für SideStore |
 
-Neue Version veröffentlichen:
+Neue Version veröffentlichen: GitHub → **Actions** → **Release (IPA für SideStore)** → **Run workflow**
+→ Version eingeben (z. B. `0.1.0`) → **Run workflow**. Nach etwa 15 Minuten liegt `Tagwerk.ipa`
+unter [Releases](https://github.com/OneAonyx/ios_app/releases/latest).
 
-```bash
-git tag v0.1.0 && git push origin v0.1.0
-```
+Nach jedem Lauf liegen Log, Fehlerauszug und Screenshots zusätzlich auf den Branches `ci-ios`
+und `ci-release`.
 
 Logiktests lokal (ohne Mac, mit Docker):
 

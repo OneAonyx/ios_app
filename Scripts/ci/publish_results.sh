@@ -33,6 +33,11 @@ for log in build/xcodebuild.log build/archive.log; do
   fi
 done
 
+# Berechtigungen der signierten App (nur Release)
+if [[ -f build/entitlements.txt ]]; then
+  cp build/entitlements.txt "$WORK/results/"
+fi
+
 cat > "$WORK/results/RUN.md" <<EOF
 # CI-Ergebnis: ${KIND}
 

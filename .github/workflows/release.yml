@@ -4,14 +4,30 @@ name: Release (IPA für SideStore)
 # Berechtigungen (HealthKit, App Group). SideStore liest diese Berechtigungen
 # und signiert die App mit deiner Apple-ID neu.
 #
-# Auslösen: Git-Tag `v0.1.0` pushen oder manuell unter „Actions“ starten.
+# Auslösen (empfohlen): GitHub → Actions → „Release (IPA für SideStore)“ →
+# „Run workflow“ → Version eingeben (z. B. 0.1.0). Der Workflow legt danach
+# selbst den Tag `v0.1.0` und das GitHub-Release mit `Tagwerk.ipa` an.
+# Alternativ: einen Tag `v…` pushen.
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version ohne „v“, z. B. 0.1.0"
+        required: true
+        default: "0.1.0"
+      prerelease:
+        description: "Als Vorabversion markieren (zählt nicht als neueste Version)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   ipa:
@@ -19,6 +35,32 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
+      - name: Version bestimmen
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="$INPUT_VERSION"
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Ungültige Version „$version“. Erwartet z. B. 0.1.0 oder 0.2.0-rc.1"
+            exit 1
+          fi
+          prerelease=false
+          if [[ "$version" == *-* || "$INPUT_PRERELEASE" == "true" ]]; then
+            prerelease=true
+          fi
+          # Ohne Bindestrich-Teil für CFBundleShortVersionString (nur Zahlen erlaubt).
+          echo "marketing=${version%%-*}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          echo "build=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
+          echo "Version ${version} (Tag v${version}, Build ${GITHUB_RUN_NUMBER}, Vorabversion: ${prerelease})"
 
       - name: Xcode wählen
         run: Scripts/ci/select_xcode.sh
@@ -28,16 +70,6 @@ jobs:
 
       - name: Projekt erzeugen
         run: xcodegen generate
-
-      - name: Version bestimmen
-        id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "marketing=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "marketing=0.1.0" >> "$GITHUB_OUTPUT"
-          fi
-          echo "build=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - name: Archiv bauen (ohne Signatur)
         run: |
@@ -63,7 +95,9 @@ jobs:
           exit $status
 
       - name: Ad-hoc-Signatur mit Berechtigungen
-        run: Scripts/ci/adhoc_sign.sh build/Tagwerk.xcarchive/Products/Applications/Tagwerk.app
+        run: |
+          set -o pipefail
+          Scripts/ci/adhoc_sign.sh build/Tagwerk.xcarchive/Products/Applications/Tagwerk.app | tee build/entitlements.txt
 
       - name: IPA packen
         run: |
@@ -78,14 +112,6 @@ jobs:
           name: Tagwerk-ipa
           path: build/Tagwerk.ipa
 
-      - name: Archiv-Log hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: archive-log
-          path: build/archive.log
-          if-no-files-found: ignore
-
       - name: Ergebnisse auf Branch ci-release ablegen
         if: always()
         env:
@@ -93,15 +119,15 @@ jobs:
         run: Scripts/ci/publish_results.sh release "${{ job.status }}"
 
       - name: GitHub-Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Tagwerk ${{ steps.version.outputs.tag }}
           files: build/Tagwerk.ipa
-          # Tags mit Bindestrich (z. B. v0.1.0-rc.1) sind Vorabversionen und
-          # zählen nicht als „neueste Version“.
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
           body: |
-            Tagwerk ${{ steps.version.outputs.marketing }} (Build ${{ steps.version.outputs.build }})
+            Tagwerk ${{ steps.version.outputs.tag }} (Build ${{ steps.version.outputs.build }})
 
             Installation: `Tagwerk.ipa` auf dem iPhone laden und in SideStore öffnen.
-            Anleitung: docs/SIDELOAD.md
+            Anleitung: [docs/SIDELOAD.md](https://github.com/${{ github.repository }}/blob/main/docs/SIDELOAD.md)
