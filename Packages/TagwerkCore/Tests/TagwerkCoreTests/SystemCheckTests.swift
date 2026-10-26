@@ -48,7 +48,7 @@ struct SystemCheckTests {
         let report = SystemCheckReport.render(results: results, environment: environment, generatedAt: date, timeZone: berlin)
         let lines = report.components(separatedBy: "\n")
 
-        #expect(lines[0] == "Tagwerk Systemcheck – 26.10.2026 22:10")
+        #expect(lines[0] == "Orbit Systemcheck – 26.10.2026 22:10")
         #expect(report.contains("App 0.1.0 (7) · iOS 26.1 · iPhone15,4"))
         #expect(report.contains("✅ 1. Installation & Signatur: OK – Signatur gültig"))
         #expect(report.contains("➖ 2. Apple Health: Nicht verfügbar – Kein HealthKit-Recht in der Signatur"))
@@ -63,7 +63,7 @@ struct SystemCheckTests {
         // 1. Juli 2026, 10:00 UTC = 12:00 Sommerzeit in Berlin.
         let date = Date(timeIntervalSince1970: 1_782_900_000)
         let report = SystemCheckReport.render(results: [], environment: environment, generatedAt: date, timeZone: berlin)
-        #expect(report.hasPrefix("Tagwerk Systemcheck – 01.07.2026 12:00"))
+        #expect(report.hasPrefix("Orbit Systemcheck – 01.07.2026 12:00"))
     }
 }
 

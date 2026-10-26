@@ -46,7 +46,7 @@ enum MedicationAlarmScheduler {
                 try await schedule(id: uuid, dose: item.dose, medication: item.medication)
                 stored[id] = item.signature
             } catch {
-                print("Tagwerk: Wecker konnte nicht gestellt werden: \(error)")
+                print("Orbit: Wecker konnte nicht gestellt werden: \(error)")
             }
         }
         saveStoredAlarms(stored)

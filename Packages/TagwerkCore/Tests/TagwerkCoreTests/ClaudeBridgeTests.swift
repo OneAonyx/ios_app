@@ -15,7 +15,7 @@ struct ShortcutsURLTests {
         let string = url.absoluteString
 
         #expect(string.hasPrefix("shortcuts://x-callback-url/run-shortcut?"))
-        #expect(string.contains("name=Tagwerk%20Claude"))
+        #expect(string.contains("name=Orbit%20Claude"))
         #expect(string.contains("input=text"))
         #expect(string.contains("text=Gr%C3%BC%C3%9Fe%20%26%20Test%20%3D%201%2B1%0AZeile%202"))
         #expect(string.contains("x-success=tagwerk%3A%2F%2Fclaude%2Fsuccess%2FABC123"))

@@ -233,15 +233,30 @@ public enum BackupError: Error, Equatable, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .notATagwerkBackup: "Die Datei ist keine Tagwerk-Sicherung."
-        case .unsupportedVersion(let format): "Diese Sicherung (\(format)) stammt von einer neueren Tagwerk-Version."
+        case .notATagwerkBackup: "Die Datei ist keine Orbit-Sicherung."
+        case .unsupportedVersion(let format): "Diese Sicherung (\(format)) stammt von einer neueren Orbit-Version."
         case .unreadable: "Die Sicherung ist beschädigt oder unvollständig."
         }
     }
 }
 
 public enum BackupCodec {
-    public static let filePrefix = "Tagwerk-Backup-"
+    public static let filePrefix = "Orbit-Backup-"
+    /// Sicherungen aus Versionen vor 0.4 (damals hieß die App „Tagwerk“).
+    public static let legacyFilePrefixes = ["Tagwerk-Backup-"]
+
+    /// Ist das eine Sicherungsdatei (neuer oder alter Name)?
+    public static func isBackupFileName(_ name: String) -> Bool {
+        name.hasSuffix(".json") && ([filePrefix] + legacyFilePrefixes).contains { name.hasPrefix($0) }
+    }
+
+    /// Datumsteil des Namens, z. B. „2026-10-26_18-17.json“ – zum Sortieren über alte und neue Namen hinweg.
+    public static func sortKey(for name: String) -> String {
+        for prefix in [filePrefix] + legacyFilePrefixes where name.hasPrefix(prefix) {
+            return String(name.dropFirst(prefix.count))
+        }
+        return name
+    }
 
     public static func encode(_ document: BackupDocument) throws -> Data {
         let encoder = JSONEncoder()
@@ -271,7 +286,7 @@ public enum BackupCodec {
         }
     }
 
-    /// „Tagwerk-Backup-2026-10-26_18-17.json“ – sortiert sich chronologisch.
+    /// „Orbit-Backup-2026-10-26_18-17.json“ – sortiert sich chronologisch.
     public static func fileName(for date: Date, calendar: Calendar) -> String {
         let c = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         return String(
@@ -285,10 +300,15 @@ public enum BackupRetention {
     /// Dateien, die gelöscht werden können, damit nur die neuesten `keep` Sicherungen bleiben.
     /// Andere Dateien im Ordner werden nie angefasst.
     public static func filesToDelete(_ fileNames: [String], keep: Int) -> [String] {
-        let backups = fileNames
-            .filter { $0.hasPrefix(BackupCodec.filePrefix) && $0.hasSuffix(".json") }
-            .sorted(by: >)
+        let backups = sortedNewestFirst(fileNames)
         return Array(backups.dropFirst(max(0, keep)))
+    }
+
+    /// Nur Sicherungsdateien, neueste zuerst (alte „Tagwerk-Backup-…“ eingeschlossen).
+    public static func sortedNewestFirst(_ fileNames: [String]) -> [String] {
+        fileNames
+            .filter(BackupCodec.isBackupFileName)
+            .sorted { BackupCodec.sortKey(for: $0) > BackupCodec.sortKey(for: $1) }
     }
 
     /// Ob eine automatische Sicherung fällig ist (Standard: nach 20 Stunden).

@@ -91,7 +91,7 @@ struct HealthView: View {
                     }
                 }
                 ComingSoonCard()
-                Text("Tagwerk hilft beim Erinnern und Protokollieren und ersetzt keine ärztliche Beratung.")
+                Text("Orbit hilft beim Erinnern und Protokollieren und ersetzt keine ärztliche Beratung.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, Spacing.xxs)
@@ -113,7 +113,7 @@ private struct EmptyMedicationsCard: View {
                 IconBadge(systemImage: "pills.fill", tint: ModuleAccent.medication, size: 48)
                 Text("Noch keine Medikamente")
                     .font(.title3.weight(.semibold))
-                Text("Lege Medikamente und Nahrungsergänzung an, z. B. DAO-Enzym vor dem Essen. Tagwerk erinnert dich, zählt den Vorrat und zeigt, wie regelmäßig du sie nimmst.")
+                Text("Lege Medikamente und Nahrungsergänzung an, z. B. DAO-Enzym vor dem Essen. Orbit erinnert dich, zählt den Vorrat und zeigt, wie regelmäßig du sie nimmst.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Button(action: onAdd) {
@@ -138,7 +138,7 @@ private struct NotificationHintCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Mitteilungen sind aus")
                         .font(.headline)
-                    Text("Ohne Mitteilungen kann Tagwerk nicht an Einnahmen erinnern.")
+                    Text("Ohne Mitteilungen kann Orbit nicht an Einnahmen erinnern.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Verbindungstest der Claude-Brücke: Tagwerk schickt eine Zufallskennung,
+/// Verbindungstest der Claude-Brücke: Orbit schickt eine Zufallskennung,
 /// Claude soll sie in einem festen JSON-Format zurückgeben.
 public enum ClaudePing {
     public static let format = "tagwerk.ping.v1"
@@ -43,7 +43,7 @@ public enum ClaudePing {
 
     public static func prompt(nonce: String) -> String {
         """
-        Das ist ein technischer Verbindungstest der App „Tagwerk“. \
+        Das ist ein technischer Verbindungstest der App „Orbit“. \
         Antworte ausschließlich mit genau diesem JSON-Objekt, ohne weiteren Text und ohne Codeblock:
         {"format":"\(format)","ok":true,"echo":"\(nonce)"}
         """

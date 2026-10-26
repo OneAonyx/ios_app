@@ -8,7 +8,7 @@ public enum TagwerkIDs {
     public static let appGroup = "group.de.tagwerk.app"
     public static let urlScheme = "tagwerk"
     /// Name des Kurzbefehls, den die Claude-Brücke aufruft.
-    public static let claudeShortcutName = "Tagwerk Claude"
+    public static let claudeShortcutName = "Orbit Claude"
 }
 
 /// Schlüssel für Einstellungen (App-eigene UserDefaults).

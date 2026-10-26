@@ -51,7 +51,7 @@ public enum TagwerkStore {
     }
 
     /// Kopiert die Datenbank (inkl. `-wal`/`-shm`) einmal vor einer Schema-Änderung,
-    /// z. B. nach „Tagwerk-vor-v2.store“. Die Kopie bleibt liegen, bis die nächste
+    /// z. B. nach „Tagwerk-vor-v2.store“ (interner Dateiname). Die Kopie bleibt liegen, bis die nächste
     /// Migration sie ersetzt.
     static func copyBeforeMigrationIfNeeded(storeURL: URL, defaults: UserDefaults) {
         let fileManager = FileManager.default

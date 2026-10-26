@@ -4,7 +4,7 @@ import TagwerkCore
 
 /// Datensicherung als JSON im Ordner „Backups“ der App.
 ///
-/// Der Ordner ist in der Dateien-App sichtbar (Auf meinem iPhone → Tagwerk → Backups).
+/// Der Ordner ist in der Dateien-App sichtbar (Auf meinem iPhone → Orbit → Backups).
 /// Automatisch einmal am Tag, die letzten 14 Sicherungen bleiben.
 @MainActor
 public enum BackupService {
@@ -108,9 +108,7 @@ public enum BackupService {
 
     public static func existingBackups() -> [URL] {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: folderURL.path)) ?? []
-        return names
-            .filter { $0.hasPrefix(BackupCodec.filePrefix) && $0.hasSuffix(".json") }
-            .sorted(by: >)
+        return BackupRetention.sortedNewestFirst(names)
             .map { folderURL.appendingPathComponent($0) }
     }
 

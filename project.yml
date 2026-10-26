@@ -53,7 +53,7 @@ targets:
     info:
       path: App/Supporting/Info.plist
       properties:
-        CFBundleDisplayName: Tagwerk
+        CFBundleDisplayName: Orbit
         CFBundleDevelopmentRegion: de
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
@@ -79,10 +79,10 @@ targets:
         # Backups sind in der Dateien-App sichtbar (ab Phase 1).
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
-        NSHealthShareUsageDescription: "Tagwerk liest Gesundheitsdaten wie Schritte, Gewicht und Schlaf, um sie in deinem Tagesüberblick zu zeigen."
-        NSHealthUpdateUsageDescription: "Tagwerk speichert Workouts, Gewicht, Wasser, Symptome und Stimmung in Apple Health."
-        NSAlarmKitUsageDescription: "Tagwerk stellt Wecker für wichtige Medikamente, damit du sie auch im Stummmodus nicht verpasst."
-        NSCalendarsFullAccessUsageDescription: "Tagwerk zeigt deine Termine auf „Heute“, in der Agenda und in der Woche und legt auf Wunsch neue Termine an."
+        NSHealthShareUsageDescription: "Orbit liest Gesundheitsdaten wie Schritte, Gewicht und Schlaf, um sie in deinem Tagesüberblick zu zeigen."
+        NSHealthUpdateUsageDescription: "Orbit speichert Workouts, Gewicht, Wasser, Symptome und Stimmung in Apple Health."
+        NSAlarmKitUsageDescription: "Orbit stellt Wecker für wichtige Medikamente, damit du sie auch im Stummmodus nicht verpasst."
+        NSCalendarsFullAccessUsageDescription: "Orbit zeigt deine Termine auf „Heute“, in der Agenda und in der Woche und legt auf Wunsch neue Termine an."
     entitlements:
       path: App/Supporting/Tagwerk.entitlements
       properties:
@@ -111,7 +111,7 @@ targets:
     info:
       path: Widgets/Info.plist
       properties:
-        CFBundleDisplayName: Tagwerk
+        CFBundleDisplayName: Orbit
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:

@@ -2,7 +2,7 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Schritt-für-Schritt-Anleitung für den Kurzbefehl „Tagwerk Claude“.
+/// Schritt-für-Schritt-Anleitung für den Kurzbefehl „Orbit Claude“.
 struct ClaudeShortcutGuideView: View {
     @Environment(\.openURL) private var openURL
 
@@ -19,18 +19,18 @@ struct ClaudeShortcutGuideView: View {
              detail: "Öffne die Kurzbefehle-App, tippe auf „+“ und nenne den Kurzbefehl genau „\(TagwerkIDs.claudeShortcutName)“."),
         Step(id: 3, title: "Claude fragen",
              detail: "Füge die Aktion „Ask Claude“ der Claude-App hinzu (auf Deutsch eventuell „Claude fragen“). Setze als Nachricht die Variable „Kurzbefehleingabe“."),
-        Step(id: 4, title: "Antwort an Tagwerk geben",
-             detail: "Füge die Aktion „Claude-Antwort übernehmen“ von Tagwerk hinzu. Wähle als Antwort das Ergebnis von „Ask Claude“."),
+        Step(id: 4, title: "Antwort an Orbit geben",
+             detail: "Füge die Aktion „Claude-Antwort übernehmen“ von Orbit hinzu. Wähle als Antwort das Ergebnis von „Ask Claude“."),
         Step(id: 5, title: "Antwort ausgeben",
              detail: "Füge als letzte Aktion „Stoppen und ausgeben“ hinzu (englisch „Stop and Output“), ebenfalls mit dem Ergebnis von „Ask Claude“."),
         Step(id: 6, title: "Testen",
-             detail: "Zurück in Tagwerk: Systemcheck → Claude-Brücke → „Kurzbefehl starten“."),
+             detail: "Zurück in Orbit: Systemcheck → Claude-Brücke → „Kurzbefehl starten“."),
     ]
 
     var body: some View {
         List {
             Section {
-                Text("Tagwerk nutzt dein normales Claude-Konto über die Claude-App. Du brauchst keinen API-Key, und es entstehen keine Zusatzkosten. Anfragen zählen zu deinem normalen Nutzungslimit.")
+                Text("Orbit nutzt dein normales Claude-Konto über die Claude-App. Du brauchst keinen API-Key, und es entstehen keine Zusatzkosten. Anfragen zählen zu deinem normalen Nutzungslimit.")
                     .font(.subheadline)
             }
 

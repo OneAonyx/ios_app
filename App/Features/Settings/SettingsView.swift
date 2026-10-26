@@ -60,7 +60,7 @@ struct SettingsView: View {
 
                 BackupSection()
 
-                Section("Tagwerk") {
+                Section("Orbit") {
                     NavigationLink {
                         RoadmapView()
                     } label: {
@@ -78,7 +78,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Text("Tagwerk ist kein Medizinprodukt. Histamin-Bewertungen sind eine Orientierung, und Erinnerungen ersetzen keine ärztliche Beratung. Alle Daten bleiben auf deinem iPhone.")
+                    Text("Orbit ist kein Medizinprodukt. Histamin-Bewertungen sind eine Orientierung, und Erinnerungen ersetzen keine ärztliche Beratung. Alle Daten bleiben auf deinem iPhone.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 } header: {
@@ -157,7 +157,7 @@ private struct BackupSection: View {
         let last = lastBackupDate.map {
             "Letzte Sicherung: \(DueFormatter.label(due: $0, hasTime: true, now: .now, calendar: AppModel.calendar)). "
         } ?? ""
-        return last + "Tagwerk sichert einmal am Tag automatisch und behält die letzten \(BackupService.keepCount). Du findest sie in der Dateien-App unter „Auf meinem iPhone → Tagwerk → Backups“."
+        return last + "Orbit sichert einmal am Tag automatisch und behält die letzten \(BackupService.keepCount). Du findest sie in der Dateien-App unter „Auf meinem iPhone → Orbit → Backups“."
     }
 
     private var restoreAlertBinding: Binding<Bool> {
@@ -193,7 +193,7 @@ private struct BackupSection: View {
     }
 }
 
-/// Welche Kalender in Tagwerk erscheinen.
+/// Welche Kalender in Orbit erscheinen.
 struct CalendarSelectionView: View {
     @Environment(CalendarService.self) private var calendarService
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""

@@ -1,7 +1,7 @@
-# Schnellerfassung – was Tagwerk versteht
+# Schnellerfassung – was Orbit versteht
 
 Tipp auf **+** (auf „Heute“ oben links oder im Planer oben rechts) und schreib einfach einen Satz.
-Was Tagwerk erkennt, erscheint als farbiger Chip unter dem Textfeld. Der Rest wird der Titel.
+Was Orbit erkennt, erscheint als farbiger Chip unter dem Textfeld. Der Rest wird der Titel.
 
 | Du schreibst | Ergebnis |
 |---|---|
@@ -38,4 +38,4 @@ Was Tagwerk erkennt, erscheint als farbiger Chip unter dem Textfeld. Der Rest wi
   einstündiger Kalendertermin angelegt.
 - **„Mit Details anlegen“** legt die Aufgabe an und öffnet direkt den Editor (Notizen, Unteraufgaben, Erinnerung …).
 
-Das Gleiche funktioniert per Siri: „**Neue Aufgabe in Tagwerk**“ und dann den Satz sagen.
+Das Gleiche funktioniert per Siri: „**Neue Aufgabe in Orbit**“ und dann den Satz sagen.

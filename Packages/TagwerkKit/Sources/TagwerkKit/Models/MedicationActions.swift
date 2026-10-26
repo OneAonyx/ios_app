@@ -169,7 +169,7 @@ public enum MedicationActions {
         do {
             try context.save()
         } catch {
-            print("Tagwerk: Speichern fehlgeschlagen: \(error)")
+            print("Orbit: Speichern fehlgeschlagen: \(error)")
         }
     }
 

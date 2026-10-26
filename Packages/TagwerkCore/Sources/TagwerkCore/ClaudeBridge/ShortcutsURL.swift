@@ -58,7 +58,7 @@ public struct ShortcutRunRequest: Sendable, Equatable {
     }
 }
 
-/// Ein Rücksprung von der Kurzbefehle-App zu Tagwerk.
+/// Ein Rücksprung von der Kurzbefehle-App zu Orbit.
 public struct ClaudeCallback: Sendable, Equatable {
     public enum Outcome: String, Sendable, Equatable {
         case success

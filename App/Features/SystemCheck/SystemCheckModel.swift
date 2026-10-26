@@ -113,7 +113,7 @@ final class SystemCheckModel {
             let snapshot = try WidgetDataStore.writeSystemCheckSnapshot()
             widgetSnapshot = snapshot
             set(.appGroup, .waitingForUser(
-                "Wert #\(snapshot.counter) gespeichert in \(snapshot.appGroupID). Füge das Widget „Tagwerk Systemcheck“ zum Home-Bildschirm hinzu: Es sollte #\(snapshot.counter) zeigen."
+                "Wert #\(snapshot.counter) gespeichert in \(snapshot.appGroupID). Füge das Widget „Orbit Systemcheck“ zum Home-Bildschirm hinzu: Es sollte #\(snapshot.counter) zeigen."
             ))
         } catch {
             set(.appGroup, .failed(error.localizedDescription))
@@ -123,7 +123,7 @@ final class SystemCheckModel {
     private func runAlarmKit() async {
         do {
             guard try await AlarmProbe.requestAuthorization() else {
-                set(.alarmKit, .failed("Wecker-Berechtigung abgelehnt. Ändern unter Einstellungen → Apps → Tagwerk."))
+                set(.alarmKit, .failed("Wecker-Berechtigung abgelehnt. Ändern unter Einstellungen → Apps → Orbit."))
                 return
             }
             let fireDate = Date.now.addingTimeInterval(60)
@@ -139,7 +139,7 @@ final class SystemCheckModel {
     private func runNotifications() async {
         do {
             guard try await NotificationSetup.requestAuthorization() else {
-                set(.notifications, .failed("Mitteilungen abgelehnt. Ändern unter Einstellungen → Apps → Tagwerk → Mitteilungen."))
+                set(.notifications, .failed("Mitteilungen abgelehnt. Ändern unter Einstellungen → Apps → Orbit → Mitteilungen."))
                 return
             }
             notificationRequestedAt = .now
@@ -187,7 +187,7 @@ final class SystemCheckModel {
         _ = ClaudeBridgeInbox.take()
         let request = ShortcutRunRequest(input: .text(ClaudePing.prompt(nonce: nonce)), requestID: UUID().uuidString)
         set(.claudeBridge, .waitingForUser(
-            "Kurzbefehl „\(TagwerkIDs.claudeShortcutName)“ läuft. Danach springt die Kurzbefehle-App zurück zu Tagwerk."
+            "Kurzbefehl „\(TagwerkIDs.claudeShortcutName)“ läuft. Danach springt die Kurzbefehle-App zurück zu Orbit."
         ))
         let opened = await UIApplication.shared.open(request.url())
         if !opened {

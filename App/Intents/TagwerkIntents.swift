@@ -3,11 +3,11 @@ import SwiftData
 import TagwerkCore
 import TagwerkKit
 
-/// „Neue Aufgabe in Tagwerk“ – Datum und Uhrzeit im Text werden erkannt.
+/// „Neue Aufgabe in Orbit“ – Datum und Uhrzeit im Text werden erkannt.
 struct AddTaskIntent: AppIntent {
     static let title: LocalizedStringResource = "Aufgabe hinzufügen"
     static let description = IntentDescription(
-        "Legt eine Aufgabe in Tagwerk an. Datum und Uhrzeit im Text werden erkannt, z. B. „morgen 10 Uhr Zahnarzt“."
+        "Legt eine Aufgabe in Orbit an. Datum und Uhrzeit im Text werden erkannt, z. B. „morgen 10 Uhr Zahnarzt“."
     )
     static let openAppWhenRun: Bool = false
 
@@ -84,11 +84,11 @@ struct MedicationStatusIntent: AppIntent {
     }
 }
 
-/// Letzte Aktion im Kurzbefehl „Tagwerk Claude“: übergibt Claudes Antwort an Tagwerk.
+/// Letzte Aktion im Kurzbefehl „Orbit Claude“: übergibt Claudes Antwort an Orbit.
 struct ImportClaudeResponseIntent: AppIntent {
     static let title: LocalizedStringResource = "Claude-Antwort übernehmen"
     static let description = IntentDescription(
-        "Übergibt eine Antwort von Claude an Tagwerk. Wird im Kurzbefehl „Tagwerk Claude“ benutzt."
+        "Übergibt eine Antwort von Claude an Orbit. Wird im Kurzbefehl „Orbit Claude“ benutzt."
     )
     static let openAppWhenRun: Bool = false
 
@@ -97,14 +97,14 @@ struct ImportClaudeResponseIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         ClaudeBridgeInbox.store(response)
-        return .result(dialog: "Antwort an Tagwerk übergeben.")
+        return .result(dialog: "Antwort an Orbit übergeben.")
     }
 }
 
-/// Öffnet den Systemcheck, z. B. per Siri: „Tagwerk Systemcheck“.
+/// Öffnet den Systemcheck, z. B. per Siri: „Orbit Systemcheck“.
 struct OpenSystemCheckIntent: AppIntent {
     static let title: LocalizedStringResource = "Systemcheck öffnen"
-    static let description = IntentDescription("Öffnet den Systemcheck in Tagwerk.")
+    static let description = IntentDescription("Öffnet den Systemcheck in Orbit.")
     static let openAppWhenRun: Bool = true
 
     @MainActor

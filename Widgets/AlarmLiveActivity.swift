@@ -4,7 +4,7 @@ import SwiftUI
 import TagwerkKit
 import WidgetKit
 
-/// Darstellung von Tagwerk-Weckern auf Sperrbildschirm und in der Dynamic Island,
+/// Darstellung von Orbit-Weckern auf Sperrbildschirm und in der Dynamic Island,
 /// z. B. während eines Schlummer-Countdowns.
 struct AlarmLiveActivity: Widget {
     var body: some WidgetConfiguration {
@@ -39,7 +39,7 @@ struct AlarmLiveActivity: Widget {
                 Image(systemName: "alarm.fill")
                     .foregroundStyle(context.attributes.tintColor)
             } compactTrailing: {
-                Text("Tagwerk")
+                Text("Orbit")
                     .font(.caption2)
             } minimal: {
                 Image(systemName: "alarm.fill")

@@ -1,4 +1,4 @@
-# Tagwerk
+# Orbit
 
 Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple Health,
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
@@ -15,7 +15,7 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 
 | Was | Wo |
 |---|---|
-| Neueste App-Version (`Tagwerk.ipa`) | [Releases](https://github.com/OneAonyx/ios_app/releases/latest) |
+| Neueste App-Version (`Orbit.ipa`) | [Releases](https://github.com/OneAonyx/ios_app/releases/latest) |
 | App aufs iPhone bringen | [`docs/SIDELOAD.md`](docs/SIDELOAD.md) |
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
@@ -34,10 +34,10 @@ im CI aus [`project.yml`](project.yml).
 |---|---|---|---|
 | `core.yml` | Linux | Änderungen an `TagwerkCore` | Logiktests |
 | `ios.yml` | macOS | Push auf `main` | Build, UI-Tests, Screenshots (Artefakt `screenshots`) |
-| `release.yml` | macOS | manuell („Run workflow“) oder Tag `v*` | `Tagwerk.ipa` als GitHub-Release für SideStore |
+| `release.yml` | macOS | manuell („Run workflow“) oder Tag `v*` | `Orbit.ipa` als GitHub-Release für SideStore |
 
 Neue Version veröffentlichen: GitHub → **Actions** → **Release (IPA für SideStore)** → **Run workflow**
-→ Version eingeben (z. B. `0.1.0`) → **Run workflow**. Nach etwa 15 Minuten liegt `Tagwerk.ipa`
+→ Version eingeben (z. B. `0.1.0`) → **Run workflow**. Nach etwa 15 Minuten liegt `Orbit.ipa`
 unter [Releases](https://github.com/OneAonyx/ios_app/releases/latest).
 
 Nach jedem Lauf liegen Log, Fehlerauszug und Screenshots zusätzlich auf den Branches `ci-ios`
@@ -64,5 +64,5 @@ docs/                Plan, Anleitungen, Architektur
 
 ## Hinweis
 
-Tagwerk ist kein Medizinprodukt. Histamin-Bewertungen sind eine Orientierung, und Erinnerungen
+Orbit ist kein Medizinprodukt. Histamin-Bewertungen sind eine Orientierung, und Erinnerungen
 ersetzen keine ärztliche Beratung. Alle Daten bleiben auf dem iPhone.

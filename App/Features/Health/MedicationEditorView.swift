@@ -294,7 +294,7 @@ struct MedicationEditorView: View {
                 case (true, .none):
                     Text("Keine Erinnerung. Die Einnahmen stehen trotzdem auf „Heute“.")
                 case (true, .notification):
-                    Text("Mitteilung mit „Genommen“, „In 10 Min“ und „Auslassen“. Nach 30 Minuten fragt Tagwerk noch einmal nach.")
+                    Text("Mitteilung mit „Genommen“, „In 10 Min“ und „Auslassen“. Nach 30 Minuten fragt Orbit noch einmal nach.")
                 case (true, .alarm):
                     Text("Klingelt wie ein Wecker, auch im Stumm- und Fokusmodus, mit Knopf „Genommen“. Für wichtige Medikamente.")
                 }
@@ -323,7 +323,7 @@ struct MedicationEditorView: View {
             Text("Vorrat")
         } footer: {
             if draft.tracksStock {
-                Text("„Genommen“ zieht automatisch ab. Wird es knapp, erinnert Tagwerk morgens um 9 Uhr.")
+                Text("„Genommen“ zieht automatisch ab. Wird es knapp, erinnert Orbit morgens um 9 Uhr.")
             }
         }
     }

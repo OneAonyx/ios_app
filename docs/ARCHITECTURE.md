@@ -1,5 +1,10 @@
 # Architektur
 
+> **Name:** Die App heißt seit Version 0.4 **Orbit** (vorher Arbeitstitel „Tagwerk“). Interne
+> Namen bleiben: Module `TagwerkCore`/`TagwerkKit`, Xcode-Target `Tagwerk`, Bundle-ID
+> `de.tagwerk.app`, App Group, URL-Schema `tagwerk://` und Datenbank `Tagwerk.store`. So bleiben
+> Daten, Signatur und Verknüpfungen erhalten. Sichtbar ist nur noch „Orbit“.
+
 ## Schichten
 
 ```
@@ -115,7 +120,7 @@ Ein eigenes Unit-Test-Target hätte die Pakete ein zweites Mal gelinkt (doppelte
 | `tagwerk://systemcheck` | öffnet den Systemcheck |
 | `tagwerk://neu` | öffnet die Schnellerfassung |
 | `tagwerk://gesundheit` | öffnet den Tab „Gesundheit“ (Medikamenten-Widget) |
-| `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Tagwerk Claude“ |
+| `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
 
 ## Screenshots im CI

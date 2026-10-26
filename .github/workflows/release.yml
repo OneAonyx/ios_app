@@ -6,7 +6,7 @@ name: Release (IPA für SideStore)
 #
 # Auslösen (empfohlen): GitHub → Actions → „Release (IPA für SideStore)“ →
 # „Run workflow“ → Version eingeben (z. B. 0.1.0). Der Workflow legt danach
-# selbst den Tag `v0.1.0` und das GitHub-Release mit `Tagwerk.ipa` an.
+# selbst den Tag `v0.1.0` und das GitHub-Release mit `Orbit.ipa` an.
 # Alternativ: einen Tag `v…` pushen.
 on:
   push:
@@ -103,14 +103,14 @@ jobs:
         run: |
           rm -rf build/ipa && mkdir -p build/ipa/Payload
           cp -R build/Tagwerk.xcarchive/Products/Applications/Tagwerk.app build/ipa/Payload/
-          (cd build/ipa && zip -qry ../Tagwerk.ipa Payload)
-          ls -la build/Tagwerk.ipa
+          (cd build/ipa && zip -qry ../Orbit.ipa Payload)
+          ls -la build/Orbit.ipa
 
       - name: IPA als Artefakt
         uses: actions/upload-artifact@v4
         with:
-          name: Tagwerk-ipa
-          path: build/Tagwerk.ipa
+          name: Orbit-ipa
+          path: build/Orbit.ipa
 
       - name: Ergebnisse auf Branch ci-release ablegen
         if: always()
@@ -123,11 +123,11 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: Tagwerk ${{ steps.version.outputs.tag }}
-          files: build/Tagwerk.ipa
+          name: Orbit ${{ steps.version.outputs.tag }}
+          files: build/Orbit.ipa
           prerelease: ${{ steps.version.outputs.prerelease }}
           body: |
-            Tagwerk ${{ steps.version.outputs.tag }} (Build ${{ steps.version.outputs.build }})
+            Orbit ${{ steps.version.outputs.tag }} (Build ${{ steps.version.outputs.build }})
 
-            Installation: `Tagwerk.ipa` auf dem iPhone laden und in SideStore öffnen.
+            Installation: `Orbit.ipa` mit iloader oder SideStore installieren.
             Anleitung: [docs/SIDELOAD.md](https://github.com/${{ github.repository }}/blob/main/docs/SIDELOAD.md)

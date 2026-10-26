@@ -43,7 +43,7 @@ struct TakeDoseIntent: AppIntent, LiveActivityIntent {
 /// (Kontrollzentrum, Siri, Kurzbefehle).
 struct TakeNextDoseIntent: AppIntent, LiveActivityIntent {
     static let title: LocalizedStringResource = "Medikament genommen"
-    static let description = IntentDescription("Hakt in Tagwerk die Einnahme ab, die gerade fällig ist.")
+    static let description = IntentDescription("Hakt in Orbit die Einnahme ab, die gerade fällig ist.")
     static let openAppWhenRun: Bool = false
 
     init() {}

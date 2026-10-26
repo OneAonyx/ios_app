@@ -12,7 +12,7 @@ struct SystemCheckWidget: Widget {
             SystemCheckWidgetView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Tagwerk Systemcheck")
+        .configurationDisplayName("Orbit Systemcheck")
         .description("Zeigt, ob App und Widget Daten teilen.")
         .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryCircular])
     }
@@ -71,7 +71,7 @@ struct SystemCheckWidgetView: View {
             }
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 1) {
-                Text("Tagwerk")
+                Text("Orbit")
                     .font(.headline)
                 if let snapshot = entry.snapshot {
                     Text("Wert #\(snapshot.counter)")
@@ -85,7 +85,7 @@ struct SystemCheckWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         default:
             VStack(alignment: .leading, spacing: 4) {
-                Label("Tagwerk", systemImage: "checkmark.seal.fill")
+                Label("Orbit", systemImage: "checkmark.seal.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.indigo)
                 Spacer(minLength: 0)

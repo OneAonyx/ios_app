@@ -392,7 +392,7 @@ private struct SigningBanner: View {
         if status.kind == .freeAppleID, level != .ok {
             WarningCard(
                 title: level == .expired ? "Signatur abgelaufen" : "App läuft bald ab",
-                message: "Signatur \(status.remainingText(now: .now)). Spiel Tagwerk über iloader oder SideStore neu auf, deine Daten bleiben erhalten."
+                message: "Signatur \(status.remainingText(now: .now)). Spiel Orbit über iloader oder SideStore neu auf, deine Daten bleiben erhalten."
             )
         }
     }

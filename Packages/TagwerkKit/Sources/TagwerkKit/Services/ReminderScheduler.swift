@@ -5,7 +5,7 @@ import UserNotifications
 
 /// Plant Erinnerungen für Aufgaben und Medikamente als lokale Mitteilungen.
 ///
-/// iOS erlaubt nur 64 geplante Mitteilungen. Tagwerk plant deshalb rollierend die
+/// iOS erlaubt nur 64 geplante Mitteilungen. Orbit plant deshalb rollierend die
 /// nächsten 72 Stunden, Medikamente zuerst, und ersetzt bei jeder Änderung die eigenen
 /// Mitteilungen (Präfixe in `NotificationIDs.Prefix.managed`). „In 10 Min“ bleibt stehen.
 @MainActor

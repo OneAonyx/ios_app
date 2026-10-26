@@ -94,7 +94,7 @@ struct QuickAddView: View {
 
     private var hints: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("Schreib einfach los, Tagwerk erkennt zum Beispiel:")
+            Text("Schreib einfach los, Orbit erkennt zum Beispiel:")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             ForEach(["morgen 10 Uhr Zahnarzt", "jeden Montag Müll rausbringen", "Freitag Steuer !! #Arbeit", "in 2 Stunden Wäsche aufhängen"], id: \.self) { example in

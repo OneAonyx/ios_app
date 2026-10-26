@@ -1,5 +1,7 @@
 # Plan: „Tagwerk“ – persönliche Alltags-App fürs iPhone
 
+> **Hinweis:** „Tagwerk“ war der Arbeitstitel. Seit Version 0.4 heißt die App **Orbit**.
+
 *(Arbeitstitel. Name lässt sich jederzeit ändern.)*
 
 ---

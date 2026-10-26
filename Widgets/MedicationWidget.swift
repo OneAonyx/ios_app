@@ -266,6 +266,6 @@ struct MedicationControl: ControlWidget {
             }
         }
         .displayName("Medikament genommen")
-        .description("Hakt in Tagwerk die Einnahme ab, die gerade fällig ist.")
+        .description("Hakt in Orbit die Einnahme ab, die gerade fällig ist.")
     }
 }

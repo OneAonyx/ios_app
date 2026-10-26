@@ -159,7 +159,7 @@ public enum SystemCheckReport {
         formatter.dateFormat = "dd.MM.yyyy HH:mm"
 
         var lines: [String] = [
-            "Tagwerk Systemcheck – \(formatter.string(from: generatedAt))",
+            "Orbit Systemcheck – \(formatter.string(from: generatedAt))",
             "App \(environment.appVersion) (\(environment.buildNumber)) · iOS \(environment.osVersion) · \(environment.deviceModel)",
             "Bundle-ID: \(environment.bundleIdentifier)",
             "Signatur: \(environment.signing)",

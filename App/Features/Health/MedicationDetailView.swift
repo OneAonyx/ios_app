@@ -241,7 +241,7 @@ struct MedicationDetailView: View {
                         .accessibilityIdentifier("medDetail.refill")
                 }
                 if medication.autoRefillTask {
-                    Text("Wird es knapp, legt Tagwerk die Aufgabe „Nachschub besorgen“ an.")
+                    Text("Wird es knapp, legt Orbit die Aufgabe „Nachschub besorgen“ an.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

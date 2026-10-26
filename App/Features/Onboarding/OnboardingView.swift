@@ -2,7 +2,7 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Erster Start: Name, was Tagwerk kann, Berechtigungen.
+/// Erster Start: Name, was Orbit kann, Berechtigungen.
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(CalendarService.self) private var calendarService
@@ -50,7 +50,7 @@ struct OnboardingView: View {
                 .foregroundStyle(ModuleAccent.today.gradient)
                 .accessibilityHidden(true)
             VStack(spacing: Spacing.xs) {
-                Text("Willkommen bei Tagwerk")
+                Text("Willkommen bei Orbit")
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
                 Text("Dein Tag an einem Ort: Aufgaben, Termine und bald auch Medikamente, Training und Ernährung.")
@@ -73,10 +73,10 @@ struct OnboardingView: View {
     private var features: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             Spacer()
-            Text("So hilft dir Tagwerk")
+            Text("So hilft dir Orbit")
                 .font(.largeTitle.bold())
             feature("sun.max", ModuleAccent.today, "Heute", "Fokus, Fälliges und der nächste Termin auf einen Blick.")
-            feature("text.cursor", ModuleAccent.tasks, "Schnellerfassung", "„morgen 10 Uhr Zahnarzt“ – Datum und Uhrzeit erkennt Tagwerk selbst.")
+            feature("text.cursor", ModuleAccent.tasks, "Schnellerfassung", "„morgen 10 Uhr Zahnarzt“ – Datum und Uhrzeit erkennt Orbit selbst.")
             feature("calendar", ModuleAccent.calendar, "Agenda", "Deine Kalendertermine und Aufgaben der nächsten 14 Tage zusammen.")
             feature("lock.shield", .green, "Privat", "Alles bleibt auf deinem iPhone. Tägliche Sicherung in der Dateien-App.")
             Spacer()

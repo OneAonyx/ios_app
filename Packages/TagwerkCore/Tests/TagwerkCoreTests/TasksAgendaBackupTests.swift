@@ -195,8 +195,10 @@ struct BackupTests {
     }
 
     @Test func fileNamesAndRetention() {
-        #expect(BackupCodec.fileName(for: date(2026, 10, 26, 18, 7), calendar: berlin) == "Tagwerk-Backup-2026-10-26_18-07.json")
-        let names = (1...16).map { String(format: "Tagwerk-Backup-2026-10-%02d_09-00.json", $0) } + ["Notizen.txt"]
+        #expect(BackupCodec.fileName(for: date(2026, 10, 26, 18, 7), calendar: berlin) == "Orbit-Backup-2026-10-26_18-07.json")
+        // Alte Namen (bis 0.3) und neue gemischt: sortiert wird nach Datum, nicht nach Name.
+        let names = (1...10).map { String(format: "Tagwerk-Backup-2026-10-%02d_09-00.json", $0) }
+            + (11...16).map { String(format: "Orbit-Backup-2026-10-%02d_09-00.json", $0) } + ["Notizen.txt"]
         let toDelete = BackupRetention.filesToDelete(names, keep: 14)
         #expect(toDelete == ["Tagwerk-Backup-2026-10-02_09-00.json", "Tagwerk-Backup-2026-10-01_09-00.json"])
         #expect(BackupRetention.isAutomaticBackupDue(lastBackup: nil, now: date(2026, 10, 26)))

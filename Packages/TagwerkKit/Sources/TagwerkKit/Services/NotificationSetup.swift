@@ -78,7 +78,7 @@ public enum NotificationSetup {
 
     public static func scheduleSystemCheckNotification(after seconds: TimeInterval = 10) async throws {
         let content = UNMutableNotificationContent()
-        content.title = "Tagwerk Systemcheck"
+        content.title = "Orbit Systemcheck"
         content.body = "Test-Erinnerung: Halte die Mitteilung gedrückt und wähle einen Knopf."
         content.sound = .default
         content.categoryIdentifier = NotificationIDs.Category.systemCheck

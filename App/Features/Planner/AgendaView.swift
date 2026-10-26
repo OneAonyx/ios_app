@@ -208,7 +208,7 @@ struct DoseToggleButton: View {
     }
 }
 
-/// Hinweis, wenn Tagwerk noch keinen Kalenderzugriff hat.
+/// Hinweis, wenn Orbit noch keinen Kalenderzugriff hat.
 struct CalendarAccessRow: View {
     @Environment(CalendarService.self) private var calendarService
     @Environment(\.openURL) private var openURL

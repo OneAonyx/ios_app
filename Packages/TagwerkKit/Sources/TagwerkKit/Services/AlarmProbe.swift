@@ -3,7 +3,7 @@ import AlarmKit
 import Foundation
 import SwiftUI
 
-/// Zusatzdaten zu einem Tagwerk-Wecker. App und Widget-Extension müssen denselben Typ nutzen.
+/// Zusatzdaten zu einem Orbit-Wecker. App und Widget-Extension müssen denselben Typ nutzen.
 public struct TagwerkAlarmMetadata: AlarmMetadata {
     /// „systemcheck“ oder „medication“.
     public var purpose: String
@@ -46,10 +46,10 @@ public enum AlarmProbe {
         let alert: AlarmPresentation.Alert
         if #available(iOS 26.1, *) {
             // Ab iOS 26.1 stellt das System den Stopp-Knopf selbst bereit.
-            alert = AlarmPresentation.Alert(title: "Tagwerk Testwecker")
+            alert = AlarmPresentation.Alert(title: "Orbit Testwecker")
         } else {
             alert = AlarmPresentation.Alert(
-                title: "Tagwerk Testwecker",
+                title: "Orbit Testwecker",
                 stopButton: AlarmButton(text: "Stopp", textColor: .white, systemImageName: "stop.circle"),
                 secondaryButton: nil,
                 secondaryButtonBehavior: nil

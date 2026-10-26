@@ -25,7 +25,7 @@ Version 0.3.0. Etwa 20 Minuten, verteilt über einen Tag. Bitte melde, was nicht
 | 6 | Widget **Medikamente** (klein) auf den Home-Bildschirm | zeigt die nächste Einnahme |
 | 7 | Im Editor eine Uhrzeit in 2 Min. ergänzen, dann im Widget **Genommen** | Widget zeigt sofort abgehakt, App ebenso |
 | 8 | Kontrollzentrum → Steuerelement **Medikament genommen** hinzufügen und antippen | fällige Einnahme wird abgehakt |
-| 9 | Siri: „Habe ich heute meine Tabletten in Tagwerk genommen?“ | Siri nennt erledigte und offene |
+| 9 | Siri: „Habe ich heute meine Tabletten in Orbit genommen?“ | Siri nennt erledigte und offene |
 | 10 | Mitteilung → **In 10 Min** | 10 Minuten später kommt sie noch einmal |
 | 11 | Einnahme offen lassen | nach 30 Min. Nachfrage „Noch offen: …“ |
 | 12 | Vorrat auf 3 setzen | „Vorrat knapp“ erscheint, am nächsten Morgen um 9 Uhr ein Hinweis |
@@ -36,8 +36,8 @@ echten Medikamente anlegen.
 
 ## Wenn etwas nicht geht
 
-- **Keine Mitteilung:** Einstellungen → Mitteilungen → Tagwerk → erlauben. Auf „Gesundheit“
+- **Keine Mitteilung:** Einstellungen → Mitteilungen → Orbit → erlauben. Auf „Gesundheit“
   erscheint sonst ein Hinweis.
-- **Kein Wecker:** Einstellungen → Tagwerk → Wecker erlauben. Ohne Erlaubnis kommt eine Mitteilung.
+- **Kein Wecker:** Einstellungen → Orbit → Wecker erlauben. Ohne Erlaubnis kommt eine Mitteilung.
 - **Aufgaben weg nach dem Update:** App nicht löschen! Melde dich, die Kopie
-  `Tagwerk-vor-v2.store` und die tägliche Sicherung (Dateien-App → Tagwerk → Backups) sind noch da.
+  `Tagwerk-vor-v2.store` und die tägliche Sicherung (Dateien-App → Orbit → Backups) sind noch da.

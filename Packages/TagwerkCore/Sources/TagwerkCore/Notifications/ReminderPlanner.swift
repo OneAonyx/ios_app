@@ -1,7 +1,7 @@
 import Foundation
 
 /// Eine mögliche Mitteilung. iOS erlaubt nur 64 geplante Mitteilungen gleichzeitig,
-/// deshalb plant Tagwerk rollierend und mit Vorrang (Medikamente vor Aufgaben).
+/// deshalb plant Orbit rollierend und mit Vorrang (Medikamente vor Aufgaben).
 public struct ReminderCandidate: Sendable, Equatable, Hashable {
     public enum Kind: String, Sendable, Hashable {
         case task

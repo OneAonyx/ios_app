@@ -1,6 +1,6 @@
 import Foundation
 
-/// Die Felder einer `embedded.mobileprovision`, die Tagwerk braucht.
+/// Die Felder einer `embedded.mobileprovision`, die Orbit braucht.
 ///
 /// Die Datei ist ein signierter CMS-Container. Darin steckt eine XML-Plist,
 /// die wir direkt herausschneiden, ohne die Signatur zu prüfen. Wir lesen nur
