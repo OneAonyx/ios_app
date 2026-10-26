@@ -46,7 +46,7 @@ public enum SystemCheckID: String, CaseIterable, Codable, Sendable, Identifiable
     public var systemImage: String {
         switch self {
         case .installation: "checkmark.seal"
-        case .healthKit: "heart.text.square"
+        case .healthKit: "heart"
         case .appGroup: "square.on.square"
         case .alarmKit: "alarm"
         case .notifications: "bell.badge"

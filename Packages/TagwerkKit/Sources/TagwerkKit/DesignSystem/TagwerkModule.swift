@@ -28,7 +28,7 @@ public enum TagwerkModule: String, CaseIterable, Identifiable, Hashable, Sendabl
         case .planner: "checklist"
         case .training: "dumbbell"
         case .nutrition: "fork.knife"
-        case .health: "heart.text.square"
+        case .health: "heart"
         case .search: "magnifyingglass"
         }
     }

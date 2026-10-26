@@ -135,7 +135,7 @@ private struct RoadmapCard: View {
         Phase(id: 2, title: "Medikamente", systemImage: "pills"),
         Phase(id: 3, title: "Training", systemImage: "dumbbell"),
         Phase(id: 4, title: "Ernährung & Histamin", systemImage: "fork.knife"),
-        Phase(id: 5, title: "Health & Claude-Brücke", systemImage: "heart.text.square"),
+        Phase(id: 5, title: "Health & Claude-Brücke", systemImage: "heart"),
         Phase(id: 6, title: "Leben & Feinschliff", systemImage: "sparkles"),
         Phase(id: 7, title: "Developer-Account & iCloud", systemImage: "icloud"),
     ]

@@ -150,15 +150,16 @@ struct SystemCheckRow: View {
         HStack(alignment: .top, spacing: Spacing.s) {
             IconBadge(systemImage: id.systemImage, tint: tint)
             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("\(id.number). \(id.title)")
-                        .font(.headline)
-                    Spacer(minLength: Spacing.xs)
-                    SystemCheckStatePill(state)
-                }
+                // Titel über die volle Breite, Status darunter: so wird nichts
+                // abgeschnitten, auch nicht bei großer Schrift.
+                Text("\(id.number). \(id.title)")
+                    .font(.headline)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(id.summary)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                SystemCheckStatePill(state)
+                    .padding(.top, 2)
                 if let detail = state.detail {
                     Text(detail)
                         .font(.footnote)
