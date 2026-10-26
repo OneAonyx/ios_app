@@ -7,6 +7,8 @@ import TagwerkKit
 struct AgendaSource {
     let tasks: [TaskItem]
     let medications: [Medication]
+    /// Trainingstage und Einheiten (schon für den Zeitraum berechnet).
+    var training: (WorkoutPlan?, [WorkoutSession]) = (nil, [])
     let calendarService: CalendarService
     let showEvents: Bool
     let hiddenCalendarIDs: Set<String>
@@ -25,8 +27,9 @@ struct AgendaSource {
         _ = calendarService.changeCounter
         let taskItems = tasks.compactMap { $0.agendaItem() }
         let doseItems = medications.flatMap { $0.agendaItems(from: start, to: end, now: now, calendar: AppModel.calendar) }
-        guard showEvents else { return taskItems + doseItems }
-        return taskItems + doseItems + calendarService.items(from: start, to: end, hiddenCalendarIDs: hiddenCalendarIDs)
+        let trainingItems = TrainingActions.agendaItems(plan: training.0, sessions: training.1, from: start, to: end, now: now, calendar: AppModel.calendar)
+        guard showEvents else { return taskItems + doseItems + trainingItems }
+        return taskItems + doseItems + trainingItems + calendarService.items(from: start, to: end, hiddenCalendarIDs: hiddenCalendarIDs)
     }
 
     /// Medikament einer Einnahme in Agenda oder Woche.
@@ -47,6 +50,8 @@ struct AgendaView: View {
     @Environment(CalendarService.self) private var calendarService
     @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
     @Query(sort: \Medication.sortIndex) private var medications: [Medication]
+    @Query(sort: \WorkoutPlan.createdAt) private var plans: [WorkoutPlan]
+    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workouts: [WorkoutSession]
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
 
@@ -55,7 +60,8 @@ struct AgendaView: View {
     var body: some View {
         let now = Date.now
         let calendar = AppModel.calendar
-        let source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        var source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        source.training = (plans.last(where: \.isActive) ?? plans.last, workouts)
         let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: dayCount, to: start) ?? now
         let days = AgendaBuilder.build(items: source.items(from: start, to: end), from: now, days: dayCount, now: now, calendar: calendar)
@@ -127,6 +133,11 @@ struct AgendaRow: View {
             } else if item.kind == .medication {
                 DoseToggleButton(item: item)
                     .frame(width: 28)
+            } else if item.kind == .training {
+                Image(systemName: item.isDone ? "checkmark.circle.fill" : "dumbbell.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(item.isDone ? Color.green : ModuleAccent.training)
+                    .frame(width: 28)
             } else {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(Color(hex: item.colorHex))
@@ -158,6 +169,8 @@ struct AgendaRow: View {
                 onOpenTask(task)
             } else if item.kind == .medication {
                 app.openMedications()
+            } else if item.kind == .training {
+                app.openTraining()
             } else if let url = CalendarService.calendarAppURL(for: item.start) {
                 openURL(url)
             }

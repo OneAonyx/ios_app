@@ -16,12 +16,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
-    /// Mitteilungen auch zeigen, während die App offen ist.
+    /// Mitteilungen auch zeigen, während die App offen ist. „Pause vorbei“ nicht: Das zeigt
+    /// der Trainingsbildschirm selbst.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        if notification.request.identifier.hasPrefix(NotificationIDs.Prefix.restTimer) {
+            return []
+        }
+        return [.banner, .list, .sound]
     }
 
     func userNotificationCenter(
@@ -44,6 +48,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
         if categoryID == NotificationIDs.Category.medication, let doseID {
             await Self.handleMedicationAction(actionID, doseID: doseID, title: content.title, body: content.body)
+            return
+        }
+
+        if content.userInfo[NotificationIDs.trainingKey] != nil || response.notification.request.identifier.hasPrefix(NotificationIDs.Prefix.restTimer) {
+            await MainActor.run {
+                AppModel.shared.openTraining()
+            }
             return
         }
 

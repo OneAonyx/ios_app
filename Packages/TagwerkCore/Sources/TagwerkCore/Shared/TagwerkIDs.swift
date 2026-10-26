@@ -72,6 +72,8 @@ public enum NotificationIDs {
     /// Schlüssel in `userInfo` einer Medikamenten-Mitteilung (siehe `DoseID`).
     public static let doseIDKey = "doseID"
     public static let medicationIDKey = "medicationID"
+    /// Schlüssel in `userInfo` einer Trainings-Mitteilung (Tag in der Rotation).
+    public static let trainingKey = "trainingDay"
 
     /// Präfixe der Mitteilungs-IDs. Beim Neuplanen werden nur diese ersetzt.
     public enum Prefix {
@@ -80,9 +82,12 @@ public enum NotificationIDs {
         public static let medicationFollowUp = "medlate."
         public static let snooze = "medsnooze."
         public static let refill = "refill."
+        public static let training = "training."
+        /// Pause vorbei (wird nicht beim Neuplanen ersetzt).
+        public static let restTimer = "rest."
 
         /// Werden bei jedem Neuplanen komplett ersetzt (Schlummern bleibt bestehen).
-        public static let managed = [task, medication, medicationFollowUp, refill]
+        public static let managed = [task, medication, medicationFollowUp, refill, training]
     }
 
     public static let systemCheckRequest = "tagwerk.systemcheck.notification"

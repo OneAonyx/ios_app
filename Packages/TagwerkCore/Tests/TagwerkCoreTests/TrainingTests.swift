@@ -287,3 +287,51 @@ struct PlanImportTests {
         #expect(PlanImporter.customID(for: "Zottman Curls") == "custom-zottman-curls")
     }
 }
+
+@Suite("Training: Erinnerungen, Körper, Sicherung")
+struct TrainingRecordsTests {
+    @Test func remindersOnTrainingDays() {
+        let slots = TrainingSchedule.upcoming(preferredWeekdays: [2, 5], nextDayIndex: 0, dayCount: 4, trainedToday: false, from: date(2026, 10, 26, 8), days: 7, calendar: berlin)
+        let names = ["A · Push", "B · Pull", "C · Arme", "D · Brust & Rücken"]
+        let candidates = TrainingReminders.candidates(
+            slots: slots, minuteOfDay: 17 * 60 + 30, dayTitle: { names[$0] }, detail: { _ in "6 Übungen · ca. 60 Min." },
+            now: date(2026, 10, 26, 8), calendar: berlin
+        )
+        #expect(candidates.map(\.id) == ["training.20261026", "training.20261029"])
+        #expect(candidates.map(\.title) == ["Training heute: A · Push", "Training heute: B · Pull"])
+        #expect(candidates[0].fireDate == date(2026, 10, 26, 17, 30))
+        #expect(candidates[0].kind == .training)
+        // Schon vorbei: keine Erinnerung mehr für heute.
+        let late = TrainingReminders.candidates(slots: slots, minuteOfDay: 7 * 60, dayTitle: { names[$0] }, detail: { _ in "" }, now: date(2026, 10, 26, 8), calendar: berlin)
+        #expect(late.map(\.id) == ["training.20261029"])
+        #expect(TrainingReminders.candidates(slots: slots, minuteOfDay: -1, dayTitle: { _ in "" }, detail: { _ in "" }, now: .now, calendar: berlin).isEmpty)
+    }
+
+    @Test func bodyMetrics() {
+        #expect(BodyMetricType.weight.label(82.4) == "82,4 kg")
+        #expect(BodyMetricType.waist.label(84) == "84 cm")
+        #expect(BodyMetricType.bodyFat.unit == "%")
+    }
+
+    @Test func backupWithTraining() throws {
+        let set = SetLogRecord(stableID: "s1", exerciseID: "bench-press-barbell", slot: 0, setIndex: 0, kind: "working", weight: 80, reps: 8, rir: 2, isDone: true, completedAt: date(2026, 10, 26, 18, 10), targetRepMin: 6, targetRepMax: 8, targetRIR: 2, restSeconds: 150, superset: nil, note: "")
+        let training = TrainingBackup(
+            plans: [WorkoutPlanRecord(
+                stableID: "p1", name: "Oberkörper", summary: "", templateID: "upper-4day", isActive: true, mesoLength: 6,
+                currentWeek: 2, nextDayIndex: 1, moduleDayIndex: -1, preferredWeekdays: [2, 3, 5, 7], reminderMinute: 1050,
+                createdAt: date(2026, 10, 1),
+                days: [PlanDayRecord(stableID: "d1", name: "Push", shortName: "A", focus: "", order: 0, isModule: false, exercises: [
+                    PlanExerciseRecord(stableID: "e1", exerciseID: "bench-press-barbell", order: 0, sets: 4, repMin: 6, repMax: 8, rir: 2, restSeconds: 150, superset: nil, note: "", isOptional: false),
+                ])]
+            )],
+            sessions: [WorkoutSessionRecord(stableID: "w1", planID: "p1", dayID: "d1", dayName: "Push", dayShortName: "A", dayIndex: 0, week: 2, isDeload: false, startedAt: date(2026, 10, 26, 18), endedAt: date(2026, 10, 26, 19), note: "", bodyweight: 82, includesModule: false, sets: [set])],
+            customExercises: [ExerciseInfo(id: "custom-zottman-curls", name: "Zottman Curls", primary: [.biceps], equipment: .dumbbell, mechanic: .isolation, isCustom: true)],
+            preferences: [ExercisePreferenceRecord(exerciseID: "lateral-raise-dumbbell", increment: 1, note: "")],
+            bodyMetrics: [BodyMetricRecord(stableID: "b1", date: date(2026, 10, 26, 7), type: "weight", value: 82.4, note: "")]
+        )
+        let document = BackupDocument(createdAt: date(2026, 10, 26, 20), appVersion: "0.4.0", lists: [], tasks: [], training: training)
+        let decoded = try BackupCodec.decode(BackupCodec.encode(document))
+        #expect(decoded == document)
+        #expect(decoded.training?.customExercises.first?.increment == 2)
+    }
+}

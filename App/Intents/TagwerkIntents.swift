@@ -84,6 +84,19 @@ struct MedicationStatusIntent: AppIntent {
     }
 }
 
+/// „Was trainiere ich als Nächstes?“
+struct NextWorkoutIntent: AppIntent {
+    static let title: LocalizedStringResource = "Nächstes Training"
+    static let description = IntentDescription("Nennt die nächste Einheit deines Trainingsplans.")
+    static let openAppWhenRun: Bool = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let snapshot = TrainingActions.snapshot(in: AppModel.shared.context)
+        return .result(dialog: IntentDialog(stringLiteral: snapshot.sentence(now: .now, calendar: AppModel.calendar)))
+    }
+}
+
 /// Letzte Aktion im Kurzbefehl „Orbit Claude“: übergibt Claudes Antwort an Orbit.
 struct ImportClaudeResponseIntent: AppIntent {
     static let title: LocalizedStringResource = "Claude-Antwort übernehmen"
@@ -153,6 +166,24 @@ struct TagwerkShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Medikamente heute",
             systemImageName: "pills"
+        )
+        AppShortcut(
+            intent: StartWorkoutIntent(),
+            phrases: [
+                "Starte mein Training in \(.applicationName)",
+                "\(.applicationName) Training starten",
+            ],
+            shortTitle: "Training starten",
+            systemImageName: "figure.strengthtraining.traditional"
+        )
+        AppShortcut(
+            intent: NextWorkoutIntent(),
+            phrases: [
+                "Was trainiere ich als Nächstes in \(.applicationName)",
+                "\(.applicationName) nächstes Training",
+            ],
+            shortTitle: "Nächstes Training",
+            systemImageName: "dumbbell"
         )
         AppShortcut(
             intent: OpenSystemCheckIntent(),

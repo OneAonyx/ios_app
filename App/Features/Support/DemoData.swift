@@ -59,7 +59,50 @@ enum DemoData {
             subtask.task = gift
         }
         seedMedications(into: context, now: now, calendar: calendar)
+        seedTraining(into: context, now: now, calendar: calendar)
         try? context.save()
+    }
+
+    /// Startplan mit gut drei Wochen Verlauf, damit Vorschläge, Rekorde und Diagramme etwas zeigen.
+    private static func seedTraining(into context: ModelContext, now: Date, calendar: Calendar) {
+        guard let template = PlanTemplate.bundledUpperFourDay() else { return }
+        let plan = TrainingActions.createPlan(from: template, in: context, now: now.addingTimeInterval(-30 * 86_400))
+        plan.reminderMinute = 17 * 60 + 30
+        let catalog = TrainingActions.catalog(in: context)
+        let base: [String: Double] = [
+            "bench-press-barbell": 72.5, "incline-press-dumbbell": 24, "shoulder-press-dumbbell": 20, "cable-fly-mid": 12.5,
+            "lateral-raise-dumbbell": 9, "pushdown-rope": 22.5, "pull-up": 0, "chest-supported-row": 50, "lat-pulldown-close": 55,
+            "seated-cable-row": 55, "face-pull": 20, "ez-curl": 27.5, "hammer-curl": 14, "close-grip-bench": 60,
+            "incline-dumbbell-curl": 12, "overhead-extension-cable": 20, "preacher-curl-machine": 30, "lateral-raise-cable": 7.5,
+            "reverse-fly-machine": 30, "reverse-curl": 20, "incline-press-barbell": 60, "t-bar-row": 50, "dips-chest": 0,
+            "lat-pulldown-wide": 60, "pec-deck": 45, "cable-pullover": 25,
+        ]
+        let today = calendar.startOfDay(for: now)
+        // Neun Einheiten in drei Wochen, jeweils 18:00.
+        let offsets = [-22, -20, -17, -15, -13, -10, -8, -6, -3]
+        for (index, offset) in offsets.enumerated() {
+            guard let day = calendar.date(byAdding: .day, value: offset, to: today),
+                  let start = calendar.date(bySettingHour: 18, minute: 0, second: 0, of: day),
+                  let planDay = plan.nextDay
+            else { continue }
+            let session = TrainingActions.startSession(plan: plan, day: planDay, includeModule: false, catalog: catalog, now: start, in: context)
+            var minute = 4.0
+            for set in session.sortedSets {
+                let weight = set.weight > 0 ? set.weight : (base[set.exerciseID] ?? 20)
+                let reps = set.kind == .warmup ? set.reps : min(set.targetRepMax, set.reps + (index % 2))
+                TrainingActions.complete(set, weight: weight, reps: reps, rir: set.kind == .warmup ? nil : set.targetRIR, now: start.addingTimeInterval(minute * 60), in: context)
+                minute += 2.5
+            }
+            TrainingActions.finish(session, catalog: catalog, now: start.addingTimeInterval(minute * 60 + 120), in: context)
+        }
+        // Gewicht leicht steigend.
+        for week in 0..<5 {
+            if let date = calendar.date(byAdding: .day, value: -7 * (4 - week), to: today) {
+                TrainingActions.addMetric(.weight, value: 81.2 + Double(week) * 0.3, date: date.addingTimeInterval(7 * 3_600), in: context)
+            }
+        }
+        TrainingActions.addMetric(.upperArm, value: 37.5, date: today.addingTimeInterval(-3 * 86_400), in: context)
+        TrainingActions.addMetric(.waist, value: 84, date: today.addingTimeInterval(-3 * 86_400), in: context)
     }
 
     /// Medikamente mit Verlauf der letzten Tage (für Einnahmetreue und Kalender).

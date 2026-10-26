@@ -184,7 +184,7 @@ private struct BackupSection: View {
         pendingRestoreURL = nil
         do {
             let summary = try BackupService.restore(from: url, context: context, calendar: AppModel.calendar)
-            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente."
+            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente, \(summary.workouts) Trainingseinheiten."
             app.tasksChanged()
         } catch {
             message = error.localizedDescription
@@ -238,13 +238,13 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 2
+    private let currentPhase = 3
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
         Phase(id: 1, title: "Heute, Aufgaben, Agenda", detail: "Abgeschlossen: Aufgaben, Schnellerfassung, Kalender, Datensicherung.", systemImage: "checklist"),
-        Phase(id: 2, title: "Medikamente", detail: "Einnahmepläne, Erinnerungen mit Knöpfen, Wecker, Vorrat, Widget, Kontrollzentrum, Siri.", systemImage: "pills"),
-        Phase(id: 3, title: "Training", detail: "Dein Oberkörper-4er-Plan, Satz-Tracking, Pausen-Timer.", systemImage: "dumbbell"),
+        Phase(id: 2, title: "Medikamente", detail: "Abgeschlossen: Einnahmepläne, Erinnerungen, Wecker, Vorrat, Widget, Kontrollzentrum, Siri.", systemImage: "pills"),
+        Phase(id: 3, title: "Training", detail: "Oberkörper-4er, Satz-Tracking mit Vorschlag, Pausen-Timer in der Dynamic Island, Statistik.", systemImage: "dumbbell"),
         Phase(id: 4, title: "Ernährung & Histamin", detail: "Lexikon, Scanner, Tagebuch, Auslöser-Analyse.", systemImage: "fork.knife"),
         Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Wochenrückblick, Arztbericht, Claude über Kurzbefehl.", systemImage: "sparkles"),
         Phase(id: 6, title: "Leben & Feinschliff", detail: "Routinen, Fristen, Verträge, Widgets, Fokus-Filter.", systemImage: "wand.and.stars"),

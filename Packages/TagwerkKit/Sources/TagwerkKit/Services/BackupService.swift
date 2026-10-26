@@ -77,7 +77,8 @@ public enum BackupService {
                     takenAt: log.takenAt, status: log.statusRaw, amount: log.amount, note: log.note,
                     createdAt: log.createdAt
                 )
-            }
+            },
+            training: try TrainingBackupMapper.makeBackup(context: context)
         )
     }
 
@@ -118,10 +119,11 @@ public enum BackupService {
         public let lists: Int
         public let tasks: Int
         public let medications: Int
+        public let workouts: Int
     }
 
-    /// Ersetzt alle Aufgaben, Listen und Medikamente durch den Inhalt der Sicherung.
-    /// Ältere Sicherungen ohne Medikamente lassen die vorhandenen Medikamente stehen.
+    /// Ersetzt alle Aufgaben, Listen, Medikamente und Trainingsdaten durch den Inhalt der Sicherung.
+    /// Ältere Sicherungen ohne Medikamente oder Training lassen diese Daten stehen.
     /// Vorher wird automatisch eine Sicherung des aktuellen Stands angelegt.
     @discardableResult
     public static func restore(from url: URL, context: ModelContext, now: Date = .now, calendar: Calendar) throws -> RestoreSummary {
@@ -218,6 +220,11 @@ public enum BackupService {
             log.medication = medication
         }
 
+        // Ältere Sicherungen ohne Training lassen vorhandene Trainingsdaten stehen.
+        if let training = document.training {
+            try TrainingBackupMapper.restore(training, context: context)
+        }
+
         let defaults = UserDefaults.standard
         for (key, value) in document.settings where SettingsKeys.backedUp.contains(key) {
             switch key {
@@ -231,6 +238,11 @@ public enum BackupService {
         }
 
         try context.save()
-        return RestoreSummary(lists: document.lists.count, tasks: document.tasks.count, medications: document.medications?.count ?? 0)
+        return RestoreSummary(
+            lists: document.lists.count,
+            tasks: document.tasks.count,
+            medications: document.medications?.count ?? 0,
+            workouts: document.training?.sessions.count ?? 0
+        )
     }
 }

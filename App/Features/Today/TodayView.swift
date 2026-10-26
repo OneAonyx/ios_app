@@ -9,6 +9,8 @@ struct TodayView: View {
     @Environment(CalendarService.self) private var calendarService
     @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
     @Query(sort: \Medication.sortIndex) private var medications: [Medication]
+    @Query(sort: \WorkoutPlan.createdAt) private var plans: [WorkoutPlan]
+    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workouts: [WorkoutSession]
     @AppStorage(SettingsKeys.userName) private var userName = ""
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
@@ -33,7 +35,9 @@ struct TodayView: View {
         let calendar = AppModel.calendar
         let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: 1, to: start) ?? now
-        let source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        let plan = plans.last(where: \.isActive) ?? plans.last
+        var source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        source.training = (plan, workouts)
         let todayItems = source.items(from: start, to: end, now: now)
         let doses = DayDoses(medications: medications.filter { $0.schedule.isScheduled }, day: now, now: now, calendar: calendar)
         let events = todayItems.filter { $0.kind == .event }.sorted { $0.start < $1.start }
@@ -59,6 +63,9 @@ struct TodayView: View {
                 }
                 if doses.total > 0 {
                     TodayDosesCard(today: doses, now: now, title: "Medikamente", collapsesResolved: true)
+                }
+                if let plan {
+                    TrainingTodayCard(plan: plan, workouts: workouts, now: now)
                 }
                 FocusCard(tasks: focusTasks, allTasks: tasks, onPick: { isPickingFocus = true })
                 DueTodayCard(tasks: otherTasks, allTasks: tasks, hasFocus: !focusTasks.isEmpty)
@@ -249,6 +256,7 @@ private struct NextUpCard: View {
         case .event: "calendar"
         case .task: "checklist"
         case .medication: "pills.fill"
+        case .training: "dumbbell.fill"
         }
     }
 
@@ -257,6 +265,7 @@ private struct NextUpCard: View {
         case .event: Color(hex: item.colorHex)
         case .task: ModuleAccent.tasks
         case .medication: ModuleAccent.medication
+        case .training: ModuleAccent.training
         }
     }
 
@@ -359,6 +368,72 @@ private struct EventsCard: View {
                 } else {
                     ForEach(events) { event in
                         AgendaRow(item: event, task: nil, compact: true) { _ in }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Training auf „Heute“: läuft gerade, heute erledigt oder als Nächstes.
+private struct TrainingTodayCard: View {
+    let plan: WorkoutPlan
+    let workouts: [WorkoutSession]
+    let now: Date
+
+    @Environment(AppModel.self) private var app
+
+    var body: some View {
+        let calendar = AppModel.calendar
+        let active = workouts.first(where: \.isActive)
+        let doneToday = workouts.first { !$0.isActive && calendar.isDate($0.startedAt, inSameDayAs: now) }
+        let isTrainingDay = plan.preferredWeekdays.contains(calendar.component(.weekday, from: now))
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                SectionHeader("Training", systemImage: "dumbbell", tint: ModuleAccent.training)
+                if let active {
+                    HStack(spacing: Spacing.s) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Läuft: \(active.title)")
+                                .font(.headline)
+                            Text(active.startedAt, style: .timer)
+                                .font(.subheadline.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 0)
+                        Button("Weiter") { app.isShowingWorkout = true }
+                            .buttonStyle(.borderedProminent)
+                            .tint(ModuleAccent.training)
+                    }
+                } else if let doneToday {
+                    Label("Heute erledigt: \(doneToday.title)", systemImage: "checkmark.circle.fill")
+                        .font(.headline)
+                        .foregroundStyle(.green)
+                    if let next = plan.nextDay {
+                        Text("Als Nächstes: \(next.title)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if let next = plan.nextDay {
+                    HStack(spacing: Spacing.s) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(next.title)
+                                .font(.headline)
+                            Text([isTrainingDay ? "Heute ist Trainingstag" : nil, "ca. \(next.estimatedMinutes(week: plan.currentWeek, cycle: plan.cycle)) Min.", plan.isDeloadWeek ? "Deload" : nil]
+                                .compactMap { $0 }
+                                .joined(separator: " · "))
+                                .font(.subheadline)
+                                .foregroundStyle(isTrainingDay ? ModuleAccent.training : Color.secondary)
+                        }
+                        Spacer(minLength: 0)
+                        Button {
+                            app.startWorkout()
+                        } label: {
+                            Label("Start", systemImage: "play.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(ModuleAccent.training)
+                        .accessibilityIdentifier("today.training.start")
                     }
                 }
             }

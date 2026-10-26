@@ -16,6 +16,8 @@ final class AppModel {
     let container: ModelContainer
     let calendarService = CalendarService()
     let systemCheck = SystemCheckModel()
+    /// Laufende Trainingseinheit: Pause, Live Activity.
+    let workout = WorkoutRunner()
     /// Gesetzt, wenn der Speicher nicht geöffnet werden konnte (Daten dann nur im Arbeitsspeicher).
     let storeError: String?
 
@@ -33,6 +35,8 @@ final class AppModel {
     var isAddingMedication = false
     /// Navigation im Tab „Gesundheit“ (Medikament-IDs).
     var healthPath: [String] = []
+    /// Trainingseinheit im Vollbild.
+    var isShowingWorkout = false
 
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
 
@@ -59,6 +63,13 @@ final class AppModel {
         }
         DoseActionCenter.refreshSnapshot = {
             AppModel.shared.writeMedicationSnapshot()
+        }
+        // Training: Knöpfe der Live Activity, „Training starten“ aus Siri und Kontrollzentrum.
+        WorkoutActionCenter.handler = { command in
+            AppModel.shared.handleWorkoutCommand(command)
+        }
+        WorkoutActionCenter.startHandler = {
+            AppModel.shared.startWorkout()
         }
     }
 
@@ -109,6 +120,12 @@ final class AppModel {
             openQuickAdd()
         case "gesundheit", "medikamente", "health":
             openMedications()
+        case "training":
+            if url.path == "/start" {
+                startWorkout()
+            } else {
+                openTraining()
+            }
         default:
             break
         }
@@ -119,6 +136,17 @@ final class AppModel {
     /// Nach jeder Änderung an Aufgaben: Erinnerungen neu planen (gebündelt).
     func tasksChanged() {
         scheduleRefresh()
+    }
+
+    /// Nach Änderungen am Training: Widget-Daten und Erinnerungen an Trainingstage.
+    func trainingChanged() {
+        writeTrainingSnapshot()
+        scheduleRefresh()
+    }
+
+    func writeTrainingSnapshot(now: Date = .now) {
+        guard !AppInfo.isUITesting else { return }
+        TrainingSnapshotWriter.write(context: context, now: now)
     }
 
     /// Nach jeder Änderung an Medikamenten oder Einnahmen: Widgets, Erinnerungen, Wecker.
@@ -144,6 +172,7 @@ final class AppModel {
             MedicationActions.ensureRefillTasks(in: context, now: now, calendar: calendar)
         }
         writeMedicationSnapshot(now: now)
+        writeTrainingSnapshot(now: now)
         let alarmsActive = AlarmProbe.isAuthorized && !AppInfo.isUITesting
         if alarmsActive {
             await MedicationAlarmScheduler.reschedule(medications: MedicationActions.fetchAll(in: context), now: now, calendar: calendar)
@@ -188,6 +217,95 @@ final class AppModel {
         }
         systemCheck.refreshOnActivate()
         BackgroundRefresh.schedule()
+        if storeError == nil, !AppInfo.isUITesting {
+            TrainingActions.ensureStarterPlan(in: context)
+        }
+        for command in WorkoutActionCenter.takeQueued() {
+            handleWorkoutCommand(command)
+        }
+        if WorkoutActionCenter.takePendingStart() {
+            startWorkout()
+        }
+        if let session = TrainingActions.activeSession(in: context) {
+            workout.updateActivity(session: session, catalog: TrainingActions.catalog(in: context))
+        }
+    }
+
+    // MARK: Training
+
+    func openTraining() {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        isShowingSettings = false
+        editingTask = nil
+        selectedTab = .training
+    }
+
+    /// Startet die nächste (oder gewählte) Einheit. Läuft schon eine, wird sie gezeigt.
+    func startWorkout(day: PlanDay? = nil, includeModule: Bool? = nil) {
+        openTraining()
+        if TrainingActions.activeSession(in: context) != nil {
+            isShowingWorkout = true
+            return
+        }
+        guard let plan = TrainingActions.ensureStarterPlan(in: context), let chosen = day ?? plan.nextDay else { return }
+        let dayIndex = plan.rotationDays.firstIndex { $0.stableID == chosen.stableID } ?? -1
+        let catalog = TrainingActions.catalog(in: context)
+        let session = TrainingActions.startSession(
+            plan: plan, day: chosen, includeModule: includeModule ?? (plan.moduleDayIndex == dayIndex),
+            catalog: catalog, in: context
+        )
+        workout.updateActivity(session: session, catalog: catalog)
+        isShowingWorkout = true
+        trainingChanged()
+    }
+
+    /// Satz abhaken und die passende Pause starten.
+    func completeSet(_ set: SetLog, weight: Double, reps: Int, rir: Int?) {
+        guard let session = set.session else { return }
+        let catalog = TrainingActions.catalog(in: context)
+        TrainingActions.complete(set, weight: weight, reps: reps, rir: rir, in: context)
+        let next = TrainingActions.next(after: set, in: session)
+        workout.focusSlot = next.set?.slot
+        if next.set != nil, next.restSeconds > 0 {
+            workout.startRest(seconds: next.restSeconds, session: session, catalog: catalog)
+        } else {
+            workout.skipRest(session: session, catalog: catalog)
+        }
+    }
+
+    /// Einheit abschließen. Gibt die Zusammenfassung zurück.
+    func finishWorkout(_ session: WorkoutSession) -> SessionSummary {
+        let summary = TrainingActions.finish(session, catalog: TrainingActions.catalog(in: context), in: context)
+        workout.endActivity()
+        trainingChanged()
+        return summary
+    }
+
+    func discardWorkout(_ session: WorkoutSession) {
+        TrainingActions.discard(session, in: context)
+        workout.endActivity()
+        isShowingWorkout = false
+        trainingChanged()
+    }
+
+    /// Knöpfe der Live Activity.
+    func handleWorkoutCommand(_ command: WorkoutCommand) {
+        guard let session = TrainingActions.activeSession(in: context) else {
+            workout.endActivity()
+            return
+        }
+        let catalog = TrainingActions.catalog(in: context)
+        switch command {
+        case .addRest:
+            workout.addRest(30, session: session, catalog: catalog)
+        case .skipRest:
+            workout.skipRest(session: session, catalog: catalog)
+        case .completeSet:
+            if let set = TrainingActions.nextPendingSet(in: session) {
+                completeSet(set, weight: set.weight, reps: set.reps, rir: set.rir ?? set.targetRIR)
+            }
+        }
     }
 
     /// Hintergrundaktualisierung: hält Mitteilungen und Wecker auch ohne Öffnen der App aktuell.

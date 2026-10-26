@@ -7,6 +7,8 @@ public struct AgendaItem: Sendable, Equatable, Identifiable, Hashable {
         case event
         case task
         case medication
+        /// Geplanter Trainingstag.
+        case training
     }
 
     public var id: String

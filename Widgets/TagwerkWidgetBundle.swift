@@ -7,7 +7,10 @@ import WidgetKit
 struct TagwerkWidgetBundle: WidgetBundle {
     var body: some Widget {
         MedicationWidget()
+        TrainingWidget()
         MedicationControl()
+        TrainingControl()
+        WorkoutLiveActivity()
         SystemCheckWidget()
         AlarmLiveActivity()
     }

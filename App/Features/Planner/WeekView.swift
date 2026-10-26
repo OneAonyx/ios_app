@@ -9,6 +9,8 @@ struct WeekView: View {
     @Environment(CalendarService.self) private var calendarService
     @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
     @Query(sort: \Medication.sortIndex) private var medications: [Medication]
+    @Query(sort: \WorkoutPlan.createdAt) private var plans: [WorkoutPlan]
+    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workouts: [WorkoutSession]
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
     @State private var weekOffset = 0
@@ -19,7 +21,8 @@ struct WeekView: View {
         let thisMonday = AgendaBuilder.startOfWeek(containing: now, calendar: calendar)
         let monday = calendar.date(byAdding: .day, value: 7 * weekOffset, to: thisMonday) ?? thisMonday
         let sunday = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
-        let source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        var source = AgendaSource(tasks: tasks, medications: medications, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        source.training = (plans.last(where: \.isActive) ?? plans.last, workouts)
         let days = AgendaBuilder.build(items: source.items(from: monday, to: sunday), from: monday, days: 7, now: now, calendar: calendar)
 
         ScrollView {

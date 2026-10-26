@@ -30,6 +30,48 @@ final class ScreenshotTests: XCTestCase {
         tapIfPresent(app.buttons["editor.done"])
         tapTab("Gesundheit", in: app)
         snap(app, "11-gesundheit-grosse-schrift")
+        tapTab("Training", in: app)
+        snap(app, "16-training-grosse-schrift")
+    }
+
+    /// Training: Tab, Plan, Statistik, Übungen, Körper, Einheit mit Pause, Satz, Zusammenfassung.
+    @MainActor
+    func testTraining() {
+        let app = launch(extraArguments: ["-forceLight"])
+        tapTab("Training", in: app)
+        snap(app, "16-training")
+
+        for (identifier, name) in [("training.plan", "17-plan"), ("training.stats", "18-statistik"), ("training.library", "19-uebungen"), ("training.body", "20-koerper")] {
+            let link = app.buttons[identifier]
+            if scrollTo(link, in: app), tapIfPresent(link) {
+                snap(app, name)
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+        }
+
+        // Nach oben und Einheit starten.
+        let start = app.buttons["training.start"]
+        for _ in 0..<4 where !(start.exists && start.isHittable) { app.swipeDown() }
+        guard tapIfPresent(start) else { return }
+        snap(app, "21-einheit")
+        let checks = app.buttons.matching(identifier: "workout.set.check")
+        if tapIfPresent(checks.element(boundBy: 0)) {
+            snap(app, "22-pause")
+        }
+        tapIfPresent(app.buttons["workout.rest.skip"], timeout: 2)
+        let edits = app.buttons.matching(identifier: "workout.set.edit")
+        if tapIfPresent(edits.element(boundBy: 1)) {
+            snap(app, "23-satz")
+            tapIfPresent(app.buttons["setEditor.complete"])
+        }
+        tapIfPresent(app.buttons["workout.rest.skip"], timeout: 2)
+        if tapIfPresent(app.buttons["workout.finish"]) {
+            tapIfPresent(app.buttons["Beenden und speichern"].firstMatch)
+            snap(app, "24-zusammenfassung")
+            tapIfPresent(app.buttons["summary.done"])
+        }
+        tapTab("Heute", in: app)
+        snap(app, "25-heute-nach-training")
     }
 
     /// Prüft im Simulator, was unter Linux nicht geht: Migration, Medikamenten-Aktionen, Sicherung.
@@ -130,6 +172,9 @@ final class ScreenshotTests: XCTestCase {
             snap(app, "14-neues-medikament-\(suffix)")
             tapIfPresent(app.buttons["Abbrechen"].firstMatch)
         }
+
+        tapTab("Training", in: app)
+        snap(app, "16-training-\(suffix)")
     }
 
     // MARK: - Hilfen
