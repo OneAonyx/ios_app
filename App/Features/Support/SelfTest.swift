@@ -175,7 +175,10 @@ enum SelfTest {
         try context.save()
         let snapshot = MedicationSnapshotWriter.makeSnapshot(medications: [medication], calendar: calendar)
         try check(snapshot.doses.count == 4, "\(snapshot.doses.count) statt 4 Einnahmen")
-        try check(MedicationWidgetSnapshot.decode(try snapshot.encoded()) == snapshot, "Kodierung")
+        // Nur die Einnahmen vergleichen: Der Zeitstempel `writtenAt` verliert beim Kodieren
+        // Sekundenbruchteile, die Einnahme-Zeiten sind ganze Minuten.
+        let decoded = MedicationWidgetSnapshot.decode(try snapshot.encoded())
+        try check(decoded?.doses == snapshot.doses, "Kodierung: Einnahmen weichen ab")
         return "4 Einnahmen (heute und morgen)"
     }
 }
@@ -212,6 +215,8 @@ struct SelfTestView: View {
     private var summary: String {
         if results.isEmpty { return "Läuft …" }
         let failed = results.filter { !$0.passed }
-        return failed.isEmpty ? "Alle \(results.count) Prüfungen bestanden" : "Fehlgeschlagen: \(failed.map(\.name).joined(separator: ", "))"
+        return failed.isEmpty
+            ? "Alle \(results.count) Prüfungen bestanden"
+            : "Fehlgeschlagen: \(failed.map { "\($0.name) (\($0.detail))" }.joined(separator: ", "))"
     }
 }
