@@ -1,8 +1,10 @@
 import SwiftUI
+import TagwerkCore
 import TagwerkKit
 
 struct RootView: View {
     @Environment(AppModel.self) private var app
+    @AppStorage(SettingsKeys.onboardingDone) private var onboardingDone = false
 
     var body: some View {
         @Bindable var app = app
@@ -11,7 +13,7 @@ struct RootView: View {
                 TodayView()
             }
             Tab(TagwerkModule.planner.title, systemImage: TagwerkModule.planner.systemImage, value: TagwerkModule.planner) {
-                PlaceholderTab(module: .planner)
+                PlannerView()
             }
             Tab(TagwerkModule.training.title, systemImage: TagwerkModule.training.systemImage, value: TagwerkModule.training) {
                 PlaceholderTab(module: .training)
@@ -32,6 +34,28 @@ struct RootView: View {
         .sheet(isPresented: $app.isShowingSearch) {
             SearchView()
         }
+        .sheet(isPresented: $app.isShowingQuickAdd) {
+            QuickAddView(presetList: app.quickAddList)
+        }
+        .sheet(item: $app.editingTask) { task in
+            TaskEditorView(task: task)
+        }
+        .fullScreenCover(isPresented: onboardingBinding) {
+            OnboardingView()
+        }
+    }
+
+    /// Onboarding beim ersten Start. In UI-Tests nur, wenn ausdrücklich verlangt.
+    private var onboardingBinding: Binding<Bool> {
+        Binding(
+            get: {
+                if LaunchOptions.showOnboarding { return !onboardingDone }
+                return !onboardingDone && !AppInfo.isUITesting
+            },
+            set: { isShown in
+                if !isShown { onboardingDone = true }
+            }
+        )
     }
 }
 

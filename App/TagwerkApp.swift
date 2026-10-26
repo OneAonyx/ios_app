@@ -4,16 +4,24 @@ import TagwerkKit
 @main
 struct TagwerkApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model = AppModel.shared
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(model)
+                .environment(model.calendarService)
+                .modelContainer(model.container)
                 .preferredColorScheme(LaunchOptions.forcedColorScheme)
                 .onOpenURL { url in
                     model.handle(url: url)
                 }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                model.appBecameActive()
+            }
         }
     }
 }
@@ -25,5 +33,10 @@ enum LaunchOptions {
         if arguments.contains("-forceDark") { return .dark }
         if arguments.contains("-forceLight") { return .light }
         return nil
+    }
+
+    /// Onboarding im UI-Test gezielt zeigen.
+    static var showOnboarding: Bool {
+        ProcessInfo.processInfo.arguments.contains("-showOnboarding")
     }
 }

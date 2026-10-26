@@ -11,6 +11,21 @@ public enum TagwerkIDs {
     public static let claudeShortcutName = "Tagwerk Claude"
 }
 
+/// Schlüssel für Einstellungen (App-eigene UserDefaults).
+public enum SettingsKeys {
+    public static let userName = "tagwerk.settings.userName"
+    public static let onboardingDone = "tagwerk.settings.onboardingDone"
+    public static let showCalendarEvents = "tagwerk.settings.showCalendarEvents"
+    /// Ausgeblendete Kalender, IDs durch Zeilenumbruch getrennt.
+    public static let hiddenCalendarIDs = "tagwerk.settings.hiddenCalendarIDs"
+    /// Standard-Erinnerung für neue Aufgaben mit Uhrzeit in Minuten vorher, −1 = keine.
+    public static let defaultReminderOffset = "tagwerk.settings.defaultReminderOffset"
+    public static let lastBackupAt = "tagwerk.settings.lastBackupAt"
+
+    /// Diese Einstellungen wandern mit in die Datensicherung.
+    public static let backedUp = [userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset]
+}
+
 /// Schlüssel für die gemeinsamen UserDefaults (App Group) und die App-eigenen Defaults.
 public enum SharedKeys {
     public static let widgetSnapshot = "tagwerk.widget.systemcheck.snapshot"
@@ -24,13 +39,19 @@ public enum NotificationIDs {
     public enum Category {
         public static let systemCheck = "tagwerk.category.systemcheck"
         public static let medication = "tagwerk.category.medication"
+        public static let task = "tagwerk.category.task"
     }
 
     public enum Action {
         public static let taken = "tagwerk.action.taken"
         public static let snooze10 = "tagwerk.action.snooze10"
         public static let skip = "tagwerk.action.skip"
+        public static let complete = "tagwerk.action.complete"
+        public static let tomorrow = "tagwerk.action.tomorrow"
     }
+
+    /// Schlüssel in `userInfo` einer Aufgaben-Mitteilung.
+    public static let taskIDKey = "taskID"
 
     public static let systemCheckRequest = "tagwerk.systemcheck.notification"
 }

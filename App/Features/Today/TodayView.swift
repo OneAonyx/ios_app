@@ -1,68 +1,337 @@
+import SwiftData
 import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
+/// Startseite: Was steht heute an, was ist als Nächstes dran, wie weit bin ich?
 struct TodayView: View {
     @Environment(AppModel.self) private var app
+    @Environment(CalendarService.self) private var calendarService
+    @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
+    @AppStorage(SettingsKeys.userName) private var userName = ""
+    @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
+    @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
+    @State private var isPickingFocus = false
 
     var body: some View {
-        @Bindable var app = app
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.m) {
-                    TodayHeader()
-                    SigningBanner()
-                    SystemCheckCard()
-                    RoadmapCard()
-                }
-                .padding(.horizontal, Spacing.m)
-                .padding(.bottom, Spacing.xl)
+            TimelineView(.everyMinute) { context in
+                content(now: context.date)
             }
             .background(Color.tagwerkPage)
             .navigationTitle("Heute")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {
-                        app.isShowingSearch = true
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                    }
-                    .accessibilityLabel("Suche")
-                    .accessibilityIdentifier("today.search")
+            .toolbar { toolbar }
+            .sheet(isPresented: $isPickingFocus) {
+                FocusPickerView(allTasks: tasks)
+            }
+        }
+    }
 
-                    Button {
-                        app.isShowingSettings = true
-                    } label: {
-                        Image(systemName: "person.crop.circle")
-                    }
-                    .accessibilityLabel("Einstellungen")
-                    .accessibilityIdentifier("today.settings")
+    private func content(now: Date) -> some View {
+        let calendar = AppModel.calendar
+        let start = calendar.startOfDay(for: now)
+        let end = calendar.date(byAdding: .day, value: 1, to: start) ?? now
+        let source = AgendaSource(tasks: tasks, calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs)
+        let todayItems = source.items(from: start, to: end)
+        let events = todayItems.filter { $0.kind == .event }.sorted { $0.start < $1.start }
+        let progress = TodayProgress.compute(tasks.map(\.facts), now: now, calendar: calendar)
+        let todayTasks = TaskOrdering.sorted(
+            tasks.filter { SmartList.today.includes($0.facts, now: now, calendar: calendar) },
+            facts: \.facts, now: now, calendar: calendar
+        )
+        let focusTasks = todayTasks.filter { $0.facts.isFocus(on: now, calendar: calendar) }
+        let otherTasks = todayTasks.filter { !$0.facts.isFocus(on: now, calendar: calendar) }
+        let nextUp = AgendaBuilder.nextUp(in: todayItems, now: now, calendar: calendar)
+
+        return ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                TodayHeader(now: now, userName: userName)
+                SigningBanner()
+                if let storeError = app.storeError {
+                    WarningCard(title: "Speicherproblem", message: storeError)
+                }
+                OverviewCard(progress: progress, eventCount: events.count, showsEvents: showEvents && calendarService.canRead)
+                if let nextUp {
+                    NextUpCard(item: nextUp, now: now, task: source.task(for: nextUp))
+                }
+                FocusCard(tasks: focusTasks, allTasks: tasks, onPick: { isPickingFocus = true })
+                DueTodayCard(tasks: otherTasks, allTasks: tasks, hasFocus: !focusTasks.isEmpty)
+                if showEvents {
+                    EventsCard(events: events)
                 }
             }
-            .navigationDestination(isPresented: $app.isShowingSystemCheck) {
-                SystemCheckView()
+            .padding(.horizontal, Spacing.m)
+            .padding(.bottom, Spacing.xl)
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            Button {
+                app.isShowingSearch = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+            }
+            .accessibilityLabel("Suche")
+            .accessibilityIdentifier("today.search")
+
+            Button {
+                app.isShowingSettings = true
+            } label: {
+                Image(systemName: "person.crop.circle")
+            }
+            .accessibilityLabel("Einstellungen")
+            .accessibilityIdentifier("today.settings")
+        }
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                app.openQuickAdd()
+            } label: {
+                Image(systemName: "plus")
+            }
+            .accessibilityLabel("Neue Aufgabe")
+            .accessibilityIdentifier("today.quickadd")
+        }
+    }
+}
+
+// MARK: - Karten
+
+private struct TodayHeader: View {
+    let now: Date
+    let userName: String
+
+    var body: some View {
+        let calendar = AppModel.calendar
+        let weekday = GermanCalendar.longWeekdays[calendar.component(.weekday, from: now) - 1]
+        let dateText = "\(weekday), \(calendar.component(.day, from: now)). \(GermanCalendar.shortMonths[calendar.component(.month, from: now) - 1])"
+        let greeting = DayPeriod(date: now, calendar: calendar).greeting
+        let name = userName.trimmingCharacters(in: .whitespaces)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(dateText)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(ModuleAccent.today)
+                .textCase(.uppercase)
+            Text(name.isEmpty ? greeting : "\(greeting), \(name)")
+                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, Spacing.xs)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct OverviewCard: View {
+    let progress: TodayProgress
+    let eventCount: Int
+    let showsEvents: Bool
+
+    var body: some View {
+        Card {
+            HStack(spacing: Spacing.m) {
+                ProgressRing(fraction: progress.fraction, tint: ModuleAccent.tasks, lineWidth: 9) {
+                    VStack(spacing: 0) {
+                        Text("\(progress.done)")
+                            .font(.system(.title2, design: .rounded, weight: .bold))
+                        Text("von \(progress.total)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(width: 72, height: 72)
+
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(headline)
+                        .font(.headline)
+                    Text(detail)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private var headline: String {
+        if progress.total == 0 { return "Heute ist nichts fällig" }
+        if progress.open == 0 { return "Alles erledigt" }
+        return progress.open == 1 ? "Noch 1 Aufgabe offen" : "Noch \(progress.open) Aufgaben offen"
+    }
+
+    private var detail: String {
+        var parts: [String] = []
+        if progress.done > 0 {
+            parts.append("\(progress.done) erledigt")
+        }
+        if showsEvents {
+            parts.append(eventCount == 1 ? "1 Termin" : "\(eventCount) Termine")
+        }
+        return parts.isEmpty ? "Plane deinen Tag mit „Neue Aufgabe“." : parts.joined(separator: " · ")
+    }
+}
+
+private struct NextUpCard: View {
+    let item: AgendaItem
+    let now: Date
+    let task: TaskItem?
+
+    @Environment(AppModel.self) private var app
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                SectionHeader("Als Nächstes", systemImage: "arrow.forward.circle", tint: ModuleAccent.today)
+                HStack(spacing: Spacing.s) {
+                    IconBadge(
+                        systemImage: item.kind == .event ? "calendar" : "checklist",
+                        tint: item.kind == .event ? Color(hex: item.colorHex) : ModuleAccent.tasks
+                    )
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.title)
+                            .font(.headline)
+                            .lineLimit(2)
+                        Text(timeText)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let task {
+                app.editingTask = task
+            } else if let url = CalendarService.calendarAppURL(for: item.start) {
+                openURL(url)
+            }
+        }
+    }
+
+    private var timeText: String {
+        let calendar = AppModel.calendar
+        let start = GermanCalendar.time(item.start, calendar: calendar)
+        if item.start <= now {
+            if let end = item.end { return "Läuft bis \(GermanCalendar.time(end, calendar: calendar))" }
+            return "Jetzt"
+        }
+        let minutes = Int(item.start.timeIntervalSince(now) / 60)
+        if minutes < 60 { return "\(start) · in \(max(minutes, 1)) Min." }
+        let hours = minutes / 60
+        return "\(start) · in \(hours) Std."
+    }
+}
+
+private struct FocusCard: View {
+    let tasks: [TaskItem]
+    let allTasks: [TaskItem]
+    let onPick: () -> Void
+
+    @Environment(AppModel.self) private var app
+
+    var body: some View {
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                HStack {
+                    SectionHeader("Fokus heute", systemImage: "scope", tint: ModuleAccent.today)
+                    Button(tasks.isEmpty ? "Wählen" : "Ändern", action: onPick)
+                        .font(.subheadline.weight(.semibold))
+                        .accessibilityIdentifier("today.focus.pick")
+                }
+                if tasks.isEmpty {
+                    Text("Wähle bis zu drei Aufgaben, die heute wirklich zählen.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(tasks) { task in
+                        TaskRow(task: task, onOpen: { app.editingTask = $0 })
+                    }
+                }
             }
         }
     }
 }
 
-/// Datum und Begrüßung, aktualisiert sich jede Minute.
-private struct TodayHeader: View {
+private struct DueTodayCard: View {
+    let tasks: [TaskItem]
+    let allTasks: [TaskItem]
+    let hasFocus: Bool
+
+    @Environment(AppModel.self) private var app
+    private let limit = 6
+
     var body: some View {
-        TimelineView(.everyMinute) { context in
-            VStack(alignment: .leading, spacing: 2) {
-                Text(context.date, format: .dateTime.weekday(.wide).day().month(.wide))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(ModuleAccent.today)
-                    .textCase(.uppercase)
-                Text(DayPeriod(date: context.date).greeting)
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                SectionHeader(hasFocus ? "Außerdem heute" : "Heute fällig", systemImage: "checklist", tint: ModuleAccent.tasks)
+                if tasks.isEmpty {
+                    Text(hasFocus ? "Sonst steht heute nichts an." : "Für heute ist nichts offen.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(tasks.prefix(limit)) { task in
+                        TaskRow(task: task, onOpen: { app.editingTask = $0 })
+                    }
+                    if tasks.count > limit {
+                        NavigationLink {
+                            TaskListScreen(scope: .smart(.today))
+                        } label: {
+                            Text("Alle \(tasks.count) anzeigen")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .padding(.top, Spacing.xxs)
+                    }
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
         }
-        .padding(.top, Spacing.xs)
+    }
+}
+
+private struct EventsCard: View {
+    let events: [AgendaItem]
+
+    @Environment(CalendarService.self) private var calendarService
+    @Environment(AppModel.self) private var app
+
+    var body: some View {
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                SectionHeader("Termine heute", systemImage: "calendar", tint: ModuleAccent.calendar)
+                if !calendarService.canRead {
+                    CalendarAccessRow()
+                } else if events.isEmpty {
+                    Text("Keine Termine im Kalender.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(events) { event in
+                        AgendaRow(item: event, task: nil, compact: true) { _ in }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct WarningCard: View {
+    let title: String
+    let message: String
+
+    var body: some View {
+        Card {
+            HStack(alignment: .top, spacing: Spacing.s) {
+                IconBadge(systemImage: "exclamationmark.triangle.fill", tint: .orange)
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(title).font(.headline)
+                    Text(message).font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
+        }
     }
 }
 
@@ -73,101 +342,70 @@ private struct SigningBanner: View {
     var body: some View {
         let level = status.level(now: .now)
         if status.kind == .freeAppleID, level != .ok {
-            Card {
-                HStack(alignment: .top, spacing: Spacing.s) {
-                    IconBadge(systemImage: "exclamationmark.triangle.fill", tint: .orange)
-                    VStack(alignment: .leading, spacing: Spacing.xxs) {
-                        Text(level == .expired ? "Signatur abgelaufen" : "App läuft bald ab")
-                            .font(.headline)
-                        Text("Signatur \(status.remainingText(now: .now)). Öffne SideStore und tippe bei Tagwerk auf „Refresh“.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
+            WarningCard(
+                title: level == .expired ? "Signatur abgelaufen" : "App läuft bald ab",
+                message: "Signatur \(status.remainingText(now: .now)). Spiel Tagwerk über iloader oder SideStore neu auf, deine Daten bleiben erhalten."
+            )
         }
     }
 }
 
-private struct SystemCheckCard: View {
-    @Environment(AppModel.self) private var app
+// MARK: - Fokus wählen
+
+/// Bis zu drei Aufgaben für heute in den Fokus nehmen.
+struct FocusPickerView: View {
+    let allTasks: [TaskItem]
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
 
     var body: some View {
-        let passed = app.systemCheck.passedCount
-        let total = SystemCheckID.allCases.count
-        Card {
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                SectionHeader("Phase 0", systemImage: "checkmark.seal", tint: .indigo)
-                Text("Systemcheck")
-                    .font(.title3.bold())
-                Text("Sechs kurze Tests zeigen, was auf deinem iPhone funktioniert: Health, Widget, Wecker, Mitteilungen und die Claude-Brücke.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                ProgressView(value: Double(passed), total: Double(total))
-                    .tint(.green)
-                HStack {
-                    Text("\(passed) von \(total) bestanden")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Öffnen") {
-                        app.isShowingSystemCheck = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("today.systemcheck")
-                }
-            }
-        }
-    }
-}
+        let now = Date.now
+        let calendar = AppModel.calendar
+        let candidates = TaskOrdering.sorted(allTasks.filter { !$0.isDone }, facts: \.facts, now: now, calendar: calendar)
+        let focusCount = candidates.filter { $0.facts.isFocus(on: now, calendar: calendar) }.count
 
-/// Fahrplan der Phasen, damit klar ist, was als Nächstes kommt.
-private struct RoadmapCard: View {
-    private struct Phase: Identifiable {
-        let id: Int
-        let title: String
-        let systemImage: String
-    }
-
-    private let phases: [Phase] = [
-        Phase(id: 0, title: "Fundament & Systemcheck", systemImage: "hammer"),
-        Phase(id: 1, title: "Heute, Aufgaben, Agenda", systemImage: "checklist"),
-        Phase(id: 2, title: "Medikamente", systemImage: "pills"),
-        Phase(id: 3, title: "Training", systemImage: "dumbbell"),
-        Phase(id: 4, title: "Ernährung & Histamin", systemImage: "fork.knife"),
-        Phase(id: 5, title: "Health & Claude-Brücke", systemImage: "heart"),
-        Phase(id: 6, title: "Leben & Feinschliff", systemImage: "sparkles"),
-        Phase(id: 7, title: "Developer-Account & iCloud", systemImage: "icloud"),
-    ]
-
-    private let currentPhase = 0
-
-    var body: some View {
-        Card {
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                SectionHeader("Fahrplan", systemImage: "map", tint: ModuleAccent.today)
-                ForEach(phases) { phase in
-                    HStack(spacing: Spacing.s) {
-                        Image(systemName: phase.systemImage)
-                            .frame(width: 24)
-                            .foregroundStyle(phase.id == currentPhase ? ModuleAccent.today : Color.secondary)
-                        Text("Phase \(phase.id): \(phase.title)")
-                            .font(.subheadline)
-                            .fontWeight(phase.id == currentPhase ? .semibold : .regular)
-                            .foregroundStyle(phase.id <= currentPhase ? Color.primary : Color.secondary)
-                        Spacer()
-                        if phase.id == currentPhase {
-                            Text("jetzt")
-                                .font(.caption.weight(.semibold))
-                                .padding(.horizontal, Spacing.xs)
-                                .padding(.vertical, 2)
-                                .foregroundStyle(ModuleAccent.today)
-                                .background(ModuleAccent.today.opacity(0.15), in: Capsule())
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(candidates) { task in
+                        let isFocus = task.facts.isFocus(on: now, calendar: calendar)
+                        Button {
+                            TaskActions.toggleFocus(task, allTasks: allTasks, in: context, calendar: calendar)
+                        } label: {
+                            HStack {
+                                Image(systemName: isFocus ? "scope" : "circle")
+                                    .foregroundStyle(isFocus ? ModuleAccent.today : Color.secondary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(task.title)
+                                        .foregroundStyle(Color.primary)
+                                    if let due = task.dueDate {
+                                        Text(DueFormatter.label(due: due, hasTime: task.hasDueTime, now: now, calendar: calendar))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
                         }
+                        .disabled(!isFocus && !FocusRules.canAddFocus(currentCount: focusCount))
                     }
-                    .accessibilityElement(children: .combine)
+                } footer: {
+                    Text("\(focusCount) von \(FocusRules.maximum) gewählt")
+                }
+            }
+            .overlay {
+                if candidates.isEmpty {
+                    ContentUnavailableView("Keine offenen Aufgaben", systemImage: "checklist", description: Text("Lege zuerst Aufgaben an."))
+                }
+            }
+            .navigationTitle("Fokus heute")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") { dismiss() }
                 }
             }
         }
+        .presentationDetents([.medium, .large])
     }
 }

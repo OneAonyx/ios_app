@@ -39,8 +39,37 @@ public enum NotificationSetup {
                 intentIdentifiers: [],
                 options: [.customDismissAction]
             ),
+            UNNotificationCategory(
+                identifier: NotificationIDs.Category.task,
+                actions: taskActions,
+                intentIdentifiers: [],
+                options: []
+            ),
         ]
         UNUserNotificationCenter.current().setNotificationCategories(categories)
+    }
+
+    private static var taskActions: [UNNotificationAction] {
+        [
+            UNNotificationAction(
+                identifier: NotificationIDs.Action.complete,
+                title: "Erledigt",
+                options: [],
+                icon: UNNotificationActionIcon(systemImageName: "checkmark.circle")
+            ),
+            UNNotificationAction(
+                identifier: NotificationIDs.Action.tomorrow,
+                title: "Morgen",
+                options: [],
+                icon: UNNotificationActionIcon(systemImageName: "arrow.turn.up.right")
+            ),
+        ]
+    }
+
+    /// `true`, wenn Mitteilungen erlaubt sind (auch „vorläufig“).
+    public static func isAuthorized() async -> Bool {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        return status == .authorized || status == .provisional
     }
 
     public static func requestAuthorization() async throws -> Bool {

@@ -14,7 +14,7 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     # Phase 0: Swift-5-Modus für App und Widget (Nebenläufigkeit als Warnung).
     # TagwerkCore läuft bereits im Swift-6-Modus. Umstellung in Phase 1.
@@ -75,6 +75,7 @@ targets:
         NSHealthShareUsageDescription: "Tagwerk liest Gesundheitsdaten wie Schritte, Gewicht und Schlaf, um sie in deinem Tagesüberblick zu zeigen."
         NSHealthUpdateUsageDescription: "Tagwerk speichert Workouts, Gewicht, Wasser, Symptome und Stimmung in Apple Health."
         NSAlarmKitUsageDescription: "Tagwerk stellt Wecker für wichtige Medikamente, damit du sie auch im Stummmodus nicht verpasst."
+        NSCalendarsFullAccessUsageDescription: "Tagwerk zeigt deine Termine auf „Heute“, in der Agenda und in der Woche und legt auf Wunsch neue Termine an."
     entitlements:
       path: App/Supporting/Tagwerk.entitlements
       properties:
