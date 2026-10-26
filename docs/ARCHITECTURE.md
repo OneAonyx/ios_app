@@ -106,6 +106,44 @@ Medikamenten-Aktionen, Sicherung mit Medikamenten, Widget-Daten), prüft `App/Fe
 Der UI-Test `testSelfTest` startet die App mit `-selfTest` und erwartet „Alle … bestanden“.
 Ein eigenes Unit-Test-Target hätte die Pakete ein zweites Mal gelinkt (doppelte SwiftData-Klassen).
 
+## Phase 3: Training
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Übungen, Startplan | `TagwerkCore/Resources/exercises.de.json`, `plan-upper-4day.json` | als SPM-Ressourcen (`Bundle.module`), unter Linux geprüft |
+| Katalog, Plan-Format, Import | `TagwerkCore/Training/ExerciseCatalog.swift`, `PlanTemplate.swift` | Muskelgruppen mit Zielbereichen, `orbit.plan.v1`, unscharfe Namenszuordnung |
+| Progression, Zyklus, Aufwärmen, Volumen, Rekorde, Rotation | `TagwerkCore/Training/TrainingLogic.swift` | reine Logik (`TrainingTests.swift`) |
+| `TagwerkSchemaV3` | `TagwerkKit/…/Models/SchemaV3.swift` | `WorkoutPlan`, `PlanDay`, `PlanExercise`, `WorkoutSession`, `SetLog`, `CustomExercise`, `ExercisePreference`, `BodyMetric`; V2 → V3 leicht |
+| `TrainingActions` | `…/Models/TrainingActions.swift` | Startplan, Einheit starten/abschließen, nächster Satz (Supersätze), Tauschen, Statistik, Agenda, Erinnerungen |
+| `TrainingSnapshotWriter`, `WorkoutActionCenter` | `…/Services/TrainingSharing.swift` | Widget-Daten, Befehle aus der Live Activity |
+| `TrainingBackupMapper` | `…/Services/TrainingBackupMapper.swift` | Training in der Sicherung |
+| `WorkoutRunner` | `App/Services/WorkoutRunner.swift` | Pausen-Timer, Live Activity, Mitteilung „Pause vorbei“ |
+| `WorkoutActivityAttributes`, Knopf-Intents | `Shared/WorkoutActivity.swift` | in App **und** Widget kompiliert |
+| Training-Tab, Einheit, Editor, Statistik | `App/Features/Training/` | SwiftUI |
+
+**Eine Einheit** ist eine `WorkoutSession` ohne `endedAt`. Beim Start werden alle Sätze als
+`SetLog` mit Zielwerten angelegt (Gewicht aus dem Vorschlag, Aufwärmsätze davor). Abhaken setzt
+Ist-Werte und `completedAt`. Beim Abschließen fallen offene Sätze weg, und der Plan rückt
+eine Einheit weiter (`PlanProgress`). Die Vorgeschichte für Vorschläge liest `TrainingActions`
+aus abgeschlossenen Einheiten und reicht sie als Werte an `TagwerkCore`.
+
+**Knopf in der Live Activity:**
+
+```
+„Satz fertig“ ──► CompleteSetIntent (LiveActivityIntent, läuft im App-Prozess)
+                     ▼
+              WorkoutActionCenter.submit
+               ├─ App läuft:  AppModel.handleWorkoutCommand
+               │              → Satz abhaken, Pause starten, Live Activity aktualisieren
+               └─ sonst:      Warteschlange (App Group), App übernimmt beim Öffnen
+```
+
+Die Live Activity setzt `staleDate` auf das Pausenende. Danach zeigt sie „Pause vorbei“ statt
+eines Countdowns, auch wenn die App nicht mehr läuft.
+
+**Selbsttest:** Migration V1 → V3 und V2 → V3 (Medikamente bleiben), eine Einheit mit Abschluss
+und Vorschlag für die nächste (Steigerung, Aufwärmsätze), Sicherung mit Training.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
@@ -120,6 +158,8 @@ Ein eigenes Unit-Test-Target hätte die Pakete ein zweites Mal gelinkt (doppelte
 | `tagwerk://systemcheck` | öffnet den Systemcheck |
 | `tagwerk://neu` | öffnet die Schnellerfassung |
 | `tagwerk://gesundheit` | öffnet den Tab „Gesundheit“ (Medikamenten-Widget) |
+| `tagwerk://training` | öffnet den Tab „Training“ (Widget, Live Activity) |
+| `tagwerk://training/start` | startet die nächste Einheit |
 | `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
 
