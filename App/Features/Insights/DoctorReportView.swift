@@ -31,8 +31,7 @@ struct DoctorReportView: View {
                     Text("3 Monate").tag(13)
                     Text("6 Monate").tag(26)
                 }
-                TextField("Name im Bericht", text: $name, prompt: Text("optional"))
-                    .textContentType(.name)
+                LabeledField(title: "Name im Bericht (optional)", text: $name, prompt: "z. B. Vor- und Nachname")
             } footer: {
                 Text(report.periodLabel(calendar: calendar))
             }

@@ -213,9 +213,28 @@ private struct SleepHoursRow: View {
     let onChange: (Double?) -> Void
 
     var body: some View {
+        // Bei großer Schrift steht der Wert unter der Überschrift.
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                title
+                Spacer()
+                control
+            }
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                title
+                control
+            }
+        }
+    }
+
+    private var title: some View {
+        Label("Schlafdauer", systemImage: "moon.zzz.fill")
+            .fixedSize()
+    }
+
+    @ViewBuilder
+    private var control: some View {
         HStack {
-            Label("Schlafdauer", systemImage: "moon.zzz.fill")
-            Spacer()
             if let hours {
                 Stepper(value: Binding(get: { hours }, set: { onChange($0) }), in: 0...16, step: 0.5) {
                     Text("\(WeightFormat.number(hours)) Std.")
@@ -297,6 +316,12 @@ struct CheckInHistoryView: View {
                             .foregroundStyle(ModuleAccent.health)
                     }
                     .chartYScale(domain: 1...5)
+                    .chartXAxis {
+                        AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                            AxisGridLine()
+                            AxisValueLabel(format: .dateTime.day().month(.twoDigits))
+                        }
+                    }
                     .chartYAxis {
                         AxisMarks(values: [1, 2, 3, 4, 5]) { value in
                             AxisGridLine()

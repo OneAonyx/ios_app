@@ -304,11 +304,9 @@ struct ClaudeRequestView: View {
                 }
             } else {
                 Section {
-                    TextField("Was soll sich ändern?", text: $wish, prompt: Text("z. B. mehr Rücken, kürzere Einheiten"), axis: .vertical)
-                        .lineLimit(2...5)
-                        .accessibilityIdentifier("claude.wish")
-                    TextField("Ziel", text: $goal, prompt: Text(ClaudeBridgeActions.defaultGoal))
-                    TextField("Erfahrung", text: $experience, prompt: Text(ClaudeBridgeActions.defaultExperience))
+                    LabeledField(title: "Was soll sich ändern?", text: $wish, prompt: "z. B. mehr Rücken, kürzere Einheiten", lines: 2...5, identifier: "claude.wish")
+                    LabeledField(title: "Ziel", text: $goal, prompt: ClaudeBridgeActions.defaultGoal)
+                    LabeledField(title: "Erfahrung", text: $experience, prompt: ClaudeBridgeActions.defaultExperience)
                 } header: {
                     Text("Deine Angaben")
                 } footer: {
@@ -322,8 +320,7 @@ struct ClaudeRequestView: View {
                         Text(WeeklyReview.title(weekStart: start, calendar: AppModel.calendar)).tag(start)
                     }
                 }
-                TextField("Frage oder Wunsch", text: $wish, prompt: Text("optional, z. B. mehr Fokus auf Schlaf"), axis: .vertical)
-                    .lineLimit(1...4)
+                LabeledField(title: "Frage oder Wunsch (optional)", text: $wish, prompt: "z. B. mehr Fokus auf Schlaf", lines: 1...4)
             }
             if let review = inputs.review, review.isEmpty {
                 Section {
@@ -332,11 +329,9 @@ struct ClaudeRequestView: View {
             }
         case .food:
             Section {
-                TextField("Name", text: $foodName, prompt: Text("z. B. Haferdrink Barista"))
-                    .accessibilityIdentifier("claude.food.name")
-                TextField("Marke", text: $brand, prompt: Text("optional"))
-                TextField("Zutaten", text: $ingredients, prompt: Text("optional, z. B. von der Verpackung"), axis: .vertical)
-                    .lineLimit(2...6)
+                LabeledField(title: "Name", text: $foodName, prompt: "z. B. Haferdrink Barista", identifier: "claude.food.name")
+                LabeledField(title: "Marke (optional)", text: $brand, prompt: "z. B. Alpro")
+                LabeledField(title: "Zutaten (optional)", text: $ingredients, prompt: "von der Verpackung", lines: 2...6)
             } header: {
                 Text("Lebensmittel")
             } footer: {
@@ -344,16 +339,13 @@ struct ClaudeRequestView: View {
             }
         case .recipes:
             Section("Deine Angaben") {
-                TextField("Wunsch", text: $wish, prompt: Text("z. B. schnelles Frühstück, ohne Fisch"), axis: .vertical)
-                    .lineLimit(1...4)
-                    .accessibilityIdentifier("claude.wish")
+                LabeledField(title: "Wunsch (optional)", text: $wish, prompt: "z. B. schnelles Frühstück, ohne Fisch", lines: 1...4, identifier: "claude.wish")
                 Stepper("\(recipeCount) Rezepte", value: $recipeCount, in: 1...5)
                 Stepper(servings == 1 ? "1 Portion" : "\(servings) Portionen", value: $servings, in: 1...6)
             }
         case .patterns:
             Section {
-                TextField("Frage", text: $wish, prompt: Text("optional, z. B. Liegt es am Käse?"), axis: .vertical)
-                    .lineLimit(1...4)
+                LabeledField(title: "Frage (optional)", text: $wish, prompt: "z. B. Liegt es am Käse?", lines: 1...4)
             } header: {
                 Text("Deine Angaben")
             } footer: {
@@ -500,9 +492,9 @@ struct ClaudeExchangeView: View {
                             .textSelection(.enabled)
                     }
                 case .success(.food(let food)):
-                    FoodAnswerSection(food: food, exchange: exchange) { text in message = text }
+                    FoodAnswerSection(food: food, exchange: exchange)
                 case .success(.recipes(let recipes, let newFoods)):
-                    RecipesAnswerSection(recipes: recipes, newFoods: newFoods, exchange: exchange) { text in message = text }
+                    RecipesAnswerSection(recipes: recipes, newFoods: newFoods, exchange: exchange)
                 case .failure(let error):
                     Section {
                         Label(error.localizedDescription, systemImage: "exclamationmark.triangle.fill")
@@ -726,7 +718,6 @@ private struct PlanAnswerSection: View {
 private struct FoodAnswerSection: View {
     let food: FoodInfo
     let exchange: ClaudeExchange
-    let onApplied: (String) -> Void
 
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
@@ -764,7 +755,6 @@ private struct FoodAnswerSection: View {
                 Button {
                     ClaudeBridgeActions.applyFood(food, from: exchange, in: context)
                     app.nutritionChanged()
-                    onApplied("„\(food.name)“ steht jetzt in deinem Lexikon.")
                 } label: {
                     Label("Ins Lexikon übernehmen", systemImage: "plus.circle")
                         .font(.headline)
@@ -781,7 +771,6 @@ private struct RecipesAnswerSection: View {
     let recipes: [RecipeInfo]
     let newFoods: [FoodInfo]
     let exchange: ClaudeExchange
-    let onApplied: (String) -> Void
 
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
@@ -838,13 +827,43 @@ private struct RecipesAnswerSection: View {
                 Button {
                     ClaudeBridgeActions.applyRecipes(recipes, newFoods: newFoods, from: exchange, in: context)
                     app.nutritionChanged()
-                    onApplied(recipes.count == 1 ? "Rezept gespeichert." : "\(recipes.count) Rezepte gespeichert.")
                 } label: {
                     Label(recipes.count == 1 ? "Rezept speichern" : "\(recipes.count) Rezepte speichern", systemImage: "book.closed")
                         .font(.headline)
                 }
                 .accessibilityIdentifier("claude.apply")
             }
+        }
+    }
+}
+
+/// Eingabefeld mit kleiner Überschrift, damit Beispiele nicht wie eingetragene Werte aussehen.
+struct LabeledField: View {
+    let title: String
+    @Binding var text: String
+    var prompt = ""
+    var lines: ClosedRange<Int>?
+    var identifier: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            field
+                .accessibilityLabel(title)
+                .accessibilityIdentifier(identifier ?? "")
+        }
+    }
+
+    @ViewBuilder
+    private var field: some View {
+        if let lines {
+            TextField(title, text: $text, prompt: Text(prompt), axis: .vertical)
+                .lineLimit(lines)
+        } else {
+            TextField(title, text: $text, prompt: Text(prompt))
         }
     }
 }
