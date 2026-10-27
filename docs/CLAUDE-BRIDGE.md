@@ -1,8 +1,5 @@
 # Claude-Brücke
 
-> **Umbenannt:** Hast du den Kurzbefehl schon als „Tagwerk Claude“ angelegt, benenne ihn in der
-> Kurzbefehle-App in **„Orbit Claude“** um (lange drücken → Umbenennen).
-
 Orbit nutzt Claude **ohne API-Key und ohne Zusatzkosten**: Anfragen laufen über die Aktion
 „Ask Claude“ der offiziellen Claude-App in der Kurzbefehle-App, also über dein normales Claude-Konto.
 Anfragen zählen zu deinem normalen Nutzungslimit.
@@ -18,42 +15,57 @@ Anfragen zählen zu deinem normalen Nutzungslimit.
 5. Als letzte Aktion **„Stoppen und ausgeben“** (englisch „Stop and Output“) hinzufügen, ebenfalls
    mit dem Ergebnis von „Ask Claude“.
 
-Fertig. Der Kurzbefehl hat damit drei Aktionen:
-
 ```
 [Ask Claude: Kurzbefehleingabe] → [Claude-Antwort übernehmen: Antwort] → [Stoppen und ausgeben: Antwort]
 ```
 
-Die Anleitung steht auch in der App: Systemcheck → Claude-Brücke → „Anleitung: Kurzbefehl anlegen“.
+Die Anleitung steht auch in der App: **Gesundheit → Claude → Kurzbefehl einrichten** oder
+Einstellungen → Einblicke. Hast du den Kurzbefehl in Phase 0 angelegt, musst du nichts ändern.
+
+## Anwendungsfälle
+
+| Anfrage | Was an Claude geht | Antwortformat | In Orbit |
+|---|---|---|---|
+| Trainingsplan | Ziel, Erfahrung, aktueller Plan mit Übungsnamen, letzte Top-Sätze, stagnierende Übungen, Sätze je Muskel, Wunsch, Liste der Übungsnamen | `orbit.plan.v1` | Vorschau, „Als neuen Plan übernehmen“ (der alte bleibt erhalten) |
+| Wochenrückblick | Kennzahlen der Woche als Kurzfassung, Wunsch | `orbit.text.v1` | Text mit fett und Listen |
+| Lebensmittel | Name, Marke, Zutaten | `orbit.food.v1` | Bewertung, „Ins Lexikon übernehmen“ |
+| Rezepte | Anzahl, Portionen, Eiweiß je Portion, gut verträgliche und gemiedene Lebensmittel, Wunsch | `orbit.recipes.v1` | Vorschau mit Bewertung je Zutat, „Rezepte speichern“ |
+| Muster | Anzahl Mahlzeiten und Beschwerden, auffällige Lebensmittel und Umstände, häufigste Beschwerden, Befinden, gemiedene Lebensmittel, Frage | `orbit.text.v1` | Text |
+
+**Nie dabei:** dein Name, Geburtsdatum, einzelne Einträge mit Datum, Notizen.
+
+Jede Anfrage bekommt eine Kennung (6 Zeichen), die Claude im Feld `ref` zurückgibt. Daran ordnet
+Orbit die Antwort der richtigen Anfrage zu, auch wenn mehrere offen sind.
 
 ## So läuft eine Anfrage
 
-1. Orbit baut die Anfrage und öffnet
+1. Anfrage zusammenstellen, Vorschau prüfen, **An Claude senden**.
+2. Orbit öffnet
    `shortcuts://x-callback-url/run-shortcut?name=Orbit%20Claude&input=text&text=…&x-success=tagwerk://claude/success/<id>`.
-2. Der Kurzbefehl fragt Claude und gibt die Antwort auf zwei Wegen zurück:
+   Lange Anfragen (über 8000 Zeichen, z. B. Trainingsplan) legt Orbit in die Zwischenablage und
+   startet den Kurzbefehl mit `input=clipboard`. iOS fragt dann eventuell einmal, ob Kurzbefehle
+   einfügen darf: **Erlauben**.
+3. Der Kurzbefehl fragt Claude und gibt die Antwort auf zwei Wegen zurück:
    - über die Orbit-Aktion „Claude-Antwort übernehmen“ (Briefkasten in der App)
    - über „Stoppen und ausgeben“ → Rücksprung `tagwerk://claude/success/<id>?result=…`
-3. Orbit sucht in der Antwort das JSON, prüft Format und Kennung und zeigt das Ergebnis.
-
-Der Phase-0-Test schickt nur eine Zufallskennung (z. B. `7F3A9C21`) und erwartet
-`{"format":"tagwerk.ping.v1","ok":true,"echo":"7F3A9C21"}` zurück.
+4. Orbit springt zur Anfrage, liest das JSON (auch aus Codeblöcken oder mit typografischen
+   Anführungszeichen) und zeigt die Vorschau. Übernommen wird erst auf deinen Tipp.
 
 ## Ausweichweg ohne Kurzbefehl
 
-Systemcheck → Claude-Brücke → **„Anfrage kopieren“** → in der Claude-App einfügen →
-Antwort kopieren → in Orbit **„Einfügen“** tippen.
+**Stattdessen kopieren** → in der Claude-App einfügen → Claudes Antwort kopieren → in Orbit
+bei der Anfrage **Einfügen** tippen. Das geht auch später aus dem Verlauf.
 
 ## Fehlerbilder
 
 | Meldung | Ursache und Lösung |
 |---|---|
-| „Kurzbefehl meldet einen Fehler“ | Kurzbefehl heißt nicht exakt `Orbit Claude` oder eine Aktion fehlt |
-| „lief, gab aber keine Antwort zurück“ | Schritt 4 oder 5 fehlt, oder die Aktionen nutzen nicht das Ergebnis von „Ask Claude“ |
-| „In der Antwort war kein gültiges JSON“ | Claude hat frei formuliert. Erneut versuchen; Orbit liest JSON auch aus Codeblöcken |
-| „Kennung passt nicht“ | Eine alte Antwort kam an. Test neu starten |
+| „Senden hat nicht geklappt“ | Kurzbefehl heißt nicht exakt `Orbit Claude`, oder die Kurzbefehle-App ließ sich nicht öffnen |
+| „Wartet auf Claudes Antwort“ bleibt stehen | Schritt 4 oder 5 fehlt. Antwort in der Kurzbefehle-App kopieren und **Einfügen** |
+| „In der Antwort war kein passendes JSON“ | Claude hat frei formuliert. **Erneut senden** oder eine korrigierte Antwort einfügen |
+| „Claude hat im falschen Format geantwortet“ | Antwort gehört zu einer anderen Art von Anfrage. Erneut senden |
 
-## Später (Phase 3 und 5)
+## Systemcheck
 
-Dieselbe Brücke liefert Trainingspläne (`tagwerk.plan.v1`), Lebensmittel (`tagwerk.food.v1`),
-Rezepte (`tagwerk.recipe.v1`) und Wochenrückblicke. Vor jedem Senden zeigt Orbit, welche Daten
-an Claude gehen.
+Der Phase-0-Test (Systemcheck → Claude-Brücke) schickt nur eine Zufallskennung und erwartet
+`{"format":"tagwerk.ping.v1","ok":true,"echo":"…"}` zurück. Er läuft unabhängig vom Verlauf.

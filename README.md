@@ -4,13 +4,13 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Phase 4 – Ernährung & Histamin.** Lexikon mit 350 Lebensmitteln (Bewertung 0–3,
-eigene Einschätzung hat Vorrang), Ernährungstagebuch mit Histamin-Tageslast, Eiweiß und Wasser,
-Barcode-Scan (Open Food Facts) und Zutatenlisten-Prüfung per Kamera, Beschwerden mit
-Muster-Auswertung, Nachfrage „DAO schon genommen?“, Einkaufsliste, 32 Rezepte und Wochenplan.
-Dazu aus Phase 3: Training mit Startplan, Progression und Pausen-Timer in der Dynamic Island;
+**Stand: Phase 5 – Einblicke & Claude-Brücke.** Täglicher Check-in (Schlaf, Energie, Stimmung,
+Stress), Wochenrückblick mit Sonntags-Erinnerung, Arztbericht als PDF, Claude für Trainingsplan,
+Lebensmittel, Rezepte, Muster und Rückblick mit Datenvorschau und Verlauf (über die Claude-App,
+ohne API-Key). Dazu aus Phase 4: Ernährung mit Histamin-Lexikon, Scanner, Tagebuch, Mustern,
+Einkauf und Rezepten; aus Phase 3: Training mit Progression und Pausen-Timer in der Dynamic Island;
 aus Phase 2: Medikamente mit Erinnerungen und Wecker; aus Phase 1: Aufgaben, Schnellerfassung,
-Agenda mit Kalenderterminen, tägliche Datensicherung.
+Agenda, tägliche Datensicherung. Apple Health folgt mit dem Developer-Account.
 Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Schnellstart
@@ -21,6 +21,8 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | App aufs iPhone bringen | [`docs/SIDELOAD.md`](docs/SIDELOAD.md) |
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
+| Check-in, Wochenrückblick, Arztbericht, Claude | [`docs/EINBLICKE.md`](docs/EINBLICKE.md) |
+| Phase 5 auf dem iPhone testen | [`docs/PHASE5-CHECKLIST.md`](docs/PHASE5-CHECKLIST.md) |
 | Ernährung, Histamin, Scanner, Muster | [`docs/ERNAEHRUNG.md`](docs/ERNAEHRUNG.md) |
 | Phase 4 auf dem iPhone testen | [`docs/PHASE4-CHECKLIST.md`](docs/PHASE4-CHECKLIST.md) |
 | Training, Progression, Plan-Import | [`docs/TRAINING.md`](docs/TRAINING.md) |
@@ -28,7 +30,7 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | Phase 2 auf dem iPhone testen | [`docs/PHASE2-CHECKLIST.md`](docs/PHASE2-CHECKLIST.md) |
 | Phase-0-Tests durchführen | [`docs/PHASE0-CHECKLIST.md`](docs/PHASE0-CHECKLIST.md) |
 | Phase-0-Ergebnis | [`docs/PHASE0-ERGEBNIS.md`](docs/PHASE0-ERGEBNIS.md) |
-| Kurzbefehl für Claude einrichten | [`docs/CLAUDE-BRIDGE.md`](docs/CLAUDE-BRIDGE.md) |
+| Claude-Brücke: Kurzbefehl, Anfragen, Formate | [`docs/CLAUDE-BRIDGE.md`](docs/CLAUDE-BRIDGE.md) |
 | Aufbau des Codes | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 
 ## Ohne Mac bauen

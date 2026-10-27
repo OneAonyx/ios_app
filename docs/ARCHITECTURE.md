@@ -174,6 +174,32 @@ landet das Glas in einer Warteschlange (App Group) und das Widget zeigt es sofor
 **Selbsttest:** Migration V1/V2/V3 → V4, Ernährungs-Ablauf (Muster, Tageslast mit Einschätzung,
 Wasser, Einkauf aus dem Wochenplan ohne Doppelte), Sicherung mit Ernährung.
 
+## Phase 5: Einblicke und Claude-Brücke
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Check-ins, Umstände | `TagwerkCore/Insights/CheckIns.swift` | Skalen 1–5, Morgen/Abend, „Schlecht geschlafen“ und „Viel Stress“ als `DayFactor` für die Muster |
+| Wochenrückblick | `…/Insights/WeeklyReview.swift` | Abschnitte, Höhepunkte, Kurzfassung ohne Namen, Sonntags-Erinnerung |
+| Arztbericht | `…/Insights/DoctorReport.swift` | Medikamente mit Treue, Beschwerden je Woche und Art, Muster, Gewicht, Befinden |
+| Claude-Anfragen und -Antworten | `…/ClaudeBridge/ClaudeTasks.swift` | Prompt je Anwendungsfall mit Liste der enthaltenen Daten, Parser für `orbit.plan.v1`, `orbit.text.v1`, `orbit.food.v1`, `orbit.recipes.v1` |
+| `TagwerkSchemaV5` | `TagwerkKit/…/Models/SchemaV5.swift` | `DailyCheckIn`, `ClaudeExchange`; V4 → V5 leicht |
+| `InsightsActions` | `…/Models/InsightsActions.swift` | Check-ins, Daten für Rückblick und Bericht aus allen Bereichen, Verlauf |
+| `ClaudeBridgeActions` | `…/Models/ClaudeBridgeActions.swift` | Daten für die Anfragen sammeln, Antwort zuordnen, Plan/Lebensmittel/Rezepte übernehmen |
+| Sicherung | `…/Services/InsightsBackupMapper.swift` | Check-ins und Claude-Verlauf (Sicherungen vor 0.6 lassen sie stehen) |
+| Oberfläche | `App/Features/Insights/` | Check-in, Befinden, Rückblick, Arztbericht (PDF per `ImageRenderer` in einen PDF-Kontext, A4), Claude-Zentrale |
+
+**Antwort zuordnen:** Der Kurzbefehl-Aufruf trägt die `stableID` der Anfrage als Rückruf-ID
+(`tagwerk://claude/success/<stableID>`). Kommt die Antwort nur über den Briefkasten, zählt zuerst
+die Kennung `ref` in der Antwort, dann ein wartender Systemcheck, dann die zuletzt abgeschickte
+Anfrage. Lange Anfragen (über 8000 Zeichen) gehen über die Zwischenablage (`input=clipboard`).
+
+**Siri:** Bei 10 App-Kurzbefehlen ist Schluss. „Check-in“ ersetzt den Systemcheck, der als Aktion
+in der Kurzbefehle-App bleibt.
+
+**Selbsttest:** Migration V1/V2/V3/V4 → V5, Check-ins als Umstände, Rückblick ohne Namen,
+Arztbericht mit 3 PDF-Seiten, Claude-Ablauf (Zuordnung über `ref`, Lebensmittel, Plan mit
+unbekannter Übung, Rezept mit neuer Zutat), Sicherung mit Einblicken.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
@@ -194,7 +220,10 @@ Wasser, Einkauf aus dem Wochenplan ohne Doppelte), Sicherung mit Ernährung.
 | `tagwerk://mahlzeit` | öffnet den Mahlzeit-Editor |
 | `tagwerk://wasser` | trägt ein Glas Wasser ein |
 | `tagwerk://symptom` | öffnet die Erfassung von Beschwerden |
-| `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ |
+| `tagwerk://checkin` | öffnet den Check-in des Tages |
+| `tagwerk://rueckblick` | öffnet den Wochenrückblick |
+| `tagwerk://claude` | öffnet die Claude-Zentrale |
+| `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ (Anfrage oder Systemcheck) |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
 
 ## Screenshots im CI
