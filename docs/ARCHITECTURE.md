@@ -144,6 +144,36 @@ eines Countdowns, auch wenn die App nicht mehr läuft.
 **Selbsttest:** Migration V1 → V3 und V2 → V3 (Medikamente bleiben), eine Einheit mit Abschluss
 und Vorschlag für die nächste (Steigerung, Aufwärmsätze), Sicherung mit Training.
 
+## Phase 4: Ernährung und Histamin
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Lexikon, Zutatenregeln, Rezepte | `TagwerkCore/Resources/foods.de.json`, `ingredient-rules.de.json`, `recipes.de.json` | 350 Lebensmittel, 87 Regeln (230 Stichworte, 51 E-Nummern), 32 Rezepte |
+| Katalog, Verträglichkeit, Siri-Antwort | `TagwerkCore/Nutrition/FoodCatalog.swift` | Suche mit Mehrzahl, eigene Einschätzung vor Standard |
+| Zutaten-Check | `…/Nutrition/IngredientAnalyzer.swift` | längstes Stichwort je Wort, Ausnahmen, `^` Wortanfang, `=` ganzes Wort, E-Nummern |
+| Tageslast, Ziele, Mahlzeiten | `…/Nutrition/NutritionLogic.swift` | Punkte je Bewertung × Menge, Zuschläge für Reste/Aufgewärmt/Auswärts |
+| Beschwerden, Muster | `…/Nutrition/Symptoms.swift` | Gewicht nach Zeitabstand, Grundrate, Mindestmengen |
+| Rezepte, Einkauf | `…/Nutrition/Recipes.swift` | Portionen, Zusammenfassen, Supermarkt-Bereiche |
+| Barcode, Open Food Facts | `…/Nutrition/OpenFoodFacts.swift` | Prüfziffer, Antwort auslesen (unter Linux getestet) |
+| `TagwerkSchemaV4` | `TagwerkKit/…/Models/SchemaV4.swift` | `MealEntry`, `MealItem`, `SymptomEntry`, `WaterLog`, `ShoppingItem`, `MealPlanEntry`, `CustomFood`, `CustomRecipe`, `FoodPreference`; V3 → V4 leicht |
+| `NutritionActions` | `…/Models/NutritionActions.swift` | Tagebuch, Tageswerte, Muster, Einkauf, Wochenplan, Medikamente „vor dem Essen“ |
+| `FoodLookupService` | `…/Services/FoodLookupService.swift` | Open Food Facts mit eigenem User-Agent, Ergebnis als eigenes Lebensmittel |
+| `NutritionSnapshotWriter`, `NutritionActionCenter` | `…/Services/NutritionSharing.swift` | Widget-Daten, Wasser aus Widget und Kontrollzentrum |
+| `AddWaterIntent`, `LogSymptomIntent` | `Shared/NutritionIntents.swift` | in App **und** Widget kompiliert |
+| Tab, Editor, Scanner, Listen | `App/Features/Nutrition/` | SwiftUI, VisionKit `DataScannerViewController` |
+
+**Inhalte bleiben im Paket:** Lexikon, Regeln und Rezepte liegen als JSON in `TagwerkCore` und
+werden nicht in die Datenbank kopiert. Die Datenbank speichert nur, was du selbst anlegst oder
+einstellst (Mahlzeiten, Einschätzungen, gescannte Produkte). Neue Inhalte kommen mit einem Update,
+ohne Migration. Mahlzeiten speichern den Namen jedes Lebensmittels mit, falls es später fehlt.
+
+**Wasser von außerhalb** läuft wie die Einnahmen aus Phase 2: `AddWaterIntent` ist ein
+`LiveActivityIntent`, iOS führt ihn im App-Prozess aus. Läuft er doch in der Erweiterung,
+landet das Glas in einer Warteschlange (App Group) und das Widget zeigt es sofort.
+
+**Selbsttest:** Migration V1/V2/V3 → V4, Ernährungs-Ablauf (Muster, Tageslast mit Einschätzung,
+Wasser, Einkauf aus dem Wochenplan ohne Doppelte), Sicherung mit Ernährung.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
@@ -160,6 +190,10 @@ und Vorschlag für die nächste (Steigerung, Aufwärmsätze), Sicherung mit Trai
 | `tagwerk://gesundheit` | öffnet den Tab „Gesundheit“ (Medikamenten-Widget) |
 | `tagwerk://training` | öffnet den Tab „Training“ (Widget, Live Activity) |
 | `tagwerk://training/start` | startet die nächste Einheit |
+| `tagwerk://ernaehrung` | öffnet den Tab „Ernährung“ (Widget) |
+| `tagwerk://mahlzeit` | öffnet den Mahlzeit-Editor |
+| `tagwerk://wasser` | trägt ein Glas Wasser ein |
+| `tagwerk://symptom` | öffnet die Erfassung von Beschwerden |
 | `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
 
