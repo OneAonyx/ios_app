@@ -212,24 +212,26 @@ private struct SleepHoursRow: View {
     let hours: Double?
     let onChange: (Double?) -> Void
 
-    var body: some View {
-        // Bei großer Schrift steht der Wert unter der Überschrift.
-        ViewThatFits(in: .horizontal) {
-            HStack {
-                title
-                Spacer()
-                control
-            }
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                title
-                control
-            }
-        }
-    }
+    @Environment(\.dynamicTypeSize) private var typeSize
 
-    private var title: some View {
-        Label("Schlafdauer", systemImage: "moon.zzz.fill")
-            .fixedSize()
+    var body: some View {
+        // Bei sehr großer Schrift steht der Wert unter der Überschrift.
+        let large = typeSize.isAccessibilitySize
+        let layout = large
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.xs))
+            : AnyLayout(HStackLayout(spacing: Spacing.s))
+        layout {
+            HStack(spacing: Spacing.s) {
+                Image(systemName: "moon.zzz.fill")
+                    .foregroundStyle(.blue)
+                    .accessibilityHidden(true)
+                Text("Schlafdauer")
+            }
+            if !large {
+                Spacer(minLength: 0)
+            }
+            control
+        }
     }
 
     @ViewBuilder
