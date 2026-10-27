@@ -21,9 +21,15 @@ public enum SettingsKeys {
     /// Standard-Erinnerung für neue Aufgaben mit Uhrzeit in Minuten vorher, −1 = keine.
     public static let defaultReminderOffset = "tagwerk.settings.defaultReminderOffset"
     public static let lastBackupAt = "tagwerk.settings.lastBackupAt"
+    /// Eiweiß-Ziel in g je kg Körpergewicht (Text, z. B. „1.8“).
+    public static let proteinPerKg = "tagwerk.settings.proteinPerKg"
+    /// Wasser-Ziel in ml.
+    public static let waterTarget = "tagwerk.settings.waterTarget"
+    /// Nach Medikamenten „vor dem Essen“ fragen, wenn eine Mahlzeit eingetragen wird.
+    public static let askBeforeMealMedication = "tagwerk.settings.askBeforeMealMedication"
 
     /// Diese Einstellungen wandern mit in die Datensicherung.
-    public static let backedUp = [userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset]
+    public static let backedUp = [userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget, askBeforeMealMedication]
 }
 
 /// Schlüssel für die gemeinsamen UserDefaults (App Group) und die App-eigenen Defaults.
@@ -40,6 +46,10 @@ public enum SharedKeys {
     public static let trainingSnapshot = "tagwerk.widget.training.snapshot"
     /// Befehle aus der Live Activity (Pause verlängern/überspringen), bis die App sie übernimmt.
     public static let pendingWorkoutCommands = "tagwerk.training.pendingCommands"
+    /// Histamin-Tageslast, Eiweiß und Wasser für Widget, Kontrollzentrum und Siri.
+    public static let nutritionSnapshot = "tagwerk.widget.nutrition.snapshot"
+    /// Wasser aus Widget oder Kontrollzentrum, bis die App es übernimmt.
+    public static let pendingWater = "tagwerk.nutrition.pendingWater"
 }
 
 /// Kennungen der Widgets und Steuerelemente.
@@ -49,6 +59,8 @@ public enum WidgetKinds {
     public static let medicationControl = "de.tagwerk.control.medication"
     public static let training = "TagwerkTrainingWidget"
     public static let trainingControl = "de.tagwerk.control.training"
+    public static let nutrition = "TagwerkNutritionWidget"
+    public static let waterControl = "de.tagwerk.control.water"
 }
 
 /// Kennungen für Mitteilungen und ihre Aktionsknöpfe.

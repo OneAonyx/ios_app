@@ -18,6 +18,8 @@ public struct BackupDocument: Codable, Sendable, Equatable {
     public var doseLogs: [DoseLogRecord]?
     /// Ab Version 0.4. Fehlt in älteren Sicherungen.
     public var training: TrainingBackup?
+    /// Ab Version 0.5. Fehlt in älteren Sicherungen.
+    public var nutrition: NutritionBackup?
 
     public init(
         format: String = BackupDocument.currentFormat,
@@ -28,7 +30,8 @@ public struct BackupDocument: Codable, Sendable, Equatable {
         settings: [String: String] = [:],
         medications: [MedicationRecord]? = nil,
         doseLogs: [DoseLogRecord]? = nil,
-        training: TrainingBackup? = nil
+        training: TrainingBackup? = nil,
+        nutrition: NutritionBackup? = nil
     ) {
         self.format = format
         self.createdAt = createdAt
@@ -39,6 +42,7 @@ public struct BackupDocument: Codable, Sendable, Equatable {
         self.medications = medications
         self.doseLogs = doseLogs
         self.training = training
+        self.nutrition = nutrition
     }
 }
 
