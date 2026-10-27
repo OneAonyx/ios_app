@@ -26,9 +26,9 @@ enum SpotlightIndexer {
     private static let contentKinds: [SpotlightLink.Kind] = [.food, .exercise, .recipe]
     private static let personalKinds: [SpotlightLink.Kind] = [.task, .habit, .contract, .birthday]
 
-    static func identifier(_ kind: SpotlightLink.Kind, _ id: String) -> String { "\(kind.rawValue):\(id)" }
+    nonisolated static func identifier(_ kind: SpotlightLink.Kind, _ id: String) -> String { "\(kind.rawValue):\(id)" }
 
-    static func link(for identifier: String) -> SpotlightLink? {
+    nonisolated static func link(for identifier: String) -> SpotlightLink? {
         guard let colon = identifier.firstIndex(of: ":"),
               let kind = SpotlightLink.Kind(rawValue: String(identifier[..<colon])) else { return nil }
         return SpotlightLink(kind: kind, itemID: String(identifier[identifier.index(after: colon)...]))
