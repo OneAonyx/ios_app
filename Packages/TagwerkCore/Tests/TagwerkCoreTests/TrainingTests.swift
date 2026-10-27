@@ -442,6 +442,11 @@ struct ProgressAssessmentTests {
         let trend = ProgressAssessment.exercise("x", history: two, isCompound: true, now: date(2026, 10, 27, 10))
         #expect(trend.pace == .notEnoughData)
         #expect(ProgressAssessment.summary([trend]) == "Noch zu wenig Daten")
+        var good = trend
+        good.pace = .good
+        var fast = trend
+        fast.pace = .tooFast
+        #expect(ProgressAssessment.summary([fast, good, good]) == "Gutes Tempo: 2 · Sehr schnell: 1")
     }
 
     @Test func bodyweightPaceForLeanBulk() throws {

@@ -227,7 +227,7 @@ struct ContractEditorView: View {
                     HStack {
                         Text("Betrag")
                         Spacer()
-                        TextField("0,00", value: $contract.cost, format: .number.precision(.fractionLength(0...2)))
+                        TextField("0,00", value: $contract.cost, format: .number.precision(.fractionLength(2)))
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(maxWidth: 110)

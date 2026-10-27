@@ -245,6 +245,12 @@ struct HabitDetailView: View {
     @State private var editing = false
     @State private var confirmDelete = false
 
+    /// „1 Tag“, „3 Tage“, „1 Woche“
+    static func unit(_ count: Int, weeks: Bool) -> String {
+        if weeks { return count == 1 ? "Woche" : "Wochen" }
+        return count == 1 ? "Tag" : "Tage"
+    }
+
     var body: some View {
         let calendar = AppModel.calendar
         let now = Date.now
@@ -254,8 +260,8 @@ struct HabitDetailView: View {
         List {
             Section {
                 HStack {
-                    StatTile(title: "Serie", value: "\(stats.current)", detail: stats.unitIsWeeks ? "Wochen" : "Tage", tint: ListColor.color(named: habit.colorName))
-                    StatTile(title: "Beste", value: "\(stats.best)", detail: stats.unitIsWeeks ? "Wochen" : "Tage", tint: .primary)
+                    StatTile(title: "Serie", value: "\(stats.current)", detail: Self.unit(stats.current, weeks: stats.unitIsWeeks), tint: ListColor.color(named: habit.colorName))
+                    StatTile(title: "Beste", value: "\(stats.best)", detail: Self.unit(stats.best, weeks: stats.unitIsWeeks), tint: .primary)
                     StatTile(title: "30 Tage", value: stats.rate.map { "\(Int(($0 * 100).rounded())) %" } ?? "–", detail: "erledigt", tint: .primary)
                 }
                 .listRowInsets(EdgeInsets(top: Spacing.xs, leading: Spacing.s, bottom: Spacing.xs, trailing: Spacing.s))

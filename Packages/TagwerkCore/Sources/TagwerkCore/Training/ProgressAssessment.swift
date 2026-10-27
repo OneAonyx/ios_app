@@ -191,14 +191,15 @@ public enum ProgressAssessment {
     }
 
     /// „5 gut, 2 langsam, 1 Stillstand“
+    /// „Gutes Tempo: 4 · Sehr schnell: 5“
     public static func summary(_ trends: [ExerciseTrend]) -> String {
         let counted = Dictionary(grouping: trends.filter { $0.pace != .notEnoughData }, by: \.pace)
         let order: [ProgressPace] = [.good, .tooFast, .slow, .stalled, .declining]
         let parts = order.compactMap { pace -> String? in
             guard let count = counted[pace]?.count, count > 0 else { return nil }
-            return "\(count) \(pace.title)"
+            return "\(pace.title.prefix(1).uppercased())\(pace.title.dropFirst()): \(count)"
         }
-        return parts.isEmpty ? "Noch zu wenig Daten" : parts.joined(separator: ", ")
+        return parts.isEmpty ? "Noch zu wenig Daten" : parts.joined(separator: " · ")
     }
 }
 
