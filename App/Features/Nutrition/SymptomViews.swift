@@ -222,6 +222,11 @@ private struct FindingRow: View {
                 Text(finding.comparison)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if let together = finding.companionText {
+                    Label(together, systemImage: "link")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.vertical, 2)

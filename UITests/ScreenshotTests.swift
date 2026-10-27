@@ -65,22 +65,15 @@ final class ScreenshotTests: XCTestCase {
             ("nutrition.patterns", "37-muster"),
             ("nutrition.settings", "38-ziele"),
         ]
-        // Lexikon und ein Lebensmittel (über die Suche).
+        // Lexikon und ein Lebensmittel.
         let lexicon = app.buttons["nutrition.lexicon"]
         if scrollTo(lexicon, in: app), tapIfPresent(lexicon) {
             snap(app, "30-lexikon")
-            let search = app.searchFields.firstMatch
-            if search.waitForExistence(timeout: 3) {
-                search.tap()
-                search.typeText("Tomate")
-                let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Tomate'")).firstMatch
-                if tapIfPresent(row) {
-                    snap(app, "31-lebensmittel")
-                    tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
-                }
-                // Suche beenden, dann zurück zum Tab.
-                let cancel = app.buttons.matching(NSPredicate(format: "label IN %@", ["Abbrechen", "Cancel"]))
-                if cancel.count > 0 { tapHittable(cancel) }
+            // Avocado steht weit oben und ist als „Meiden“ markiert.
+            let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Avocado'")).firstMatch
+            if tapIfPresent(row) {
+                snap(app, "31-lebensmittel")
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
             }
             tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
         }

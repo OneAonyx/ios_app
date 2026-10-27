@@ -93,6 +93,9 @@ Schwindel …), Stärke 1–5, Beginn und Dauer.
 - ein Lebensmittel erscheint erst ab 3 Mahlzeiten, die Auswertung erst ab 10 Mahlzeiten und
   3 Beschwerden
 - auch **Reste oder Aufgewärmtes** und **auswärts gegessen** werden geprüft
+- Lebensmittel, die immer zusammen gegessen wurden (z. B. Nudeln, Tomate, Mozzarella), erscheinen
+  als ein Eintrag. Vorn steht das mit der höchsten Bewertung, die anderen als „Immer zusammen mit …“.
+  Welches davon der Auslöser ist, zeigt erst ein gezielter Test.
 
 Beispiel: „Tomate · 5 von 6 Mal Beschwerden innerhalb von 3 Std. · etwa 2,5× so oft wie nach
 anderen Mahlzeiten“. Das ist ein Hinweis, keine Diagnose. Verdächtiges gezielt testen, am besten

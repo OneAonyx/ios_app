@@ -129,8 +129,22 @@ public struct TriggerFinding: Sendable, Hashable, Identifiable {
     public var rate: Double
     /// Verhältnis zur Grundrate aller Mahlzeiten (2 = doppelt so oft wie sonst).
     public var lift: Double
+    /// Höchste Bewertung (bei Lebensmitteln), für die Reihenfolge bei Gleichstand.
+    public var score: HistamineScore
+    /// Lebensmittel, die immer zusammen mit diesem gegessen wurden. Welches davon
+    /// der Auslöser ist, lässt sich aus den Daten nicht trennen.
+    public var companions: [String]
 
     public var id: String { key }
+
+    /// „Immer zusammen mit Nudeln und Mozzarella gegessen“
+    public var companionText: String? {
+        guard !companions.isEmpty else { return nil }
+        let list = companions.count == 1
+            ? companions[0]
+            : companions.dropLast().joined(separator: ", ") + " und " + (companions.last ?? "")
+        return "Immer zusammen mit \(list) gegessen"
+    }
 
     /// „5 von 6 Mal Beschwerden innerhalb von 3 Std.“
     public var sentence: String {
@@ -213,20 +227,30 @@ public enum TriggerAnalysis {
         }
         let baseline = mealWeights.values.reduce(0) { $0 + $1.weight } / Double(meals.count)
 
-        struct Tally { var name: String; var isFactor: Bool; var count = 0; var soon = 0; var weight = 0.0 }
+        struct Tally {
+            var name: String
+            var isFactor: Bool
+            var score: HistamineScore = .good
+            var count = 0
+            var soon = 0
+            var weight = 0.0
+            var mealIDs: [String] = []
+        }
         var tallies: [String: Tally] = [:]
-        func add(_ key: String, name: String, isFactor: Bool, meal: MealFact) {
+        func add(_ key: String, name: String, isFactor: Bool, score: HistamineScore = .good, meal: MealFact) {
             guard let entry = mealWeights[meal.id] else { return }
             var tally = tallies[key] ?? Tally(name: name, isFactor: isFactor)
             tally.count += 1
             tally.weight += entry.weight
+            tally.score = max(tally.score, score)
+            tally.mealIDs.append(meal.id)
             if entry.soon { tally.soon += 1 }
             tallies[key] = tally
         }
         for meal in meals {
             for foodID in Set(meal.items.map(\.foodID)) {
-                let name = meal.items.first { $0.foodID == foodID }?.name ?? foodID
-                add(foodID, name: name, isFactor: false, meal: meal)
+                let item = meal.items.first { $0.foodID == foodID }
+                add(foodID, name: item?.name ?? foodID, isFactor: false, score: item?.score ?? .good, meal: meal)
             }
             if meal.freshness != .fresh {
                 add("factor.leftovers", name: "Reste oder Aufgewärmtes", isFactor: true, meal: meal)
@@ -236,18 +260,35 @@ public enum TriggerAnalysis {
             }
         }
 
-        let findings = tallies.compactMap { key, tally -> TriggerFinding? in
+        let candidates = tallies.compactMap { key, tally -> (finding: TriggerFinding, meals: [String])? in
             guard tally.count >= minimumOccurrences else { return nil }
             let rate = tally.weight / Double(tally.count)
             let lift = baseline > 0 ? rate / baseline : (rate > 0 ? 9.9 : 0)
             guard rate >= 0.4, lift >= 1.3, tally.soon >= 2 else { return nil }
-            return TriggerFinding(
+            let finding = TriggerFinding(
                 key: key, name: tally.name, isFactor: tally.isFactor, occurrences: tally.count,
-                followedSoon: tally.soon, rate: rate, lift: lift
+                followedSoon: tally.soon, rate: rate, lift: lift, score: tally.score, companions: []
             )
+            return (finding, tally.mealIDs.sorted())
         }
-        .sorted { lhs, rhs in
+
+        // Lebensmittel, die immer gemeinsam gegessen wurden, zu einem Eintrag zusammenfassen.
+        // Vorne steht das mit der höchsten Bewertung (am ehesten der Auslöser).
+        var findings: [TriggerFinding] = []
+        let foods = candidates.filter { !$0.finding.isFactor }
+        for (_, group) in Dictionary(grouping: foods, by: { $0.meals }) {
+            let ordered = group.map(\.finding).sorted { lhs, rhs in
+                if lhs.score != rhs.score { return lhs.score > rhs.score }
+                return lhs.name.localizedCompare(rhs.name) == .orderedAscending
+            }
+            guard var lead = ordered.first else { continue }
+            lead.companions = ordered.dropFirst().map(\.name)
+            findings.append(lead)
+        }
+        findings += candidates.filter(\.finding.isFactor).map(\.finding)
+        findings.sort { lhs, rhs in
             if abs(lhs.lift - rhs.lift) > 0.01 { return lhs.lift > rhs.lift }
+            if lhs.score != rhs.score { return lhs.score > rhs.score }
             return lhs.occurrences > rhs.occurrences
         }
         return TriggerReport(findings: findings, mealCount: meals.count, symptomCount: relevant.count, baseline: baseline)

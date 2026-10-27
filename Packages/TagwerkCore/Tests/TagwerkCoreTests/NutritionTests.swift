@@ -222,11 +222,33 @@ struct TriggerTests {
         #expect(first?.occurrences == 6)
         #expect(first?.followedSoon == 5)
         #expect(first?.sentence == "5 von 6 Mal Beschwerden innerhalb von 3 Std.")
+        #expect(first?.companions.isEmpty == true)
         #expect((first?.lift ?? 0) > 2)
         #expect(!report.findings.contains { $0.key == "haehnchenbrust" }, "Täglich gegessen, keine Auffälligkeit")
         #expect(!report.findings.contains { $0.key == "kartoffel" })
         // Nur Übelkeit: keine Funde.
         #expect(TriggerAnalysis.analyze(meals: meals, symptoms: symptoms, only: .nausea).findings.isEmpty)
+    }
+
+    @Test func foodsEatenTogetherAreGrouped() {
+        var meals: [MealFact] = []
+        var symptoms: [SymptomFact] = []
+        for day in 1...12 {
+            let noon = date(2026, 10, day, 12)
+            if day <= 5 {
+                // Immer gemeinsam: Nudeln, Tomate, Mozzarella.
+                meals.append(meal("m\(day)", noon, [item("nudeln", 100), item("tomate", 150), item("mozzarella", 60)]))
+                symptoms.append(SymptomFact(date: noon.addingTimeInterval(3_600), type: .headache, severity: 3))
+            } else {
+                meals.append(meal("m\(day)", noon, [item("haehnchenbrust", 150), item("reis", 70)]))
+            }
+        }
+        let report = TriggerAnalysis.analyze(meals: meals, symptoms: symptoms)
+        #expect(report.findings.count == 1)
+        let finding = report.findings.first
+        #expect(finding?.key == "tomate", "Höchste Bewertung steht vorn")
+        #expect(finding?.companions == ["Mozzarella", "Nudeln"])
+        #expect(finding?.companionText == "Immer zusammen mit Mozzarella und Nudeln gegessen")
     }
 
     @Test func leftoversAppearAsFactor() {
