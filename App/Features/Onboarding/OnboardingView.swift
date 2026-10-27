@@ -45,15 +45,12 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(spacing: Spacing.l) {
             Spacer()
-            Image(systemName: "sun.max.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(ModuleAccent.today.gradient)
-                .accessibilityHidden(true)
+            OrbitLogo(size: 112)
             VStack(spacing: Spacing.xs) {
                 Text("Willkommen bei Orbit")
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
-                Text("Dein Tag an einem Ort: Aufgaben, Termine und bald auch Medikamente, Training und Ernährung.")
+                Text("Dein Tag an einem Ort: Aufgaben, Termine, Medikamente, Training, Ernährung und alles, was sonst ansteht.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -143,5 +140,20 @@ struct OnboardingView: View {
                 }
             }
         }
+    }
+}
+
+/// Das App-Symbol als Logo in der App (Willkommen, App-Sperre).
+struct OrbitLogo: View {
+    var size: CGFloat = 96
+
+    var body: some View {
+        Image("OrbitLogo")
+            .resizable()
+            .interpolation(.high)
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous))
+            .shadow(color: .indigo.opacity(0.35), radius: size * 0.12, y: size * 0.05)
+            .accessibilityHidden(true)
     }
 }

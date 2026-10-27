@@ -99,10 +99,8 @@ private struct LockScreen: View {
                 .fill(.ultraThickMaterial)
                 .ignoresSafeArea()
             VStack(spacing: Spacing.m) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 44, weight: .semibold))
-                    .foregroundStyle(ModuleAccent.today)
-                Text("Orbit ist gesperrt")
+                OrbitLogo(size: 88)
+                Label("Orbit ist gesperrt", systemImage: "lock.fill")
                     .font(.title2.weight(.bold))
                 Text("Deine Gesundheitsdaten sind geschützt.")
                     .font(.subheadline)
