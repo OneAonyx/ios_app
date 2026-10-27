@@ -184,8 +184,9 @@ private struct BackupSection: View {
         pendingRestoreURL = nil
         do {
             let summary = try BackupService.restore(from: url, context: context, calendar: AppModel.calendar)
-            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente, \(summary.workouts) Trainingseinheiten."
+            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente, \(summary.workouts) Trainingseinheiten, \(summary.meals) Mahlzeiten."
             app.tasksChanged()
+            app.nutritionChanged()
         } catch {
             message = error.localizedDescription
         }
@@ -238,14 +239,14 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 3
+    private let currentPhase = 4
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
         Phase(id: 1, title: "Heute, Aufgaben, Agenda", detail: "Abgeschlossen: Aufgaben, Schnellerfassung, Kalender, Datensicherung.", systemImage: "checklist"),
         Phase(id: 2, title: "Medikamente", detail: "Abgeschlossen: Einnahmepläne, Erinnerungen, Wecker, Vorrat, Widget, Kontrollzentrum, Siri.", systemImage: "pills"),
-        Phase(id: 3, title: "Training", detail: "Oberkörper-4er, Satz-Tracking mit Vorschlag, Pausen-Timer in der Dynamic Island, Statistik.", systemImage: "dumbbell"),
-        Phase(id: 4, title: "Ernährung & Histamin", detail: "Lexikon, Scanner, Tagebuch, Auslöser-Analyse.", systemImage: "fork.knife"),
+        Phase(id: 3, title: "Training", detail: "Abgeschlossen: Oberkörper-4er, Satz-Tracking mit Vorschlag, Pausen-Timer in der Dynamic Island, Statistik.", systemImage: "dumbbell"),
+        Phase(id: 4, title: "Ernährung & Histamin", detail: "Lexikon mit 350 Lebensmitteln, Barcode- und Zutaten-Scan, Tagebuch mit Tageslast, Beschwerden und Muster, Einkauf, Rezepte, Wochenplan.", systemImage: "fork.knife"),
         Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Wochenrückblick, Arztbericht, Claude über Kurzbefehl.", systemImage: "sparkles"),
         Phase(id: 6, title: "Leben & Feinschliff", detail: "Routinen, Fristen, Verträge, Widgets, Fokus-Filter.", systemImage: "wand.and.stars"),
         Phase(id: 7, title: "Developer-Account & iCloud", detail: "TestFlight, Apple Health, iCloud-Sync.", systemImage: "icloud"),

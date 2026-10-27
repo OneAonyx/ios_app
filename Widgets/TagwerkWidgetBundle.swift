@@ -8,8 +8,10 @@ struct TagwerkWidgetBundle: WidgetBundle {
     var body: some Widget {
         MedicationWidget()
         TrainingWidget()
+        NutritionWidget()
         MedicationControl()
         TrainingControl()
+        WaterControl()
         WorkoutLiveActivity()
         SystemCheckWidget()
         AlarmLiveActivity()

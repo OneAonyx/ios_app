@@ -37,6 +37,11 @@ final class AppModel {
     var healthPath: [String] = []
     /// Trainingseinheit im Vollbild.
     var isShowingWorkout = false
+    /// Neue Mahlzeit (vorbelegt) bzw. Mahlzeit im Editor.
+    var mealDraft: MealDraft?
+    var editingMeal: MealEntry?
+    /// Beschwerden eintragen.
+    var isAddingSymptom = false
 
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
 
@@ -71,6 +76,13 @@ final class AppModel {
         WorkoutActionCenter.startHandler = {
             AppModel.shared.startWorkout()
         }
+        // Ernährung: Wasser aus Widget, Kontrollzentrum und Siri, „Symptom erfassen“.
+        NutritionActionCenter.handler = { milliliters in
+            AppModel.shared.addWater(milliliters)
+        }
+        NutritionActionCenter.symptomHandler = {
+            AppModel.shared.openSymptomEntry()
+        }
     }
 
     private static func makeFallbackContainer() -> ModelContainer {
@@ -104,7 +116,8 @@ final class AppModel {
     }
 
     /// `tagwerk://claude/…` (Rücksprung aus Kurzbefehle), `tagwerk://systemcheck`, `tagwerk://neu`,
-    /// `tagwerk://gesundheit` (aus dem Medikamenten-Widget).
+    /// `tagwerk://gesundheit` (Medikamenten-Widget), `tagwerk://training`, `tagwerk://ernaehrung`,
+    /// `tagwerk://mahlzeit`, `tagwerk://wasser`, `tagwerk://symptom`.
     func handle(url: URL) {
         if let callback = ClaudeCallback.parse(url) {
             openSystemCheck()
@@ -126,6 +139,16 @@ final class AppModel {
             } else {
                 openTraining()
             }
+        case "ernaehrung", "nutrition":
+            openNutrition()
+        case "mahlzeit", "meal":
+            openNutrition()
+            logMeal()
+        case "wasser", "water":
+            addWater(NutritionTargets.glassML)
+            openNutrition()
+        case "symptom":
+            openSymptomEntry()
         default:
             break
         }
@@ -147,6 +170,16 @@ final class AppModel {
     func writeTrainingSnapshot(now: Date = .now) {
         guard !AppInfo.isUITesting else { return }
         TrainingSnapshotWriter.write(context: context, now: now)
+    }
+
+    /// Nach Änderungen an Mahlzeiten, Wasser oder Beschwerden: Widget-Daten.
+    func nutritionChanged() {
+        writeNutritionSnapshot()
+    }
+
+    func writeNutritionSnapshot(now: Date = .now) {
+        guard !AppInfo.isUITesting else { return }
+        NutritionSnapshotWriter.write(context: context, now: now, calendar: Self.calendar)
     }
 
     /// Nach jeder Änderung an Medikamenten oder Einnahmen: Widgets, Erinnerungen, Wecker.
@@ -173,6 +206,7 @@ final class AppModel {
         }
         writeMedicationSnapshot(now: now)
         writeTrainingSnapshot(now: now)
+        writeNutritionSnapshot(now: now)
         let alarmsActive = AlarmProbe.isAuthorized && !AppInfo.isUITesting
         if alarmsActive {
             await MedicationAlarmScheduler.reschedule(medications: MedicationActions.fetchAll(in: context), now: now, calendar: calendar)
@@ -229,6 +263,49 @@ final class AppModel {
         if let session = TrainingActions.activeSession(in: context) {
             workout.updateActivity(session: session, catalog: TrainingActions.catalog(in: context))
         }
+        if storeError == nil, NutritionActions.processPendingWater(in: context) > 0 {
+            writeNutritionSnapshot()
+        }
+        if NutritionActionCenter.takePendingSymptomEntry() {
+            openSymptomEntry()
+        }
+    }
+
+    // MARK: Ernährung
+
+    func openNutrition() {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        isShowingSettings = false
+        editingTask = nil
+        selectedTab = .nutrition
+    }
+
+    /// Mahlzeit-Editor öffnen, optional mit Rezept (eine Portion) oder Lebensmitteln vorbelegt.
+    func logMeal(type: MealType? = nil, date: Date = .now, recipe: RecipeInfo? = nil, items: [MealDraftItem] = []) {
+        let calendar = Self.calendar
+        var draftItems = items
+        if let recipe {
+            draftItems += recipe.mealItems(portions: 1).map { MealDraftItem(foodID: $0.foodID, grams: $0.grams) }
+        }
+        mealDraft = MealDraft(
+            type: type ?? MealType.suggested(for: date, calendar: calendar),
+            date: date,
+            items: draftItems,
+            recipeID: recipe?.id
+        )
+    }
+
+    func addWater(_ milliliters: Int) {
+        NutritionActions.addWater(milliliters, in: context)
+        nutritionChanged()
+    }
+
+    func openSymptomEntry() {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        isShowingSettings = false
+        isAddingSymptom = true
     }
 
     // MARK: Training

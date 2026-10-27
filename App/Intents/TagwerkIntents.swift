@@ -97,6 +97,40 @@ struct NextWorkoutIntent: AppIntent {
     }
 }
 
+/// „Ist Avocado histaminarm?“ – Antwort offline aus dem Lexikon, mit eigener Einschätzung.
+struct CheckFoodIntent: AppIntent {
+    static let title: LocalizedStringResource = "Histamin-Check"
+    static let description = IntentDescription("Sagt, wie gut ein Lebensmittel bei Histaminintoleranz verträglich ist.")
+    static let openAppWhenRun: Bool = false
+
+    @Parameter(title: "Lebensmittel", requestValueDialog: IntentDialog("Welches Lebensmittel?"))
+    var food: String
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let context = AppModel.shared.context
+        let catalog = NutritionActions.catalog(in: context)
+        guard let match = catalog.bestMatch(for: food) else {
+            return .result(dialog: IntentDialog(stringLiteral: "„\(food)“ steht nicht im Lexikon. Du kannst es in Orbit als eigenes Lebensmittel anlegen."))
+        }
+        let tolerance = NutritionActions.tolerance(for: match.id, in: context)
+        return .result(dialog: IntentDialog(stringLiteral: FoodAnswer.sentence(for: match, tolerance: tolerance)))
+    }
+}
+
+/// „Wie ist meine Histamin-Last heute?“
+struct NutritionTodayIntent: AppIntent {
+    static let title: LocalizedStringResource = "Ernährung heute"
+    static let description = IntentDescription("Nennt Histamin-Tageslast, Eiweiß und Wasser von heute.")
+    static let openAppWhenRun: Bool = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let snapshot = NutritionActions.snapshot(calendar: AppModel.calendar, in: AppModel.shared.context)
+        return .result(dialog: IntentDialog(stringLiteral: snapshot.sentence(now: .now, calendar: AppModel.calendar)))
+    }
+}
+
 /// Letzte Aktion im Kurzbefehl „Orbit Claude“: übergibt Claudes Antwort an Orbit.
 struct ImportClaudeResponseIntent: AppIntent {
     static let title: LocalizedStringResource = "Claude-Antwort übernehmen"
@@ -184,6 +218,36 @@ struct TagwerkShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Nächstes Training",
             systemImageName: "dumbbell"
+        )
+        AppShortcut(
+            intent: AddWaterIntent(),
+            phrases: [
+                "Wasser trinken in \(.applicationName)",
+                "\(.applicationName) Glas Wasser",
+                "Trag ein Glas Wasser in \(.applicationName) ein",
+            ],
+            shortTitle: "Wasser trinken",
+            systemImageName: "drop.fill"
+        )
+        AppShortcut(
+            intent: LogSymptomIntent(),
+            phrases: [
+                "Symptom in \(.applicationName) erfassen",
+                "Beschwerden in \(.applicationName) eintragen",
+                "\(.applicationName) Symptom erfassen",
+            ],
+            shortTitle: "Beschwerden eintragen",
+            systemImageName: "waveform.path.ecg"
+        )
+        AppShortcut(
+            intent: CheckFoodIntent(),
+            phrases: [
+                "Histamin-Check in \(.applicationName)",
+                "Ist das histaminarm in \(.applicationName)",
+                "\(.applicationName) Histamin-Check",
+            ],
+            shortTitle: "Histamin-Check",
+            systemImageName: "fork.knife"
         )
         AppShortcut(
             intent: OpenSystemCheckIntent(),

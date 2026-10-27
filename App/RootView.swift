@@ -21,7 +21,7 @@ struct RootView: View {
                 TrainingView()
             }
             Tab(TagwerkModule.nutrition.title, systemImage: TagwerkModule.nutrition.systemImage, value: TagwerkModule.nutrition) {
-                PlaceholderTab(module: .nutrition)
+                NutritionView()
             }
             Tab(TagwerkModule.health.title, systemImage: TagwerkModule.health.systemImage, value: TagwerkModule.health) {
                 HealthView()
@@ -51,6 +51,15 @@ struct RootView: View {
         }
         .sheet(isPresented: $app.isAddingMedication) {
             MedicationEditorView(medication: nil)
+        }
+        .sheet(item: $app.mealDraft) { draft in
+            MealEditorView(draft: draft)
+        }
+        .sheet(item: $app.editingMeal) { meal in
+            MealEditorView(meal: meal)
+        }
+        .sheet(isPresented: $app.isAddingSymptom) {
+            SymptomEditorView()
         }
         .fullScreenCover(isPresented: onboardingBinding) {
             OnboardingView()
@@ -124,18 +133,6 @@ struct WorkoutMiniPlayer: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Training läuft: \(session.title)")
-        }
-    }
-}
-
-/// Bereich, der in einer späteren Phase gebaut wird.
-private struct PlaceholderTab: View {
-    let module: TagwerkModule
-
-    var body: some View {
-        NavigationStack {
-            ModulePlaceholderView(module: module)
-                .navigationTitle(module.title)
         }
     }
 }

@@ -32,6 +32,82 @@ final class ScreenshotTests: XCTestCase {
         snap(app, "11-gesundheit-grosse-schrift")
         tapTab("Training", in: app)
         snap(app, "16-training-grosse-schrift")
+        tapTab("Ernährung", in: app)
+        snap(app, "26-ernaehrung-grosse-schrift")
+    }
+
+    /// Ernährung: Tab, Mahlzeit, Auswahl, Lexikon, Lebensmittel, Zutaten, Einkauf, Rezepte, Plan, Muster, Beschwerden.
+    @MainActor
+    func testNutrition() {
+        let app = launch(extraArguments: ["-forceLight"])
+        tapTab("Ernährung", in: app)
+        snap(app, "26-ernaehrung")
+
+        // Mahlzeit eintragen: Editor mit DAO-Nachfrage, Auswahl, Lebensmittel übernehmen.
+        if tapIfPresent(app.buttons["nutrition.add"]) {
+            snap(app, "27-mahlzeit")
+            if tapIfPresent(app.buttons["mealEditor.addFood"]) {
+                snap(app, "28-auswahl")
+                if !tapIfPresent(app.buttons["foodPicker.haehnchenbrust"], timeout: 2) {
+                    tapIfPresent(app.buttons["Abbrechen"].firstMatch)
+                }
+            }
+            tapIfPresent(app.buttons["mealEditor.save"], timeout: 2)
+            tapIfPresent(app.buttons["Abbrechen"].firstMatch, timeout: 1)
+        }
+
+        let links: [(String, String)] = [
+            ("nutrition.ingredients", "32-zutaten"),
+            ("nutrition.shopping", "33-einkauf"),
+            ("nutrition.plan", "36-wochenplan"),
+            ("nutrition.patterns", "37-muster"),
+            ("nutrition.settings", "38-ziele"),
+        ]
+        // Lexikon und ein Lebensmittel (über die Suche).
+        let lexicon = app.buttons["nutrition.lexicon"]
+        if scrollTo(lexicon, in: app), tapIfPresent(lexicon) {
+            snap(app, "30-lexikon")
+            let search = app.searchFields.firstMatch
+            if search.waitForExistence(timeout: 3) {
+                search.tap()
+                search.typeText("Tomate")
+                let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Tomate'")).firstMatch
+                if tapIfPresent(row) {
+                    snap(app, "31-lebensmittel")
+                    tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+                }
+                tapIfPresent(app.buttons["Abbrechen"].firstMatch, timeout: 1)
+                tapIfPresent(app.buttons["Cancel"].firstMatch, timeout: 1)
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        // Rezepte und ein Rezept.
+        let recipes = app.buttons["nutrition.recipes"]
+        if scrollTo(recipes, in: app), tapIfPresent(recipes) {
+            snap(app, "34-rezepte")
+            let first = app.cells.element(boundBy: 1)
+            if tapIfPresent(first) {
+                snap(app, "35-rezept")
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        for (identifier, name) in links {
+            let link = app.buttons[identifier]
+            if scrollTo(link, in: app), tapIfPresent(link) {
+                snap(app, name)
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+        }
+
+        // Beschwerden eintragen.
+        let symptom = app.buttons["nutrition.symptom.add"]
+        for _ in 0..<4 where !(symptom.exists && symptom.isHittable) { app.swipeDown() }
+        if scrollTo(symptom, in: app), tapIfPresent(symptom) {
+            tapIfPresent(app.buttons["symptom.headache"], timeout: 2)
+            snap(app, "39-beschwerden")
+            tapIfPresent(app.buttons["Abbrechen"].firstMatch)
+        }
     }
 
     /// Training: Tab, Plan, Statistik, Übungen, Körper, Einheit mit Pause, Satz, Zusammenfassung.
@@ -175,6 +251,8 @@ final class ScreenshotTests: XCTestCase {
 
         tapTab("Training", in: app)
         snap(app, "16-training-\(suffix)")
+        tapTab("Ernährung", in: app)
+        snap(app, "26-ernaehrung-\(suffix)")
     }
 
     // MARK: - Hilfen

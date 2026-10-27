@@ -78,7 +78,8 @@ public enum BackupService {
                     createdAt: log.createdAt
                 )
             },
-            training: try TrainingBackupMapper.makeBackup(context: context)
+            training: try TrainingBackupMapper.makeBackup(context: context),
+            nutrition: try NutritionBackupMapper.makeBackup(context: context)
         )
     }
 
@@ -120,10 +121,11 @@ public enum BackupService {
         public let tasks: Int
         public let medications: Int
         public let workouts: Int
+        public let meals: Int
     }
 
-    /// Ersetzt alle Aufgaben, Listen, Medikamente und Trainingsdaten durch den Inhalt der Sicherung.
-    /// Ältere Sicherungen ohne Medikamente oder Training lassen diese Daten stehen.
+    /// Ersetzt alle Aufgaben, Listen, Medikamente, Trainings- und Ernährungsdaten durch den Inhalt der Sicherung.
+    /// Ältere Sicherungen ohne Medikamente, Training oder Ernährung lassen diese Daten stehen.
     /// Vorher wird automatisch eine Sicherung des aktuellen Stands angelegt.
     @discardableResult
     public static func restore(from url: URL, context: ModelContext, now: Date = .now, calendar: Calendar) throws -> RestoreSummary {
@@ -224,6 +226,10 @@ public enum BackupService {
         if let training = document.training {
             try TrainingBackupMapper.restore(training, context: context)
         }
+        // Ebenso ohne Ernährung (Sicherungen vor Version 0.5).
+        if let nutrition = document.nutrition {
+            try NutritionBackupMapper.restore(nutrition, context: context)
+        }
 
         let defaults = UserDefaults.standard
         for (key, value) in document.settings where SettingsKeys.backedUp.contains(key) {
@@ -232,6 +238,12 @@ public enum BackupService {
                 defaults.set(value == "1" || value.lowercased() == "true", forKey: key)
             case SettingsKeys.defaultReminderOffset:
                 defaults.set(Int(value) ?? -1, forKey: key)
+            case SettingsKeys.proteinPerKg:
+                if let number = Double(value) { defaults.set(number, forKey: key) }
+            case SettingsKeys.waterTarget:
+                if let number = Int(value) { defaults.set(number, forKey: key) }
+            case SettingsKeys.askBeforeMealMedication:
+                defaults.set(value == "1" || value.lowercased() == "true", forKey: key)
             default:
                 defaults.set(value, forKey: key)
             }
@@ -242,7 +254,8 @@ public enum BackupService {
             lists: document.lists.count,
             tasks: document.tasks.count,
             medications: document.medications?.count ?? 0,
-            workouts: document.training?.sessions.count ?? 0
+            workouts: document.training?.sessions.count ?? 0,
+            meals: document.nutrition?.meals.count ?? 0
         )
     }
 }

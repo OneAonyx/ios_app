@@ -69,6 +69,7 @@ struct TodayView: View {
                 if let plan {
                     TrainingTodayCard(plan: plan, workouts: workouts, now: now)
                 }
+                NutritionTodayCard(now: now)
                 FocusCard(tasks: focusTasks, allTasks: tasks, onPick: { isPickingFocus = true })
                 DueTodayCard(tasks: otherTasks, allTasks: tasks, hasFocus: !focusTasks.isEmpty)
                 if showEvents {
@@ -437,6 +438,73 @@ private struct TrainingTodayCard: View {
                         .tint(ModuleAccent.training)
                         .accessibilityIdentifier("today.training.start")
                     }
+                }
+            }
+        }
+    }
+}
+
+/// Histamin-Tageslast, Eiweiß und Wasser auf einen Blick.
+private struct NutritionTodayCard: View {
+    let now: Date
+
+    @Environment(AppModel.self) private var app
+    @Environment(\.modelContext) private var context
+    @Query(sort: \MealEntry.date, order: .reverse) private var meals: [MealEntry]
+    @Query(sort: \WaterLog.date, order: .reverse) private var water: [WaterLog]
+    @Query private var preferences: [FoodPreference]
+    @Query(sort: \BodyMetric.date, order: .reverse) private var metrics: [BodyMetric]
+    @AppStorage(SettingsKeys.proteinPerKg) private var proteinPerKg = NutritionTargets.defaultProteinPerKg
+    @AppStorage(SettingsKeys.waterTarget) private var waterTarget = NutritionTargets.defaultWaterML
+
+    var body: some View {
+        let calendar = AppModel.calendar
+        let catalog = NutritionActions.catalog(in: context)
+        let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
+        let todayMeals = meals.filter { calendar.isDate($0.date, inSameDayAs: now) }
+        let day = NutritionDay(
+            day: calendar.startOfDay(for: now),
+            meals: todayMeals.map { $0.fact(catalog: catalog) { tolerances[$0] ?? .unknown } },
+            waterML: water.filter { calendar.isDate($0.date, inSameDayAs: now) }.reduce(0) { $0 + $1.milliliters },
+            proteinTarget: NutritionTargets.proteinTarget(bodyweight: metrics.first { $0.type == .weight }?.value, perKg: proteinPerKg),
+            waterTarget: waterTarget
+        )
+        let load = day.load
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                HStack {
+                    SectionHeader("Ernährung", systemImage: "fork.knife", tint: ModuleAccent.nutrition)
+                    Label("Histamin \(load.level.title)", systemImage: load.level.symbol)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(load.level.color)
+                        .fixedSize()
+                }
+                if !todayMeals.isEmpty {
+                    LoadBar(load: load)
+                }
+                HStack(spacing: Spacing.s) {
+                    NutritionRing(title: "Eiweiß", value: day.proteinLabel, fraction: day.proteinFraction, tint: ModuleAccent.training, symbol: "bolt.fill")
+                    NutritionRing(title: "Wasser", value: day.waterLabel, fraction: day.waterFraction, tint: .cyan, symbol: "drop.fill")
+                }
+                HStack(spacing: Spacing.xs) {
+                    Button {
+                        app.logMeal()
+                    } label: {
+                        Label("Mahlzeit", systemImage: "plus")
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(ModuleAccent.nutrition)
+                    .accessibilityIdentifier("today.meal")
+                    Button {
+                        app.addWater(NutritionTargets.glassML)
+                    } label: {
+                        Label("Wasser", systemImage: "drop.fill")
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.cyan)
+                    .accessibilityIdentifier("today.water")
                 }
             }
         }

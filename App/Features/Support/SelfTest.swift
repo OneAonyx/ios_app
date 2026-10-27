@@ -22,13 +22,16 @@ enum SelfTest {
 
     static func runAll() -> [Result] {
         [
-            run("Migration V1 → V3", migrationKeepsTasks),
-            run("Migration V2 → V3", migrationKeepsMedications),
+            run("Migration V1 → V4", migrationKeepsTasks),
+            run("Migration V2 → V4", migrationKeepsMedications),
+            run("Migration V3 → V4", migrationKeepsTraining),
             run("Training: Einheit und Progression", trainingFlow),
+            run("Ernährung: Tageslast, Muster, Einkauf", nutritionFlow),
             run("Einnahmen und Vorrat", doseActionsAdjustStock),
             run("Nachschub-Aufgabe", refillTaskOnlyOnce),
             run("Datensicherung mit Medikamenten", backupRoundTrip),
             run("Datensicherung mit Training", trainingBackupRoundTrip),
+            run("Datensicherung mit Ernährung", nutritionBackupRoundTrip),
             run("Widget-Daten", snapshotContainsTodayAndTomorrow),
         ]
     }
@@ -81,9 +84,9 @@ enum SelfTest {
         context.insert(Medication(name: "Test"))
         try context.save()
         try check(try context.fetchCount(FetchDescriptor<Medication>()) == 1, "Medikament nicht gespeichert")
-        let copy = folder.appendingPathComponent("Test-vor-v3.store")
+        let copy = folder.appendingPathComponent("Test-vor-v4.store")
         try check(FileManager.default.fileExists(atPath: copy.path), "Keine Kopie vor der Migration")
-        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 3, "Schema-Version nicht gemerkt")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 4, "Schema-Version nicht gemerkt")
         return "3 Aufgaben übernommen, Kopie angelegt"
     }
 
@@ -117,8 +120,84 @@ enum SelfTest {
         try check(try context.fetchCount(FetchDescriptor<TaskItem>()) == 1, "Aufgabe verloren")
         let plan = TrainingActions.ensureStarterPlan(in: context)
         try check(plan?.rotationDays.count == 4, "Startplan nicht angelegt")
-        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Meds-vor-v3.store").path), "Keine Kopie vor der Migration")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Meds-vor-v4.store").path), "Keine Kopie vor der Migration")
         return "Medikament, Protokoll und Aufgabe übernommen, Startplan angelegt"
+    }
+
+    /// Eine Datenbank aus Version 0.4 (Schema 3) mit Training wird auf Schema 4 gebracht.
+    private static func migrationKeepsTraining() throws -> String {
+        let folder = try temporaryFolder()
+        let url = folder.appendingPathComponent("Training.store")
+        let defaults = UserDefaults(suiteName: "tagwerk.selftest.\(UUID().uuidString)")!
+        defaults.set(3, forKey: "tagwerk.store.schemaVersion")
+
+        do {
+            let schemaV3 = Schema(versionedSchema: TagwerkSchemaV3.self)
+            let container = try ModelContainer(for: schemaV3, configurations: [ModelConfiguration(schema: schemaV3, url: url)])
+            let context = ModelContext(container)
+            context.insert(WorkoutPlan(name: "Alter Plan"))
+            context.insert(BodyMetric(date: .now, type: .weight, value: 81.5))
+            context.insert(Medication(name: "DAO", schedule: .daily([DoseTime(hour: 12)])))
+            try context.save()
+        }
+
+        let container = try TagwerkStore.makeContainer(at: url, defaults: defaults)
+        let context = ModelContext(container)
+        try check(try context.fetch(FetchDescriptor<WorkoutPlan>()).first?.name == "Alter Plan", "Trainingsplan verloren")
+        try check(try context.fetchCount(FetchDescriptor<BodyMetric>()) == 1, "Körpergewicht verloren")
+        try check(try context.fetchCount(FetchDescriptor<Medication>()) == 1, "Medikament verloren")
+        NutritionActions.addMeal(type: .lunch, date: .now, items: [(foodID: "reis", grams: 70)], catalog: NutritionActions.bundledFoods, in: context)
+        try check(try context.fetchCount(FetchDescriptor<MealEntry>()) == 1, "Mahlzeit nicht gespeichert")
+        try check(NutritionActions.proteinTarget(in: context) == 147, "Eiweißziel aus Körpergewicht: \(NutritionActions.proteinTarget(in: context))")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Training-vor-v4.store").path), "Keine Kopie vor der Migration")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 4, "Schema-Version nicht gemerkt")
+        return "Plan, Gewicht und Medikament übernommen, Mahlzeit gespeichert"
+    }
+
+    /// Mahlzeiten mit Tomate vor Kopfschmerz: Tageslast, Muster, Einkauf aus dem Wochenplan.
+    private static func nutritionFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let catalog = NutritionActions.catalog(in: context)
+        try check(catalog.foods.count >= 300, "Lexikon fehlt (\(catalog.foods.count))")
+        try check(NutritionActions.bundledRecipes.recipes.count >= 30, "Rezepte fehlen")
+        let now = Date.now
+        for day in 1...12 {
+            let noon = now.addingTimeInterval(-Double(day) * 86_400)
+            let tomato = day <= 5
+            NutritionActions.addMeal(
+                type: .lunch, date: noon,
+                items: tomato ? [(foodID: "tomate", grams: 150), (foodID: "nudeln", grams: 100)] : [(foodID: "haehnchenbrust", grams: 150), (foodID: "reis", grams: 70)],
+                catalog: catalog, in: context
+            )
+            if tomato { NutritionActions.addSymptom(.headache, severity: 3, date: noon.addingTimeInterval(3_600), in: context) }
+        }
+        let report = NutritionActions.triggerReport(days: 30, now: now, in: context)
+        let keys = report.findings.map(\.key)
+        try check(keys.contains("tomate") && !keys.contains("haehnchenbrust"), "Muster: \(keys)")
+
+        // Eigene Einschätzung „ok“ senkt die Tageslast auf null.
+        NutritionActions.addMeal(type: .dinner, date: now.addingTimeInterval(-60), items: [(foodID: "tomate", grams: 100)], catalog: catalog, in: context)
+        let before = NutritionActions.day(now, calendar: calendar, in: context).load.points
+        NutritionActions.setTolerance(.ok, for: "tomate", in: context)
+        let after = NutritionActions.day(now, calendar: calendar, in: context).load.points
+        try check(before == 3 && after == 0, "Tageslast \(before) → \(after)")
+
+        NutritionActions.addWater(in: context)
+        NutritionActions.addWater(500, in: context)
+        try check(NutritionActions.water(on: now, calendar: calendar, in: context) == 750, "Wasser")
+        let snapshot = NutritionActions.snapshot(now: now, calendar: calendar, in: context)
+        try check(snapshot.waterML == 750 && snapshot.mealCount >= 1, "Widget-Daten: \(snapshot.waterML) ml")
+
+        let monday = AgendaBuilder.startOfWeek(containing: now, calendar: calendar)
+        NutritionActions.plan("haehnchen-reis-zucchini", servings: 2, on: monday, mealType: .dinner, calendar: calendar, in: context)
+        NutritionActions.plan("kurkuma-haehnchen-kokos", servings: 4, on: monday.addingTimeInterval(86_400), mealType: .dinner, calendar: calendar, in: context)
+        let end = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
+        let added = NutritionActions.addToShopping(NutritionActions.planNeeds(from: monday, to: end, in: context), source: "plan", catalog: catalog, in: context)
+        let chicken = try context.fetch(FetchDescriptor<ShoppingItem>()).first { $0.foodID == "haehnchenbrust" }
+        try check(added >= 8 && chicken?.amount == "900 g", "Einkauf: \(added) Artikel, Hähnchen \(chicken?.amount ?? "-")")
+        let again = NutritionActions.addToShopping(NutritionActions.planNeeds(from: monday, to: end, in: context), source: "plan", catalog: catalog, in: context)
+        try check(again == 0, "Doppelt auf der Liste: \(again)")
+        return "Muster Tomate, Tageslast 3 → 0, \(added) Artikel aus dem Wochenplan"
     }
 
     /// Einheit starten, Sätze abhaken, abschließen: Rotation geht weiter, beim nächsten Mal mehr Gewicht.
@@ -273,6 +352,34 @@ enum SelfTest {
         try check(try target.fetchCount(FetchDescriptor<BodyMetric>()) == 1, "Körpermaße fehlen")
         try check(TrainingActions.catalog(in: target).exercise(id: "custom-zottman-curls") != nil, "Eigene Übung fehlt")
         return "Plan, 1 Einheit, 3 Sätze, Körpermaß, eigene Übung"
+    }
+
+    private static func nutritionBackupRoundTrip() throws -> String {
+        let source = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let catalog = NutritionActions.catalog(in: source)
+        NutritionActions.addMeal(type: .lunch, date: .now, freshness: .leftover, items: [(foodID: "tomate", grams: 100), (foodID: "reis", grams: 70)], catalog: catalog, in: source)
+        NutritionActions.addSymptom(.flush, severity: 2, in: source)
+        NutritionActions.addWater(in: source)
+        NutritionActions.setTolerance(.caution, for: "banane", in: source)
+        NutritionActions.saveCustomFood(FoodInfo(id: "barcode-4006381333931", name: "Testprodukt", category: .sauces, score: .poor, isCustom: true, barcode: "4006381333931"), in: source)
+        NutritionActions.addShoppingItem("Quark", amount: "500 g", catalog: catalog, in: source)
+        NutritionActions.plan("frikadellen", servings: 3, on: .now, mealType: .dinner, calendar: calendar, in: source)
+
+        let document = try BackupService.makeDocument(context: source)
+        let file = try temporaryFolder().appendingPathComponent("nutrition.json")
+        try BackupCodec.encode(document).write(to: file)
+        let target = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let summary = try BackupService.restore(from: file, context: target, calendar: calendar)
+        try check(summary.meals == 1, "Mahlzeiten: \(summary.meals)")
+        let meal = try target.fetch(FetchDescriptor<MealEntry>()).first
+        try check(meal?.sortedItems.count == 2 && meal?.freshness == .leftover, "Mahlzeit unvollständig")
+        try check(try target.fetchCount(FetchDescriptor<SymptomEntry>()) == 1, "Beschwerden fehlen")
+        try check(NutritionActions.water(on: .now, calendar: calendar, in: target) == 250, "Wasser fehlt")
+        try check(NutritionActions.tolerance(for: "banane", in: target) == .caution, "Einschätzung fehlt")
+        try check(NutritionActions.catalog(in: target).food(barcode: "4006381333931") != nil, "Gescanntes Produkt fehlt")
+        try check(try target.fetchCount(FetchDescriptor<ShoppingItem>()) == 1, "Einkaufsliste fehlt")
+        try check(try target.fetchCount(FetchDescriptor<MealPlanEntry>()) == 1, "Wochenplan fehlt")
+        return "Mahlzeit, Beschwerde, Wasser, Einschätzung, Produkt, Einkauf, Plan"
     }
 
     private static func snapshotContainsTodayAndTomorrow() throws -> String {

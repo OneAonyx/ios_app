@@ -3,8 +3,8 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Tab „Gesundheit“: Einnahmen heute, Bei Bedarf, Einnahmetreue, Vorrat, alle Medikamente.
-/// Symptome, Check-ins und Health-Daten kommen in späteren Phasen dazu.
+/// Tab „Gesundheit“: Einnahmen heute, Bei Bedarf, Einnahmetreue, Vorrat, alle Medikamente, Beschwerden.
+/// Check-ins und Health-Daten kommen in Phase 5 dazu.
 struct HealthView: View {
     @Environment(AppModel.self) private var app
     @Query(sort: [SortDescriptor(\Medication.sortIndex), SortDescriptor(\Medication.name)]) private var medications: [Medication]
@@ -90,6 +90,7 @@ struct HealthView: View {
                         MedicationListCard(title: "Pausiert", medications: paused, now: now)
                     }
                 }
+                SymptomsHealthCard(now: now)
                 ComingSoonCard()
                 Text("Orbit hilft beim Erinnern und Protokollieren und ersetzt keine ärztliche Beratung.")
                     .font(.caption)
@@ -400,9 +401,64 @@ private struct ComingSoonCard: View {
         Card {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 SectionHeader("Demnächst", systemImage: "sparkles", tint: ModuleAccent.health)
-                Text("Symptomtagebuch und Histamin-Auswertung (Phase 4), Check-ins, Wochenrückblick und Apple-Health-Daten (Phase 5).")
+                Text("Check-ins, Wochenrückblick, Arztbericht als PDF und Apple-Health-Daten (Phase 5).")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// Beschwerden der letzten Tage mit Schnellzugriff auf Erfassung, Verlauf und Muster.
+private struct SymptomsHealthCard: View {
+    let now: Date
+
+    @Environment(AppModel.self) private var app
+    @Query(sort: \SymptomEntry.date, order: .reverse) private var symptoms: [SymptomEntry]
+
+    var body: some View {
+        let weekAgo = now.addingTimeInterval(-7 * 86_400)
+        let recent = symptoms.filter { $0.date >= weekAgo }
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                HStack {
+                    SectionHeader("Beschwerden", systemImage: "waveform.path.ecg", tint: ModuleAccent.health)
+                    Button {
+                        app.isAddingSymptom = true
+                    } label: {
+                        Label("Eintragen", systemImage: "plus")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .tint(ModuleAccent.health)
+                    .accessibilityIdentifier("health.symptom.add")
+                }
+                if recent.isEmpty {
+                    Text("In den letzten 7 Tagen keine Beschwerden eingetragen.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(recent.prefix(4)) { symptom in
+                        SymptomRow(symptom: symptom, showsDate: true)
+                    }
+                }
+                HStack(spacing: Spacing.xs) {
+                    NavigationLink {
+                        SymptomHistoryView()
+                    } label: {
+                        Label("Verlauf", systemImage: "list.bullet")
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                    }
+                    .buttonStyle(.bordered)
+                    NavigationLink {
+                        PatternsView()
+                    } label: {
+                        Label("Muster", systemImage: "magnifyingglass.circle")
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("health.patterns")
+                }
+                .tint(ModuleAccent.health)
             }
         }
     }
