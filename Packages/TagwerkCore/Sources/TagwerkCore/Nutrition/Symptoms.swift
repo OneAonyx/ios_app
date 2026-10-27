@@ -205,6 +205,7 @@ public enum TriggerAnalysis {
     public static func analyze(
         meals: [MealFact],
         symptoms: [SymptomFact],
+        dayFactors: [DayFactor] = [],
         only type: SymptomType? = nil,
         minimumSeverity: Int = 1
     ) -> TriggerReport {
@@ -257,6 +258,10 @@ public enum TriggerAnalysis {
             }
             if meal.place == .out {
                 add("factor.out", name: "Auswärts gegessen", isFactor: true, meal: meal)
+            }
+            // Umstände des Tages aus dem Check-in (wenig Schlaf, viel Stress).
+            for factor in dayFactors where factor.contains(meal.date) {
+                add(factor.key, name: factor.name, isFactor: true, meal: meal)
             }
         }
 

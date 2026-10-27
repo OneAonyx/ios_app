@@ -27,9 +27,16 @@ public enum SettingsKeys {
     public static let waterTarget = "tagwerk.settings.waterTarget"
     /// Nach Medikamenten „vor dem Essen“ fragen, wenn eine Mahlzeit eingetragen wird.
     public static let askBeforeMealMedication = "tagwerk.settings.askBeforeMealMedication"
+    /// Check-in-Karte auf „Heute“ zeigen.
+    public static let showCheckIns = "tagwerk.settings.showCheckIns"
+    /// Sonntags um 18 Uhr an den Wochenrückblick erinnern.
+    public static let weeklyReviewReminder = "tagwerk.settings.weeklyReviewReminder"
 
     /// Diese Einstellungen wandern mit in die Datensicherung.
-    public static let backedUp = [userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget, askBeforeMealMedication]
+    public static let backedUp = [
+        userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget,
+        askBeforeMealMedication, showCheckIns, weeklyReviewReminder,
+    ]
 }
 
 /// Schlüssel für die gemeinsamen UserDefaults (App Group) und die App-eigenen Defaults.
@@ -86,6 +93,8 @@ public enum NotificationIDs {
     public static let medicationIDKey = "medicationID"
     /// Schlüssel in `userInfo` einer Trainings-Mitteilung (Tag in der Rotation).
     public static let trainingKey = "trainingDay"
+    /// Schlüssel in `userInfo` der Erinnerung an den Wochenrückblick (Wochenbeginn, Unix-Sekunden).
+    public static let reviewKey = "weeklyReview"
 
     /// Präfixe der Mitteilungs-IDs. Beim Neuplanen werden nur diese ersetzt.
     public enum Prefix {
@@ -95,11 +104,13 @@ public enum NotificationIDs {
         public static let snooze = "medsnooze."
         public static let refill = "refill."
         public static let training = "training."
+        /// Wochenrückblick am Sonntag.
+        public static let review = "review."
         /// Pause vorbei (wird nicht beim Neuplanen ersetzt).
         public static let restTimer = "rest."
 
         /// Werden bei jedem Neuplanen komplett ersetzt (Schlummern bleibt bestehen).
-        public static let managed = [task, medication, medicationFollowUp, refill, training]
+        public static let managed = [task, medication, medicationFollowUp, refill, training, review]
     }
 
     public static let systemCheckRequest = "tagwerk.systemcheck.notification"

@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Einnahmetreue
 
-public struct AdherenceSummary: Sendable, Equatable {
+public struct AdherenceSummary: Sendable, Hashable {
     public var taken: Int
     public var skipped: Int
     public var missed: Int
