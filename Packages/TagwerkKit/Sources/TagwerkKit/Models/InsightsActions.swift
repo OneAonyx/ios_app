@@ -17,24 +17,32 @@ public enum InsightsActions {
 
     /// Wert setzen (legt den Check-in des Tages bei Bedarf an).
     public static func set(_ scale: CheckInScale, _ value: Int?, on day: Date = .now, calendar: Calendar, in context: ModelContext) {
-        let entry = checkIn(on: day, calendar: calendar, in: context) ?? {
-            let created = DailyCheckIn(day: calendar.startOfDay(for: day))
-            context.insert(created)
-            return created
-        }()
-        entry.set(scale, value)
+        let record = entry(on: day, calendar: calendar, in: context)
+        record.set(scale, value)
         save(context)
     }
 
     public static func setNote(_ note: String, on day: Date = .now, calendar: Calendar, in context: ModelContext) {
-        let entry = checkIn(on: day, calendar: calendar, in: context) ?? {
-            let created = DailyCheckIn(day: calendar.startOfDay(for: day))
-            context.insert(created)
-            return created
-        }()
-        entry.note = note
-        entry.updatedAt = .now
+        let record = entry(on: day, calendar: calendar, in: context)
+        record.note = note
+        record.updatedAt = .now
         save(context)
+    }
+
+    /// Geschätzte Schlafdauer in Stunden (`nil` löscht sie).
+    public static func setSleepHours(_ hours: Double?, on day: Date = .now, calendar: Calendar, in context: ModelContext) {
+        let record = entry(on: day, calendar: calendar, in: context)
+        record.sleepHours = hours.map { min(max($0, 0), 16) }
+        record.updatedAt = .now
+        save(context)
+    }
+
+    /// Check-in des Tages, bei Bedarf neu angelegt.
+    public static func entry(on day: Date, calendar: Calendar, in context: ModelContext) -> DailyCheckIn {
+        if let existing = checkIn(on: day, calendar: calendar, in: context) { return existing }
+        let created = DailyCheckIn(day: calendar.startOfDay(for: day))
+        context.insert(created)
+        return created
     }
 
     public static func checkIns(from start: Date, to end: Date, in context: ModelContext) -> [DailyCheckIn] {

@@ -61,7 +61,67 @@ enum DemoData {
         seedMedications(into: context, now: now, calendar: calendar)
         seedTraining(into: context, now: now, calendar: calendar)
         seedNutrition(into: context, now: now, calendar: calendar)
+        seedInsights(into: context, now: now, calendar: calendar)
         try? context.save()
+    }
+
+    /// Zwei Wochen Check-ins und ein paar Claude-Anfragen mit Antwort.
+    private static func seedInsights(into context: ModelContext, now: Date, calendar: Calendar) {
+        let today = calendar.startOfDay(for: now)
+        let sleep = [4, 3, 2, 4, 5, 3, 4, 2, 3, 4, 4, 5, 3, 4]
+        let energy = [4, 3, 2, 3, 4, 3, 4, 2, 3, 4, 3, 5, 3, 4]
+        let mood = [4, 3, 3, 4, 5, 3, 4, 2, 3, 4, 4, 5, 4, 4]
+        let stress = [2, 3, 4, 2, 1, 3, 2, 4, 3, 2, 3, 1, 2, 2]
+        for index in 0..<14 {
+            guard let day = calendar.date(byAdding: .day, value: index - 14, to: today) else { continue }
+            let entry = DailyCheckIn(day: day)
+            entry.sleep = sleep[index]
+            entry.energy = energy[index]
+            entry.mood = mood[index]
+            entry.stress = stress[index]
+            entry.sleepHours = [7.5, 6.5, 5.0, 7.0, 8.0, 6.5, 7.5, 5.5, 6.5, 7.0, 7.5, 8.5, 6.5, 7.0][index]
+            if index == 7 { entry.note = "Wenig geschlafen, viel los bei der Arbeit." }
+            context.insert(entry)
+        }
+        // Heute: nur der Morgen, damit die Karte etwas zeigt und der Abend offen ist.
+        let todayEntry = DailyCheckIn(day: today)
+        todayEntry.sleep = 4
+        todayEntry.energy = 4
+        context.insert(todayEntry)
+
+        let weekStart = AgendaBuilder.startOfWeek(containing: now, calendar: calendar)
+        let lastWeek = calendar.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
+        let review = ClaudeExchange(
+            task: .weeklyReview, ref: "DEMO01",
+            title: "Rückblick " + WeeklyReview.title(weekStart: lastWeek, calendar: calendar),
+            prompt: "(Beispiel-Anfrage)", createdAt: now.addingTimeInterval(-5 * 86_400)
+        )
+        review.response = #"{"format":"orbit.text.v1","ref":"DEMO01","title":"Deine Woche","text":"**Gut gelaufen:** Vier Trainings und fast jeden Tag genug Wasser.\n\n**Fällt auf:** An den Tagen mit wenig Schlaf waren Stimmung und Energie niedriger, und zweimal kam Kopfschmerz nach Tomate.\n\n**Für nächste Woche:**\n- Tomate eine Woche weglassen und beobachten.\n- Vor Trainingstagen 30 Minuten früher ins Bett.\n- Mittags Reste nicht aufwärmen, lieber frisch kochen."}"#
+        review.answeredAt = review.createdAt.addingTimeInterval(60)
+        review.status = .applied
+        context.insert(review)
+
+        let food = ClaudeExchange(
+            task: .food, ref: "DEMO02", title: "Lebensmittel: Haferdrink Barista",
+            prompt: "(Beispiel-Anfrage)", createdAt: now.addingTimeInterval(-3_600)
+        )
+        food.response = """
+            Hier ist meine Einschätzung:
+
+            ```json
+            {"format":"orbit.food.v1","ref":"DEMO02","name":"Haferdrink Barista","category":"drinks","score":1,"flags":["L"],"hint":"Hafer ist meist gut verträglich, Zusätze wie Rapsöl und Phosphate eher unkritisch. Bei Liberator-Empfindlichkeit vorsichtig testen.","protein":1.0,"kcal":59,"portion":200}
+            ```
+            """
+        food.answeredAt = food.createdAt.addingTimeInterval(45)
+        food.status = .answered
+        context.insert(food)
+
+        let waiting = ClaudeExchange(
+            task: .recipes, ref: "DEMO03", title: "Rezepte: schnelles Frühstück",
+            prompt: "(Beispiel-Anfrage)", createdAt: now.addingTimeInterval(-600)
+        )
+        waiting.status = .sent
+        context.insert(waiting)
     }
 
     /// Zwei Wochen Tagebuch: Tomate kommt öfter vor Kopfschmerz, damit „Muster“ etwas zeigt.

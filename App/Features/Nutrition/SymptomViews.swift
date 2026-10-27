@@ -149,6 +149,7 @@ struct PatternsView: View {
     @Query(sort: \SymptomEntry.date) private var symptoms: [SymptomEntry]
     @State private var type: SymptomType?
     @State private var days = 90
+    @State private var askingClaude = false
 
     var body: some View {
         // Die Abfragen sorgen dafür, dass die Auswertung bei neuen Einträgen neu rechnet.
@@ -194,24 +195,44 @@ struct PatternsView: View {
                 }
             }
             Section {
+                Button {
+                    askingClaude = true
+                } label: {
+                    Label("Mit Claude besprechen", systemImage: "sparkles")
+                }
+                .disabled(report.mealCount == 0 && report.symptomCount == 0)
+                .accessibilityIdentifier("patterns.claude")
                 NavigationLink {
                     SymptomHistoryView()
                 } label: {
                     Label("Alle Beschwerden", systemImage: "list.bullet")
                 }
+            } footer: {
+                Text("Claude ordnet die Auswertung ein und schlägt vor, wie du Verdächtiges gezielt testest. Es gehen nur die Zusammenfassungen raus.")
             }
         }
         .navigationTitle("Muster")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $askingClaude) {
+            ClaudeRequestSheet(task: .patterns)
+        }
     }
 }
 
 private struct FindingRow: View {
     let finding: TriggerFinding
 
+    static func symbol(for finding: TriggerFinding) -> String {
+        switch finding.key {
+        case "factor.sleep": "bed.double.fill"
+        case "factor.stress": "waveform.path"
+        default: finding.isFactor ? "clock.arrow.circlepath" : "fork.knife"
+        }
+    }
+
     var body: some View {
         let content = HStack(spacing: Spacing.s) {
-            IconBadge(systemImage: finding.isFactor ? "clock.arrow.circlepath" : "fork.knife", tint: finding.lift >= 2 ? .red : .orange, size: 36)
+            IconBadge(systemImage: Self.symbol(for: finding), tint: finding.lift >= 2 ? .red : .orange, size: 36)
             VStack(alignment: .leading, spacing: 2) {
                 Text(finding.name)
                     .font(.body.weight(.semibold))

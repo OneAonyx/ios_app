@@ -30,6 +30,14 @@ final class ScreenshotTests: XCTestCase {
         tapIfPresent(app.buttons["editor.done"])
         tapTab("Gesundheit", in: app)
         snap(app, "11-gesundheit-grosse-schrift")
+        let checkIn = app.buttons["health.checkin"]
+        if scrollTo(checkIn, in: app, attempts: 8) {
+            snap(app, "41-einblicke-grosse-schrift")
+            if tapIfPresent(checkIn) {
+                snap(app, "42-checkin-grosse-schrift")
+                tapIfPresent(app.buttons["Fertig"].firstMatch)
+            }
+        }
         tapTab("Training", in: app)
         snap(app, "16-training-grosse-schrift")
         tapTab("Ernährung", in: app)
@@ -106,13 +114,70 @@ final class ScreenshotTests: XCTestCase {
         }
     }
 
-    /// Schließt offene Blätter über den Knopf „Abbrechen“, der gerade antippbar ist.
+    /// Schließt offene Blätter über den Knopf „Abbrechen“ oder „Schließen“, der gerade antippbar ist.
     @MainActor
     private func closeSheets(in app: XCUIApplication) {
         for _ in 0..<3 {
-            let cancel = app.buttons.matching(NSPredicate(format: "label == %@", "Abbrechen"))
+            let cancel = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Abbrechen", "Schließen"))
             guard cancel.count > 0, tapHittable(cancel) else { return }
             Thread.sleep(forTimeInterval: 0.8)
+        }
+    }
+
+    /// Einblicke: Gesundheit-Karte, Check-in, Befinden, Wochenrückblick, Arztbericht, Claude.
+    @MainActor
+    func testInsights() {
+        let app = launch(extraArguments: ["-forceLight"])
+        tapTab("Gesundheit", in: app)
+        let checkIn = app.buttons["health.checkin"]
+        if scrollTo(checkIn, in: app, attempts: 8) {
+            snap(app, "41-einblicke")
+        }
+        if tapIfPresent(checkIn) {
+            tapIfPresent(app.buttons["checkin.mood.4"], timeout: 2)
+            snap(app, "42-checkin")
+            tapIfPresent(app.buttons["Fertig"].firstMatch)
+        }
+        for (identifier, name) in [("health.mood", "43-befinden"), ("health.review", "44-rueckblick")] {
+            let link = app.buttons[identifier]
+            if scrollTo(link, in: app), tapIfPresent(link) {
+                snap(app, name)
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+        }
+        let report = app.buttons["health.report"]
+        if scrollTo(report, in: app), tapIfPresent(report) {
+            snap(app, "45-arztbericht")
+            if tapIfPresent(app.buttons["report.build"]) {
+                Thread.sleep(forTimeInterval: 1.5)
+                snap(app, "46-arztbericht-pdf")
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        let claude = app.buttons["health.claude"]
+        guard scrollTo(claude, in: app), tapIfPresent(claude) else { return }
+        snap(app, "47-claude")
+        let food = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Haferdrink")).firstMatch
+        if scrollTo(food, in: app), tapIfPresent(food) {
+            snap(app, "48-claude-lebensmittel")
+            if tapIfPresent(app.buttons["claude.apply"], timeout: 2) {
+                snap(app, "49-claude-uebernommen")
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        let review = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Rückblick KW")).firstMatch
+        if scrollTo(review, in: app), tapIfPresent(review) {
+            snap(app, "50-claude-rueckblick")
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        for _ in 0..<3 { app.swipeDown() }
+        if tapIfPresent(app.buttons["claude.task.trainingPlan"]) {
+            snap(app, "51-claude-anfrage")
+            let preview = app.buttons["Ganze Anfrage ansehen"].firstMatch
+            if scrollTo(preview, in: app), tapIfPresent(preview) {
+                snap(app, "52-claude-vorschau")
+            }
         }
     }
 

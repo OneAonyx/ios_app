@@ -3,8 +3,8 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Tab „Gesundheit“: Einnahmen heute, Bei Bedarf, Einnahmetreue, Vorrat, alle Medikamente, Beschwerden.
-/// Check-ins und Health-Daten kommen in Phase 5 dazu.
+/// Tab „Gesundheit“: Einnahmen heute, Bei Bedarf, Einnahmetreue, Vorrat, alle Medikamente, Beschwerden,
+/// Einblicke (Befinden, Wochenrückblick, Arztbericht, Claude).
 struct HealthView: View {
     @Environment(AppModel.self) private var app
     @Query(sort: [SortDescriptor(\Medication.sortIndex), SortDescriptor(\Medication.name)]) private var medications: [Medication]
@@ -90,8 +90,8 @@ struct HealthView: View {
                         MedicationListCard(title: "Pausiert", medications: paused, now: now)
                     }
                 }
+                InsightsHealthCard(now: now)
                 SymptomsHealthCard(now: now)
-                ComingSoonCard()
                 Text("Orbit hilft beim Erinnern und Protokollieren und ersetzt keine ärztliche Beratung.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -396,16 +396,114 @@ struct MedicationSummaryRow: View {
     }
 }
 
-private struct ComingSoonCard: View {
+/// Befinden, Wochenrückblick, Arztbericht und Claude.
+private struct InsightsHealthCard: View {
+    let now: Date
+
+    @Environment(AppModel.self) private var app
+    @Query(sort: \DailyCheckIn.day, order: .reverse) private var checkIns: [DailyCheckIn]
+    @Query(sort: \ClaudeExchange.createdAt, order: .reverse) private var exchanges: [ClaudeExchange]
+
     var body: some View {
+        let calendar = AppModel.calendar
+        let today = checkIns.first { calendar.isDate($0.day, inSameDayAs: now) }?.fact
+        let weekAgo = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: now)) ?? now
+        let averages = CheckInAverages.compute(checkIns.filter { $0.day >= weekAgo }.map(\.fact))
+        let weekStart = AgendaBuilder.startOfWeek(containing: now, calendar: calendar)
+        let waiting = exchanges.filter { $0.status == .sent || $0.status == .answered }.count
         Card {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                SectionHeader("Demnächst", systemImage: "sparkles", tint: ModuleAccent.health)
-                Text("Check-ins, Wochenrückblick, Arztbericht als PDF und Apple-Health-Daten (Phase 5).")
-                    .font(.footnote)
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                SectionHeader("Einblicke", systemImage: "chart.line.uptrend.xyaxis", tint: ModuleAccent.health)
+                Button {
+                    app.openCheckIn()
+                } label: {
+                    InsightRow(
+                        title: "Check-in heute",
+                        detail: todayText(today),
+                        systemImage: "heart.text.square",
+                        tint: ModuleAccent.health
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("health.checkin")
+                NavigationLink {
+                    CheckInHistoryView()
+                } label: {
+                    InsightRow(
+                        title: "Befinden",
+                        detail: averages.days == 0 ? "Noch keine Check-ins" : "7 Tage: Stimmung Ø \(CheckInAverages.format(averages.mood)), Schlaf Ø \(CheckInAverages.format(averages.sleep))",
+                        systemImage: "face.smiling",
+                        tint: ModuleAccent.health
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("health.mood")
+                NavigationLink {
+                    WeeklyReviewView(weekStart: weekStart)
+                } label: {
+                    InsightRow(title: "Wochenrückblick", detail: WeeklyReview.title(weekStart: weekStart, calendar: calendar), systemImage: "calendar.badge.checkmark", tint: .purple)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("health.review")
+                NavigationLink {
+                    DoctorReportView()
+                } label: {
+                    InsightRow(title: "Arztbericht", detail: "PDF mit Medikamenten, Beschwerden und Mustern", systemImage: "doc.richtext", tint: .blue)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("health.report")
+                NavigationLink {
+                    ClaudeHubView()
+                } label: {
+                    InsightRow(
+                        title: "Claude",
+                        detail: waiting > 0 ? (waiting == 1 ? "1 Anfrage offen" : "\(waiting) Anfragen offen") : "Plan, Lebensmittel, Rezepte, Muster",
+                        systemImage: "sparkles",
+                        tint: .purple
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("health.claude")
+                Text("Apple Health wird mit dem Developer-Account angebunden.")
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func todayText(_ fact: CheckInFact?) -> String {
+        guard let fact else { return "Noch offen" }
+        let values = CheckInScale.allCases.compactMap { scale in fact.value(scale).map { "\(scale.emoji($0)) \(scale.title)" } }
+        return values.isEmpty ? "Noch offen" : values.joined(separator: "  ")
+    }
+}
+
+private struct InsightRow: View {
+    let title: String
+    let detail: String
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: Spacing.s) {
+            IconBadge(systemImage: systemImage, tint: tint)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.primary)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 

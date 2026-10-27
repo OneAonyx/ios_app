@@ -14,6 +14,7 @@ struct TodayView: View {
     @AppStorage(SettingsKeys.userName) private var userName = ""
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
+    @AppStorage(SettingsKeys.showCheckIns) private var showCheckIns = true
     @State private var isPickingFocus = false
 
     var body: some View {
@@ -63,6 +64,10 @@ struct TodayView: View {
                 if let nextUp {
                     NextUpCard(item: nextUp, now: now, task: source.task(for: nextUp))
                 }
+                if showCheckIns {
+                    CheckInTodayCard(now: now)
+                }
+                ReviewTodayCard(now: now)
                 if doses.total > 0 {
                     TodayDosesCard(today: doses, now: now, title: "Medikamente", collapsesResolved: true)
                 }

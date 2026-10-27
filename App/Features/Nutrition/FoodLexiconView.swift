@@ -27,6 +27,7 @@ struct FoodLexiconView: View {
     @State private var filter: LexiconFilter = .all
     @State private var creating = false
     @State private var scanning = false
+    @State private var askingClaude = false
 
     var body: some View {
         let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
@@ -81,6 +82,8 @@ struct FoodLexiconView: View {
                 } actions: {
                     if !query.isEmpty {
                         Button("Als eigenes Lebensmittel anlegen") { creating = true }
+                        Button("Claude fragen") { askingClaude = true }
+                            .accessibilityIdentifier("lexicon.claude")
                     }
                 }
             }
@@ -111,6 +114,9 @@ struct FoodLexiconView: View {
         }
         .sheet(isPresented: $scanning) {
             BarcodeScannerSheet { _ in }
+        }
+        .sheet(isPresented: $askingClaude) {
+            ClaudeRequestSheet(task: .food, preset: ClaudePreset(foodName: query))
         }
     }
 }

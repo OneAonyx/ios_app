@@ -61,6 +61,18 @@ struct RootView: View {
         .sheet(isPresented: $app.isAddingSymptom) {
             SymptomEditorView()
         }
+        .sheet(isPresented: $app.isShowingCheckIn) {
+            CheckInSheet()
+        }
+        .sheet(item: $app.presentedReview) { link in
+            WeeklyReviewSheet(weekStart: link.weekStart)
+        }
+        .sheet(isPresented: $app.isShowingClaudeHub) {
+            ClaudeHubSheet()
+        }
+        .sheet(item: $app.presentedExchange) { link in
+            ClaudeExchangeSheet(stableID: link.id)
+        }
         .fullScreenCover(isPresented: onboardingBinding) {
             OnboardingView()
         }

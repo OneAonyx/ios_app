@@ -11,6 +11,7 @@ struct RecipeListView: View {
     @Query private var customRecipes: [CustomRecipe]
     @State private var query = ""
     @State private var tag: String?
+    @State private var askingClaude = false
 
     var body: some View {
         let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
@@ -38,6 +39,18 @@ struct RecipeListView: View {
                     }
                 }
             }
+            if query.isEmpty {
+                Section {
+                    Button {
+                        askingClaude = true
+                    } label: {
+                        Label("Neue Rezeptideen von Claude", systemImage: "sparkles")
+                    }
+                    .accessibilityIdentifier("recipes.claude")
+                } footer: {
+                    Text("Histaminarm und eiweißreich, passend zu deinen verträglichen und gemiedenen Lebensmitteln.")
+                }
+            }
         }
         .overlay {
             if results.isEmpty {
@@ -54,6 +67,9 @@ struct RecipeListView: View {
                 }
                 .accessibilityLabel("Wochenplan")
             }
+        }
+        .sheet(isPresented: $askingClaude) {
+            ClaudeRequestSheet(task: .recipes, preset: ClaudePreset(wish: query))
         }
     }
 

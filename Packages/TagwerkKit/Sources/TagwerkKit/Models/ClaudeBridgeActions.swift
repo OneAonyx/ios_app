@@ -21,12 +21,14 @@ public enum ClaudeBridgeActions {
     // MARK: Anfragen
 
     public static func trainingPrompt(wish: String, ref: String = ClaudePromptBuilder.makeRef(), now: Date = .now, calendar: Calendar, in context: ModelContext) -> ClaudePrompt? {
+        guard let data = trainingContext(wish: wish, now: now, calendar: calendar, in: context) else { return nil }
+        return ClaudePromptBuilder.trainingPlan(data, ref: ref)
+    }
+
+    /// Daten für eine Plan-Anfrage, `nil` ohne aktiven Plan.
+    public static func trainingContext(wish: String = "", now: Date = .now, calendar: Calendar, in context: ModelContext) -> ClaudePromptBuilder.TrainingContext? {
         guard let plan = TrainingActions.activePlan(in: context) else { return nil }
-        let catalog = TrainingActions.catalog(in: context)
-        return ClaudePromptBuilder.trainingPlan(
-            trainingContext(plan: plan, wish: wish, catalog: catalog, now: now, calendar: calendar, in: context),
-            ref: ref
-        )
+        return trainingContext(plan: plan, wish: wish, catalog: TrainingActions.catalog(in: context), now: now, calendar: calendar, in: context)
     }
 
     static func trainingContext(plan: WorkoutPlan, wish: String, catalog: ExerciseCatalog, now: Date, calendar: Calendar, in context: ModelContext) -> ClaudePromptBuilder.TrainingContext {
@@ -93,6 +95,11 @@ public enum ClaudeBridgeActions {
     }
 
     public static func recipesPrompt(wish: String, count: Int = 3, servings: Int = 2, ref: String = ClaudePromptBuilder.makeRef(), in context: ModelContext) -> ClaudePrompt {
+        ClaudePromptBuilder.recipes(recipeContext(wish: wish, count: count, servings: servings, in: context), ref: ref)
+    }
+
+    /// Verträgliche und gemiedene Lebensmittel sowie das Eiweißziel je Portion.
+    public static func recipeContext(wish: String = "", count: Int = 3, servings: Int = 2, in context: ModelContext) -> ClaudePromptBuilder.RecipeContext {
         let catalog = NutritionActions.catalog(in: context)
         let tolerances = NutritionActions.tolerances(in: context)
         let favorites = NutritionActions.favoriteIDs(in: context)
@@ -102,20 +109,34 @@ public enum ClaudeBridgeActions {
             + tolerances.filter { $0.value == .caution }.keys.map { "\(catalog.name(for: $0)) (nur wenig)" }.sorted()
         let perServing = NutritionActions.proteinTarget(in: context) / 4
         let protein = max(25, Int((perServing / 5).rounded()) * 5)
-        return ClaudePromptBuilder.recipes(
-            .init(wish: wish, count: count, servings: servings, proteinPerServing: protein, tolerated: Array(tolerated), avoid: avoid),
-            ref: ref
+        return .init(wish: wish, count: count, servings: servings, proteinPerServing: protein, tolerated: Array(tolerated), avoid: avoid)
+    }
+
+    /// Auswertung und Zusammenfassungen für eine Muster-Anfrage.
+    public struct PatternsInput: Sendable {
+        public var report: TriggerReport
+        public var symptomSummary: [String]
+        public var checkIns: CheckInAverages
+        public var avoid: [String]
+
+        public func prompt(wish: String, ref: String) -> ClaudePrompt {
+            ClaudePromptBuilder.patterns(report, symptomSummary: symptomSummary, checkIns: checkIns, avoid: avoid, wish: wish, ref: ref)
+        }
+    }
+
+    public static func patternsInput(days: Int = 90, now: Date = .now, calendar: Calendar, in context: ModelContext) -> PatternsInput {
+        let start = now.addingTimeInterval(-Double(days) * 86_400)
+        let catalog = NutritionActions.catalog(in: context)
+        return PatternsInput(
+            report: NutritionActions.triggerReport(days: days, now: now, in: context),
+            symptomSummary: InsightsActions.symptomSummary(from: start, to: now.addingTimeInterval(1), in: context),
+            checkIns: CheckInAverages.compute(InsightsActions.checkIns(from: calendar.startOfDay(for: start), to: now.addingTimeInterval(1), in: context).map(\.fact)),
+            avoid: NutritionActions.tolerances(in: context).filter { $0.value == .avoid }.keys.map { catalog.name(for: $0) }.sorted()
         )
     }
 
     public static func patternsPrompt(wish: String, days: Int = 90, ref: String = ClaudePromptBuilder.makeRef(), now: Date = .now, calendar: Calendar, in context: ModelContext) -> ClaudePrompt {
-        let start = now.addingTimeInterval(-Double(days) * 86_400)
-        let report = NutritionActions.triggerReport(days: days, now: now, in: context)
-        let summary = InsightsActions.symptomSummary(from: start, to: now.addingTimeInterval(1), in: context)
-        let averages = CheckInAverages.compute(InsightsActions.checkIns(from: calendar.startOfDay(for: start), to: now.addingTimeInterval(1), in: context).map(\.fact))
-        let catalog = NutritionActions.catalog(in: context)
-        let avoid = NutritionActions.tolerances(in: context).filter { $0.value == .avoid }.keys.map { catalog.name(for: $0) }.sorted()
-        return ClaudePromptBuilder.patterns(report, symptomSummary: summary, checkIns: averages, avoid: avoid, wish: wish, ref: ref)
+        patternsInput(days: days, now: now, calendar: calendar, in: context).prompt(wish: wish, ref: ref)
     }
 
     // MARK: Antworten

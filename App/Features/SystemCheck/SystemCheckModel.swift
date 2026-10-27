@@ -253,7 +253,7 @@ final class SystemCheckModel {
 
     // MARK: - Rückkehr in die App, Bericht, Zurücksetzen
 
-    /// Beim Zurückkehren in die App: Widget-Wert, Mitteilungs-Antwort und Claude-Briefkasten prüfen.
+    /// Beim Zurückkehren in die App: Widget-Wert und Mitteilungs-Antwort prüfen.
     func refreshOnActivate() {
         widgetSnapshot = WidgetDataStore.readSystemCheckSnapshot()
         if let record = SystemCheckStore.lastNotificationAction(),
@@ -261,9 +261,18 @@ final class SystemCheckModel {
            record.receivedAt > (notificationRequestedAt ?? .distantPast) {
             handleNotificationAction(record)
         }
-        if let pending = ClaudeBridgeInbox.take() {
-            verifyClaude(pending, via: "Aktion „Claude-Antwort übernehmen“")
-        }
+        // Den Claude-Briefkasten verteilt AppModel (Systemcheck oder Claude-Anfrage).
+    }
+
+    /// Wartet der Claude-Test gerade auf eine Antwort?
+    var isWaitingForClaude: Bool {
+        if case .waitingForUser = state(for: .claudeBridge) { return claudeNonce != nil }
+        return false
+    }
+
+    /// Antwort aus dem Briefkasten (Aktion „Claude-Antwort übernehmen“).
+    func receiveClaude(_ text: String) {
+        verifyClaude(text, via: "Aktion „Claude-Antwort übernehmen“")
     }
 
     func reportText() -> String {

@@ -11,6 +11,8 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.userName) private var userName = ""
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.defaultReminderOffset) private var defaultReminderOffset = 0
+    @AppStorage(SettingsKeys.showCheckIns) private var showCheckIns = true
+    @AppStorage(SettingsKeys.weeklyReviewReminder) private var weeklyReviewReminder = true
     @State private var notificationsAllowed: Bool?
 
     var body: some View {
@@ -56,6 +58,21 @@ struct SettingsView: View {
                     Text("Erinnerungen")
                 } footer: {
                     Text("Gilt für neue Aufgaben mit Uhrzeit. Ganztägige Aufgaben erinnern um 9 Uhr.")
+                }
+
+                Section {
+                    Toggle("Check-in auf „Heute“", isOn: $showCheckIns)
+                    Toggle("Sonntags an Rückblick erinnern", isOn: $weeklyReviewReminder)
+                        .onChange(of: weeklyReviewReminder) { _, _ in app.tasksChanged() }
+                    NavigationLink {
+                        ClaudeShortcutGuideView()
+                    } label: {
+                        Label("Claude-Kurzbefehl einrichten", systemImage: "sparkles")
+                    }
+                } header: {
+                    Text("Einblicke")
+                } footer: {
+                    Text("Morgens fragt der Check-in nach Schlaf und Energie, abends nach Stimmung und Stress. Der Wochenrückblick kommt sonntags um 18 Uhr.")
                 }
 
                 BackupSection()
@@ -184,7 +201,7 @@ private struct BackupSection: View {
         pendingRestoreURL = nil
         do {
             let summary = try BackupService.restore(from: url, context: context, calendar: AppModel.calendar)
-            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente, \(summary.workouts) Trainingseinheiten, \(summary.meals) Mahlzeiten."
+            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente, \(summary.workouts) Trainingseinheiten, \(summary.meals) Mahlzeiten, \(summary.checkIns) Check-ins."
             app.tasksChanged()
             app.nutritionChanged()
         } catch {
@@ -239,15 +256,15 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 4
+    private let currentPhase = 5
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
         Phase(id: 1, title: "Heute, Aufgaben, Agenda", detail: "Abgeschlossen: Aufgaben, Schnellerfassung, Kalender, Datensicherung.", systemImage: "checklist"),
         Phase(id: 2, title: "Medikamente", detail: "Abgeschlossen: Einnahmepläne, Erinnerungen, Wecker, Vorrat, Widget, Kontrollzentrum, Siri.", systemImage: "pills"),
         Phase(id: 3, title: "Training", detail: "Abgeschlossen: Oberkörper-4er, Satz-Tracking mit Vorschlag, Pausen-Timer in der Dynamic Island, Statistik.", systemImage: "dumbbell"),
-        Phase(id: 4, title: "Ernährung & Histamin", detail: "Lexikon mit 350 Lebensmitteln, Barcode- und Zutaten-Scan, Tagebuch mit Tageslast, Beschwerden und Muster, Einkauf, Rezepte, Wochenplan.", systemImage: "fork.knife"),
-        Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Wochenrückblick, Arztbericht, Claude über Kurzbefehl.", systemImage: "sparkles"),
+        Phase(id: 4, title: "Ernährung & Histamin", detail: "Abgeschlossen: Lexikon, Barcode- und Zutaten-Scan, Tagebuch mit Tageslast, Beschwerden und Muster, Einkauf, Rezepte, Wochenplan.", systemImage: "fork.knife"),
+        Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Check-ins, Wochenrückblick, Arztbericht als PDF, Claude für Trainingsplan, Lebensmittel, Rezepte, Muster und Rückblick.", systemImage: "sparkles"),
         Phase(id: 6, title: "Leben & Feinschliff", detail: "Routinen, Fristen, Verträge, Widgets, Fokus-Filter.", systemImage: "wand.and.stars"),
         Phase(id: 7, title: "Developer-Account & iCloud", detail: "TestFlight, Apple Health, iCloud-Sync.", systemImage: "icloud"),
     ]

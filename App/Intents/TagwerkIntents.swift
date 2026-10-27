@@ -161,6 +161,32 @@ struct OpenSystemCheckIntent: AppIntent {
     }
 }
 
+/// Check-in öffnen, z. B. per Siri: „Check-in in Orbit“.
+struct OpenCheckInIntent: AppIntent {
+    static let title: LocalizedStringResource = "Check-in"
+    static let description = IntentDescription("Öffnet den Check-in des Tages: Schlaf, Energie, Stimmung, Stress.")
+    static let openAppWhenRun: Bool = true
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        AppModel.shared.openCheckIn()
+        return .result()
+    }
+}
+
+/// Wochenrückblick der laufenden Woche öffnen.
+struct OpenWeeklyReviewIntent: AppIntent {
+    static let title: LocalizedStringResource = "Wochenrückblick"
+    static let description = IntentDescription("Öffnet den Wochenrückblick der laufenden Woche.")
+    static let openAppWhenRun: Bool = true
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        AppModel.shared.openReview(weekStart: nil)
+        return .result()
+    }
+}
+
 struct TagwerkShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
@@ -249,14 +275,16 @@ struct TagwerkShortcuts: AppShortcutsProvider {
             shortTitle: "Histamin-Check",
             systemImageName: "fork.knife"
         )
+        // Höchstens 10 Kurzbefehle: Der Systemcheck ist als Aktion in der Kurzbefehle-App weiter da.
         AppShortcut(
-            intent: OpenSystemCheckIntent(),
+            intent: OpenCheckInIntent(),
             phrases: [
-                "Öffne den Systemcheck in \(.applicationName)",
-                "\(.applicationName) Systemcheck",
+                "Check-in in \(.applicationName)",
+                "\(.applicationName) Check-in",
+                "Wie geht es mir in \(.applicationName)",
             ],
-            shortTitle: "Systemcheck",
-            systemImageName: "checkmark.seal"
+            shortTitle: "Check-in",
+            systemImageName: "heart.text.square"
         )
     }
 }

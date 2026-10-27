@@ -11,6 +11,7 @@ struct PlanEditorView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppModel.self) private var app
     @State private var importing = false
+    @State private var askingClaude = false
     @State private var confirmReset = false
     @State private var newDayName = ""
     @State private var addingDay = false
@@ -106,9 +107,15 @@ struct PlanEditorView: View {
                     Label("Plan als JSON teilen", systemImage: "square.and.arrow.up")
                 }
                 Button {
+                    askingClaude = true
+                } label: {
+                    Label("Mit Claude anpassen", systemImage: "sparkles")
+                }
+                .accessibilityIdentifier("plan.claude")
+                Button {
                     importing = true
                 } label: {
-                    Label("Plan importieren (z. B. von Claude)", systemImage: "square.and.arrow.down")
+                    Label("Plan importieren (JSON)", systemImage: "square.and.arrow.down")
                 }
                 .accessibilityIdentifier("plan.import")
                 Button("Zyklus neu starten (Woche 1, Tag A)") {
@@ -119,7 +126,7 @@ struct PlanEditorView: View {
                     confirmReset = true
                 }
             } footer: {
-                Text("Ein importierter Plan wird der aktive Plan. Dein Verlauf bleibt erhalten.")
+                Text("Claude bekommt deinen Plan, deine letzten Top-Sätze und Stagnationen und schlägt einen neuen Plan vor. Ein übernommener Plan wird der aktive Plan, dein Verlauf bleibt erhalten.")
             }
         }
         .navigationTitle("Plan")
@@ -128,6 +135,9 @@ struct PlanEditorView: View {
         .onDisappear { changed() }
         .sheet(isPresented: $importing) {
             PlanImportView()
+        }
+        .sheet(isPresented: $askingClaude) {
+            ClaudeRequestSheet(task: .trainingPlan)
         }
         .alert("Tag hinzufügen", isPresented: $addingDay) {
             TextField("Name, z. B. Beine", text: $newDayName)

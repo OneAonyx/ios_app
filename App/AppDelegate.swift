@@ -58,6 +58,15 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             return
         }
 
+        if let reference = content.userInfo[NotificationIDs.reviewKey] as? String {
+            // Wochenrückblick: referenceID ist der Wochenbeginn in Sekunden seit 1970.
+            let weekStart = Double(reference).map { Date(timeIntervalSince1970: $0) }
+            await MainActor.run {
+                AppModel.shared.openReview(weekStart: weekStart)
+            }
+            return
+        }
+
         if medicationID != nil {
             // Nachfüll-Hinweis angetippt.
             await MainActor.run {

@@ -3,6 +3,18 @@ import Observation
 import SwiftData
 import TagwerkCore
 import TagwerkKit
+import UIKit
+
+/// Wochenrückblick im eigenen Blatt.
+struct ReviewLink: Identifiable, Hashable {
+    let weekStart: Date
+    var id: Date { weekStart }
+}
+
+/// Claude-Anfrage im eigenen Blatt (stableID).
+struct ExchangeLink: Identifiable, Hashable {
+    let id: String
+}
 
 /// Zentraler Zustand der App: Datenspeicher, Kalender, Navigation und Systemcheck.
 @MainActor
@@ -42,6 +54,13 @@ final class AppModel {
     var editingMeal: MealEntry?
     /// Beschwerden eintragen.
     var isAddingSymptom = false
+    /// Einblicke: Check-in, Wochenrückblick, Claude-Zentrale und eine Claude-Anfrage im eigenen Blatt.
+    var isShowingCheckIn = false
+    var presentedReview: ReviewLink?
+    var isShowingClaudeHub = false
+    var presentedExchange: ExchangeLink?
+    /// Claude-Anfrage, die gerade auf dem Bildschirm ist (dann kein zweites Blatt öffnen).
+    @ObservationIgnored var visibleExchangeID: String?
 
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
 
@@ -120,8 +139,12 @@ final class AppModel {
     /// `tagwerk://mahlzeit`, `tagwerk://wasser`, `tagwerk://symptom`.
     func handle(url: URL) {
         if let callback = ClaudeCallback.parse(url) {
-            openSystemCheck()
-            systemCheck.handleClaudeCallback(callback)
+            if let id = callback.requestID, let exchange = InsightsActions.exchange(stableID: id, in: context) {
+                handleClaudeCallback(callback, exchange: exchange)
+            } else {
+                openSystemCheck()
+                systemCheck.handleClaudeCallback(callback)
+            }
             return
         }
         guard url.scheme?.lowercased() == TagwerkIDs.urlScheme else { return }
@@ -149,6 +172,12 @@ final class AppModel {
             openNutrition()
         case "symptom":
             openSymptomEntry()
+        case "checkin":
+            openCheckIn()
+        case "rueckblick", "review":
+            openReview(weekStart: nil)
+        case "claude":
+            openClaudeHub()
         default:
             break
         }
@@ -269,6 +298,95 @@ final class AppModel {
         if NutritionActionCenter.takePendingSymptomEntry() {
             openSymptomEntry()
         }
+        deliverClaudeInbox()
+    }
+
+    // MARK: Einblicke
+
+    func openCheckIn() {
+        dismissPanels()
+        isShowingCheckIn = true
+    }
+
+    /// Wochenrückblick öffnen, ohne Angabe für die laufende Woche.
+    func openReview(weekStart: Date?) {
+        dismissPanels()
+        let start = weekStart ?? AgendaBuilder.startOfWeek(containing: .now, calendar: Self.calendar)
+        presentedReview = ReviewLink(weekStart: start)
+    }
+
+    func openClaudeHub() {
+        dismissPanels()
+        isShowingClaudeHub = true
+    }
+
+    private func dismissPanels() {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        isShowingSettings = false
+        editingTask = nil
+    }
+
+    /// Anfrage über den Kurzbefehl „Orbit Claude“ abschicken. Lange Anfragen gehen über die
+    /// Zwischenablage, weil sehr lange Links nicht zuverlässig ankommen.
+    @discardableResult
+    func sendToClaude(_ exchange: ClaudeExchange) async -> Bool {
+        _ = ClaudeBridgeInbox.take()
+        let input: ShortcutRunRequest.Input
+        if exchange.prompt.count <= Self.maxLinkPromptLength {
+            input = .text(exchange.prompt)
+        } else {
+            UIPasteboard.general.string = exchange.prompt
+            input = .clipboard
+        }
+        InsightsActions.markSent(exchange, in: context)
+        let request = ShortcutRunRequest(input: input, requestID: exchange.stableID)
+        let opened = await UIApplication.shared.open(request.url())
+        if !opened {
+            InsightsActions.setStatus(.failed, of: exchange, in: context)
+        }
+        return opened
+    }
+
+    static let maxLinkPromptLength = 8_000
+
+    /// Rücksprung aus der Kurzbefehle-App für eine Claude-Anfrage.
+    private func handleClaudeCallback(_ callback: ClaudeCallback, exchange: ClaudeExchange) {
+        switch callback.outcome {
+        case .success:
+            let inbox = ClaudeBridgeInbox.take()
+            if let result = callback.result?.trimmingCharacters(in: .whitespacesAndNewlines), !result.isEmpty {
+                InsightsActions.attach(result, to: exchange, in: context)
+            } else if let inbox {
+                InsightsActions.attach(inbox, to: exchange, in: context)
+            }
+        case .cancel:
+            if exchange.response.isEmpty { InsightsActions.setStatus(.draft, of: exchange, in: context) }
+        case .error:
+            if exchange.response.isEmpty { InsightsActions.setStatus(.failed, of: exchange, in: context) }
+        }
+        present(exchange)
+    }
+
+    /// Antwort aus dem Briefkasten (Aktion „Claude-Antwort übernehmen“) zustellen:
+    /// an die Anfrage mit passender Kennung, sonst an den wartenden Systemcheck, sonst an die
+    /// zuletzt abgeschickte Anfrage.
+    private func deliverClaudeInbox() {
+        guard let response = ClaudeBridgeInbox.take() else { return }
+        if let ref = ClaudeAnswerParser.ref(in: response), let exchange = InsightsActions.exchange(ref: ref, in: context) {
+            InsightsActions.attach(response, to: exchange, in: context)
+            present(exchange)
+        } else if systemCheck.isWaitingForClaude {
+            systemCheck.receiveClaude(response)
+        } else if let exchange = ClaudeBridgeActions.receive(response, in: context) {
+            present(exchange)
+        }
+    }
+
+    private func present(_ exchange: ClaudeExchange) {
+        guard visibleExchangeID != exchange.stableID else { return }
+        dismissPanels()
+        presentedExchange = ExchangeLink(id: exchange.stableID)
     }
 
     // MARK: Ernährung

@@ -92,6 +92,7 @@ struct BarcodeScannerSheet: View {
     @Environment(\.modelContext) private var context
     @State private var phase: Phase = .scanning
     @State private var manualCode = ""
+    @State private var askingClaude = false
 
     private enum Phase {
         case scanning
@@ -144,6 +145,7 @@ struct BarcodeScannerSheet: View {
                     } actions: {
                         Button("Nochmal scannen") { phase = .scanning }
                             .buttonStyle(.borderedProminent)
+                        Button("Claude fragen") { askingClaude = true }
                     }
                 }
             }
@@ -153,6 +155,9 @@ struct BarcodeScannerSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
                 }
+            }
+            .sheet(isPresented: $askingClaude) {
+                ClaudeRequestSheet(task: .food)
             }
         }
     }
@@ -217,6 +222,7 @@ private struct ScannedFoodView: View {
 struct IngredientCheckView: View {
     @State private var text = ""
     @State private var scanning = false
+    @State private var askingClaude = false
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -254,6 +260,15 @@ struct IngredientCheckView: View {
                 Section("Ergebnis") {
                     IngredientReportView(report: report)
                 }
+                Section {
+                    Button {
+                        askingClaude = true
+                    } label: {
+                        Label("Von Claude bewerten lassen", systemImage: "sparkles")
+                    }
+                } footer: {
+                    Text("Claude schätzt das ganze Produkt ein und du kannst es als eigenes Lebensmittel speichern.")
+                }
             }
             Section {
                 NutritionDisclaimer()
@@ -272,6 +287,9 @@ struct IngredientCheckView: View {
             TextScanSheet { scanned in
                 text = scanned
             }
+        }
+        .sheet(isPresented: $askingClaude) {
+            ClaudeRequestSheet(task: .food, preset: ClaudePreset(ingredients: text))
         }
         .onAppear {
             if AppInfo.isUITesting, text.isEmpty {

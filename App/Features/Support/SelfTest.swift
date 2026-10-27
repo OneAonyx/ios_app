@@ -1,4 +1,5 @@
 import Foundation
+import PDFKit
 import SwiftData
 import SwiftUI
 import TagwerkCore
@@ -22,16 +23,20 @@ enum SelfTest {
 
     static func runAll() -> [Result] {
         [
-            run("Migration V1 → V4", migrationKeepsTasks),
-            run("Migration V2 → V4", migrationKeepsMedications),
-            run("Migration V3 → V4", migrationKeepsTraining),
+            run("Migration V1 → V5", migrationKeepsTasks),
+            run("Migration V2 → V5", migrationKeepsMedications),
+            run("Migration V3 → V5", migrationKeepsTraining),
+            run("Migration V4 → V5", migrationKeepsNutrition),
             run("Training: Einheit und Progression", trainingFlow),
             run("Ernährung: Tageslast, Muster, Einkauf", nutritionFlow),
+            run("Einblicke: Check-in, Rückblick, Bericht", insightsFlow),
+            run("Claude: Anfrage, Antwort, Übernahme", claudeFlow),
             run("Einnahmen und Vorrat", doseActionsAdjustStock),
             run("Nachschub-Aufgabe", refillTaskOnlyOnce),
             run("Datensicherung mit Medikamenten", backupRoundTrip),
             run("Datensicherung mit Training", trainingBackupRoundTrip),
             run("Datensicherung mit Ernährung", nutritionBackupRoundTrip),
+            run("Datensicherung mit Einblicken", insightsBackupRoundTrip),
             run("Widget-Daten", snapshotContainsTodayAndTomorrow),
         ]
     }
@@ -84,13 +89,13 @@ enum SelfTest {
         context.insert(Medication(name: "Test"))
         try context.save()
         try check(try context.fetchCount(FetchDescriptor<Medication>()) == 1, "Medikament nicht gespeichert")
-        let copy = folder.appendingPathComponent("Test-vor-v4.store")
+        let copy = folder.appendingPathComponent("Test-vor-v5.store")
         try check(FileManager.default.fileExists(atPath: copy.path), "Keine Kopie vor der Migration")
-        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 4, "Schema-Version nicht gemerkt")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 5, "Schema-Version nicht gemerkt")
         return "3 Aufgaben übernommen, Kopie angelegt"
     }
 
-    /// Eine Datenbank aus Version 0.3 (Schema 2) mit Medikamenten wird auf Schema 3 gebracht.
+    /// Eine Datenbank aus Version 0.3 (Schema 2) mit Medikamenten wird auf Schema 5 gebracht.
     private static func migrationKeepsMedications() throws -> String {
         let folder = try temporaryFolder()
         let url = folder.appendingPathComponent("Meds.store")
@@ -120,11 +125,11 @@ enum SelfTest {
         try check(try context.fetchCount(FetchDescriptor<TaskItem>()) == 1, "Aufgabe verloren")
         let plan = TrainingActions.ensureStarterPlan(in: context)
         try check(plan?.rotationDays.count == 4, "Startplan nicht angelegt")
-        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Meds-vor-v4.store").path), "Keine Kopie vor der Migration")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Meds-vor-v5.store").path), "Keine Kopie vor der Migration")
         return "Medikament, Protokoll und Aufgabe übernommen, Startplan angelegt"
     }
 
-    /// Eine Datenbank aus Version 0.4 (Schema 3) mit Training wird auf Schema 4 gebracht.
+    /// Eine Datenbank aus Version 0.4 (Schema 3) mit Training wird auf Schema 5 gebracht.
     private static func migrationKeepsTraining() throws -> String {
         let folder = try temporaryFolder()
         let url = folder.appendingPathComponent("Training.store")
@@ -149,9 +154,135 @@ enum SelfTest {
         NutritionActions.addMeal(type: .lunch, date: .now, items: [(foodID: "reis", grams: 70)], catalog: NutritionActions.bundledFoods, in: context)
         try check(try context.fetchCount(FetchDescriptor<MealEntry>()) == 1, "Mahlzeit nicht gespeichert")
         try check(NutritionActions.proteinTarget(in: context) == 147, "Eiweißziel aus Körpergewicht: \(NutritionActions.proteinTarget(in: context))")
-        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Training-vor-v4.store").path), "Keine Kopie vor der Migration")
-        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 4, "Schema-Version nicht gemerkt")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Training-vor-v5.store").path), "Keine Kopie vor der Migration")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 5, "Schema-Version nicht gemerkt")
         return "Plan, Gewicht und Medikament übernommen, Mahlzeit gespeichert"
+    }
+
+    /// Eine Datenbank aus Version 0.5 (Schema 4) mit Ernährung wird auf Schema 5 gebracht.
+    private static func migrationKeepsNutrition() throws -> String {
+        let folder = try temporaryFolder()
+        let url = folder.appendingPathComponent("Food.store")
+        let defaults = UserDefaults(suiteName: "tagwerk.selftest.\(UUID().uuidString)")!
+        defaults.set(4, forKey: "tagwerk.store.schemaVersion")
+
+        do {
+            let schemaV4 = Schema(versionedSchema: TagwerkSchemaV4.self)
+            let container = try ModelContainer(for: schemaV4, configurations: [ModelConfiguration(schema: schemaV4, url: url)])
+            let context = ModelContext(container)
+            let meal = MealEntry(date: .now, type: .lunch)
+            context.insert(meal)
+            let item = MealItem(foodID: "reis", name: "Reis", grams: 70, position: 0)
+            context.insert(item)
+            item.meal = meal
+            context.insert(SymptomEntry(date: .now, type: .headache, severity: 3))
+            context.insert(CustomRecipe(title: "Eigenes Rezept"))
+            try context.save()
+        }
+
+        let container = try TagwerkStore.makeContainer(at: url, defaults: defaults)
+        let context = ModelContext(container)
+        try check(try context.fetch(FetchDescriptor<MealEntry>()).first?.sortedItems.count == 1, "Mahlzeit verloren")
+        try check(try context.fetchCount(FetchDescriptor<SymptomEntry>()) == 1, "Beschwerde verloren")
+        try check(try context.fetchCount(FetchDescriptor<CustomRecipe>()) == 1, "Rezept verloren")
+        InsightsActions.set(.mood, 4, calendar: calendar, in: context)
+        try check(try context.fetchCount(FetchDescriptor<DailyCheckIn>()) == 1, "Check-in nicht gespeichert")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Food-vor-v5.store").path), "Keine Kopie vor der Migration")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 5, "Schema-Version nicht gemerkt")
+        return "Mahlzeit, Beschwerde und Rezept übernommen, Check-in gespeichert"
+    }
+
+    /// Check-ins als Umstände, Wochenrückblick, Arztbericht mit PDF.
+    private static func insightsFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let now = Date.now
+        let today = calendar.startOfDay(for: now)
+        for offset in 1...6 {
+            let day = calendar.date(byAdding: .day, value: -offset, to: today) ?? today
+            InsightsActions.set(.sleep, offset <= 3 ? 1 : 4, on: day, calendar: calendar, in: context)
+            InsightsActions.set(.mood, 3, on: day, calendar: calendar, in: context)
+        }
+        InsightsActions.set(.stress, 9, on: now, calendar: calendar, in: context)
+        InsightsActions.setNote("Test", on: now, calendar: calendar, in: context)
+        try check(InsightsActions.checkIn(on: now, calendar: calendar, in: context)?.stress == 5, "Wert nicht auf 1–5 begrenzt")
+        try check(try context.fetchCount(FetchDescriptor<DailyCheckIn>()) == 7, "Ein Check-in je Tag erwartet")
+        let weekAgo = calendar.date(byAdding: .day, value: -7, to: today) ?? today
+        let factors = InsightsActions.dayFactors(from: weekAgo, to: now.addingTimeInterval(1), calendar: calendar, in: context)
+        try check(factors.filter { $0.key == "factor.sleep" }.count == 3 && factors.filter { $0.key == "factor.stress" }.count == 1, "Umstände: \(factors.map(\.key))")
+
+        let medication = Medication(name: "DAO", schedule: .daily([DoseTime(hour: 12)]), startDate: now.addingTimeInterval(-10 * 86_400), createdAt: now.addingTimeInterval(-10 * 86_400))
+        context.insert(medication)
+        NutritionActions.addMeal(type: .lunch, date: now.addingTimeInterval(-3_600), items: [(foodID: "tomate", grams: 150)], catalog: NutritionActions.catalog(in: context), in: context)
+        NutritionActions.addSymptom(.headache, severity: 3, date: now.addingTimeInterval(-1_800), durationMinutes: 90, note: "nach dem Essen", in: context)
+        TrainingActions.addMetric(.weight, value: 82, date: now.addingTimeInterval(-20 * 86_400), in: context)
+        TrainingActions.addMetric(.weight, value: 81.2, date: now.addingTimeInterval(-86_400), in: context)
+        try context.save()
+
+        let review = InsightsActions.weeklyReview(weekStart: AgendaBuilder.startOfWeek(containing: now, calendar: calendar), calendar: calendar, in: context)
+        try check(!review.isEmpty && !review.plainText.contains("DAO"), "Rückblick leer oder mit Namen")
+
+        let from = calendar.date(byAdding: .day, value: -27, to: today) ?? today
+        let report = InsightsActions.doctorReport(from: from, to: now, name: "Test", calendar: calendar, in: context)
+        try check(report.medications.count == 1 && report.symptomLog.count == 1 && report.checkIns.days == 7, "Bericht: \(report.medications.count) Medikamente, \(report.symptomLog.count) Beschwerden, \(report.checkIns.days) Check-ins")
+        try check(report.weightChangeText?.contains("82") == true, "Gewicht: \(report.weightChangeText ?? "–")")
+        guard let url = DoctorReportPDF.render(report, calendar: calendar), let document = PDFDocument(url: url) else {
+            throw Failure(description: "PDF nicht erstellt")
+        }
+        try check(document.pageCount == 3, "PDF: \(document.pageCount) statt 3 Seiten")
+        let candidates = InsightsActions.reminderCandidates(now: now, calendar: calendar)
+        try check(candidates.count == (InsightsActions.reviewReminderEnabled ? 1 : 0), "Erinnerung an den Rückblick fehlt")
+        return "3 Tage wenig Schlaf als Umstand, Rückblick, PDF mit \(document.pageCount) Seiten"
+    }
+
+    /// Anfragen bauen, Antworten zuordnen und übernehmen (Lebensmittel, Plan, Rezepte).
+    private static func claudeFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        _ = TrainingActions.ensureStarterPlan(in: context)
+
+        // Lebensmittel: Antwort mit Codeblock, Zuordnung über die Kennung.
+        let foodPrompt = ClaudeBridgeActions.foodPrompt(name: "Testriegel", ingredients: "Hafer, Kakao")
+        let food = InsightsActions.createExchange(foodPrompt, title: "Lebensmittel: Testriegel", in: context)
+        InsightsActions.markSent(food, in: context)
+        let other = InsightsActions.createExchange(ClaudeBridgeActions.foodPrompt(name: "Anderes"), title: "Anderes", in: context)
+        InsightsActions.markSent(other, in: context)
+        let response = "Gern!\n```json\n{\"format\":\"orbit.food.v1\",\"ref\":\"\(foodPrompt.ref)\",\"name\":\"Testriegel\",\"category\":\"sweets\",\"score\":2,\"flags\":[\"L\"],\"hint\":\"Kakao setzt Histamin frei.\",\"protein\":8}\n```"
+        let received = ClaudeBridgeActions.receive(response, in: context)
+        try check(received?.stableID == food.stableID && food.status == .answered, "Antwort falsch zugeordnet")
+        guard case .food(let info) = try ClaudeBridgeActions.parse(food, in: context) else {
+            throw Failure(description: "Lebensmittel nicht erkannt")
+        }
+        ClaudeBridgeActions.applyFood(info, from: food, in: context)
+        let saved = NutritionActions.catalog(in: context).foods.first { $0.name == "Testriegel" }
+        try check(saved?.score == .poor && food.status == .applied, "Lebensmittel nicht gespeichert")
+
+        // Trainingsplan: Anfrage mit Plan und Übungsnamen, Antwort wird neuer aktiver Plan.
+        guard let planPrompt = ClaudeBridgeActions.trainingPrompt(wish: "Mehr Rücken", calendar: calendar, in: context) else {
+            throw Failure(description: "Keine Plan-Anfrage ohne Plan")
+        }
+        try check(planPrompt.text.contains("Bankdrücken (Langhantel)") && planPrompt.text.contains("Mehr Rücken"), "Plan-Anfrage unvollständig")
+        let planExchange = InsightsActions.createExchange(planPrompt, title: "Plan", in: context)
+        InsightsActions.attach(#"{"format":"orbit.plan.v1","name":"Claude-Plan","mesoWeeks":5,"days":[{"name":"Oberkörper","exercises":[{"name":"Bankdrücken (Langhantel)","sets":3,"repMin":6,"repMax":8,"rir":2,"restSec":150},{"name":"Xylofon-Übung","sets":2,"repMin":10,"repMax":12,"rir":1,"restSec":60}]}]}"#, to: planExchange, in: context)
+        guard case .plan(let template) = try ClaudeBridgeActions.parse(planExchange, in: context) else {
+            throw Failure(description: "Plan nicht erkannt")
+        }
+        let plan = ClaudeBridgeActions.applyPlan(template, from: planExchange, in: context)
+        try check(TrainingActions.activePlan(in: context)?.stableID == plan.stableID && plan.rotationDays.count == 1, "Plan nicht aktiv")
+        try check(TrainingActions.catalog(in: context).exercise(id: PlanImporter.customID(for: "Xylofon-Übung")) != nil, "Unbekannte Übung nicht angelegt")
+
+        // Rezepte: unbekannte Zutat wird eigenes Lebensmittel.
+        let recipesPrompt = ClaudeBridgeActions.recipesPrompt(wish: "Frühstück", in: context)
+        let recipes = InsightsActions.createExchange(recipesPrompt, title: "Rezepte", in: context)
+        InsightsActions.attach(#"{"format":"orbit.recipes.v1","recipes":[{"title":"Quark-Bowl","servings":1,"minutes":5,"ingredients":[{"name":"Magerquark","grams":250},{"name":"Xylofrucht","grams":80}],"steps":["Alles mischen."]}]}"#, to: recipes, in: context)
+        guard case .recipes(let list, let newFoods) = try ClaudeBridgeActions.parse(recipes, in: context) else {
+            throw Failure(description: "Rezepte nicht erkannt")
+        }
+        ClaudeBridgeActions.applyRecipes(list, newFoods: newFoods, from: recipes, in: context)
+        try check(NutritionActions.recipes(in: context).recipes.contains { $0.title == "Quark-Bowl" }, "Rezept nicht gespeichert")
+        try check(newFoods.count == 1 && NutritionActions.catalog(in: context).food(id: newFoods[0].id) != nil, "Neue Zutat fehlt")
+
+        let waiting = InsightsActions.waitingExchange(in: context)
+        try check(waiting?.stableID == other.stableID, "Wartende Anfrage: \(waiting?.title ?? "keine")")
+        return "Lebensmittel, Plan und Rezept übernommen"
     }
 
     /// Mahlzeiten mit Tomate vor Kopfschmerz: Tageslast, Muster, Einkauf aus dem Wochenplan.
@@ -380,6 +511,28 @@ enum SelfTest {
         try check(try target.fetchCount(FetchDescriptor<ShoppingItem>()) == 1, "Einkaufsliste fehlt")
         try check(try target.fetchCount(FetchDescriptor<MealPlanEntry>()) == 1, "Wochenplan fehlt")
         return "Mahlzeit, Beschwerde, Wasser, Einschätzung, Produkt, Einkauf, Plan"
+    }
+
+    private static func insightsBackupRoundTrip() throws -> String {
+        let source = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        InsightsActions.set(.mood, 4, calendar: calendar, in: source)
+        InsightsActions.setSleepHours(7.5, calendar: calendar, in: source)
+        InsightsActions.setNote("Gut geschlafen", calendar: calendar, in: source)
+        let prompt = ClaudeBridgeActions.foodPrompt(name: "Sicherung")
+        let exchange = InsightsActions.createExchange(prompt, title: "Lebensmittel: Sicherung", in: source)
+        InsightsActions.attach("Antwort", to: exchange, in: source)
+
+        let document = try BackupService.makeDocument(context: source)
+        let file = try temporaryFolder().appendingPathComponent("insights.json")
+        try BackupCodec.encode(document).write(to: file)
+        let target = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let summary = try BackupService.restore(from: file, context: target, calendar: calendar)
+        try check(summary.checkIns == 1, "Check-ins: \(summary.checkIns)")
+        let checkIn = try target.fetch(FetchDescriptor<DailyCheckIn>()).first
+        try check(checkIn?.mood == 4 && checkIn?.sleepHours == 7.5 && checkIn?.note == "Gut geschlafen", "Check-in unvollständig")
+        let restored = try target.fetch(FetchDescriptor<ClaudeExchange>())
+        try check(restored.count == 1 && restored[0].ref == prompt.ref && restored[0].response == "Antwort" && restored[0].status == .answered, "Claude-Verlauf unvollständig")
+        return "Check-in und Claude-Verlauf"
     }
 
     private static func snapshotContainsTodayAndTomorrow() throws -> String {
