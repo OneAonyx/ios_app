@@ -2,13 +2,14 @@ import Foundation
 
 /// Körpermaße.
 public enum BodyMetricType: String, Codable, Sendable, CaseIterable, Identifiable {
-    case weight, bodyFat, waist, chest, upperArm, shoulders, thigh
+    case weight, height, bodyFat, waist, chest, upperArm, shoulders, thigh
 
     public var id: String { rawValue }
 
     public var title: String {
         switch self {
         case .weight: "Gewicht"
+        case .height: "Größe"
         case .bodyFat: "Körperfett"
         case .waist: "Taille"
         case .chest: "Brust"
@@ -29,6 +30,7 @@ public enum BodyMetricType: String, Codable, Sendable, CaseIterable, Identifiabl
     public var symbol: String {
         switch self {
         case .weight: "scalemass"
+        case .height: "figure.stand"
         case .bodyFat: "percent"
         default: "ruler"
         }
@@ -45,6 +47,36 @@ public enum BodyMetricType: String, Codable, Sendable, CaseIterable, Identifiabl
     /// „82,4 kg“
     public func label(_ value: Double) -> String {
         "\(WeightFormat.number(value)) \(unit)"
+    }
+
+    /// Sinnvoller Bereich beim Eintragen.
+    public var range: ClosedRange<Double> {
+        switch self {
+        case .weight: 30...250
+        case .height: 120...230
+        case .bodyFat: 3...60
+        default: 10...200
+        }
+    }
+}
+
+/// Body-Mass-Index aus Gewicht (kg) und Größe (cm).
+public enum BodyIndex {
+    public static func bmi(weight: Double, heightCM: Double) -> Double? {
+        guard weight > 0, heightCM > 50 else { return nil }
+        let meters = heightCM / 100
+        return weight / (meters * meters)
+    }
+
+    /// „24,3“
+    public static func format(_ bmi: Double) -> String {
+        WeightFormat.number((bmi * 10).rounded() / 10)
+    }
+
+    /// „1,83 m“
+    public static func heightText(_ heightCM: Double) -> String {
+        let meters = (heightCM).rounded() / 100
+        return WeightFormat.number(meters) + " m"
     }
 }
 
@@ -247,11 +279,14 @@ public struct ExercisePreferenceRecord: Codable, Sendable, Equatable {
     public var exerciseID: String
     public var increment: Double?
     public var note: String
+    /// Ab Version 0.7: Gewicht für die erste Einheit ohne Verlauf.
+    public var startWeight: Double?
 
-    public init(exerciseID: String, increment: Double?, note: String) {
+    public init(exerciseID: String, increment: Double?, note: String, startWeight: Double? = nil) {
         self.exerciseID = exerciseID
         self.increment = increment
         self.note = note
+        self.startWeight = startWeight
     }
 }
 

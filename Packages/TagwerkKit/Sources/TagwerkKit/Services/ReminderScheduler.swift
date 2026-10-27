@@ -26,6 +26,7 @@ public enum ReminderScheduler {
             + medicationCandidates(context: context, now: now, calendar: calendar, alarmsActive: alarmsActive)
             + TrainingActions.reminderCandidates(now: now, calendar: calendar, in: context)
             + InsightsActions.reminderCandidates(now: now, calendar: calendar)
+            + LifeActions.reminderCandidates(now: now, calendar: calendar, in: context)
         let planned = ReminderPlanner.plan(candidates, now: now, horizon: horizon)
         let plannedIDs = Set(planned.map(\.id))
 
@@ -64,6 +65,12 @@ public enum ReminderScheduler {
             case .review:
                 content.threadIdentifier = "tagwerk.review"
                 content.userInfo = [NotificationIDs.reviewKey: candidate.referenceID]
+            case .habit:
+                content.threadIdentifier = "tagwerk.habits"
+                content.userInfo = [NotificationIDs.habitKey: candidate.referenceID]
+            case .lifeDeadline, .birthday:
+                content.threadIdentifier = "tagwerk.life"
+                content.userInfo = [NotificationIDs.lifeKey: candidate.referenceID]
             }
 
             let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: candidate.fireDate)

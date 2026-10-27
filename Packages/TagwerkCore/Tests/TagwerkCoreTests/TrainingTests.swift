@@ -340,3 +340,71 @@ struct TrainingRecordsTests {
         #expect(decoded.training?.customExercises.first?.increment == 2)
     }
 }
+
+@Suite("Training: eigener Plan, Startgewichte, Größe")
+struct OwnPlanTests {
+    @Test func ownPlanUsesOnlyLibraryExercises() throws {
+        let plan = try #require(PlanTemplate.bundledOwnFourDay())
+        #expect(plan.id == "own-4day")
+        #expect(plan.days.map(\.name) == ["Push", "Pull", "Arme & Schultern", "Brust & Rücken"])
+        #expect(plan.validationIssues(catalog: catalog) == [])
+        // Je 3 × 7–10, wie bisher trainiert.
+        let items = plan.days.flatMap(\.exercises)
+        #expect(items.allSatisfy { $0.sets == 3 && $0.repMin == 7 && $0.repMax == 10 })
+        #expect(catalog.exercise(id: "chest-press-lying")?.unilateral == true)
+    }
+
+    @Test func startWeightsAreTakenOnceAndExactly() throws {
+        let plan = try #require(PlanTemplate.bundledOwnFourDay())
+        let weights = plan.startWeights
+        #expect(weights["pec-deck"] == 93)
+        #expect(weights["lateral-raise-cable"] == 5.4)
+        #expect(weights["chest-press-lying"] == 35)
+        #expect(weights["machine-row"] == 59)
+        #expect(weights["reverse-curl-barbell"] == 20)
+        #expect(weights["wrist-curl-barbell"] == nil)
+        #expect(weights.count == 12)
+    }
+
+    @Test func startWeightSurvivesJSON() throws {
+        let item = ExerciseTemplate(exercise: "pec-deck", sets: 3, repMin: 7, repMax: 10, rir: 1, restSec: 90, startWeight: 93)
+        let data = try JSONEncoder().encode(item)
+        let decoded = try JSONDecoder().decode(ExerciseTemplate.self, from: data)
+        #expect(decoded.startWeight == 93)
+        // Unsinnige Werte werden verworfen.
+        let bad = try JSONDecoder().decode(ExerciseTemplate.self, from: Data(#"{"exercise":"x","startWeight":-5}"#.utf8))
+        #expect(bad.startWeight == nil)
+    }
+
+    @Test func bodyMassIndexAndHeight() throws {
+        let bmi = try #require(BodyIndex.bmi(weight: 82, heightCM: 183))
+        #expect(BodyIndex.format(bmi) == "24,5")
+        #expect(BodyIndex.heightText(183) == "1,83 m")
+        #expect(BodyIndex.bmi(weight: 82, heightCM: 0) == nil)
+        #expect(BodyMetricType.height.title == "Größe")
+        #expect(BodyMetricType.height.unit == "cm")
+    }
+
+    @Test func startWeightIsUsedOnlyWithoutHistory() throws {
+        let butterfly = try #require(catalog.exercise(id: "pec-deck"))
+        let first = ProgressionEngine.suggest(exercise: butterfly, sets: 3, repMin: 7, repMax: 10, rir: 1, isDeload: false, history: [], startWeight: 93)
+        #expect(first.weight == 93)
+        #expect(first.kind == .firstTime)
+        #expect(first.message.hasPrefix("Startwert aus deinem bisherigen Training: 93 kg"))
+        let later = ProgressionEngine.suggest(
+            exercise: butterfly, sets: 3, repMin: 7, repMax: 10, rir: 1, isDeload: false,
+            history: [perf(20, [(80, 9), (80, 8), (80, 8)])], startWeight: 93
+        )
+        #expect(later.weight == 80)
+    }
+
+    @Test func trainingPromptMentionsBodyWhenGiven() {
+        let context = ClaudePromptBuilder.TrainingContext(
+            goal: "Muskelaufbau", experience: "1 Jahr", sessionsPerWeek: 5, planJSON: "{}", recentSets: [], stagnating: [],
+            weeklyVolume: [], wish: "", exerciseNames: ["Latzug breit"], body: "1,83 m, 82 kg"
+        )
+        let prompt = ClaudePromptBuilder.trainingPlan(context, ref: "ABC123")
+        #expect(prompt.text.contains("KÖRPER: 1,83 m, 82 kg"))
+        #expect(prompt.includedData.contains("Größe und Gewicht"))
+    }
+}

@@ -98,6 +98,10 @@ public enum NotificationIDs {
     public static let trainingKey = "trainingDay"
     /// Schlüssel in `userInfo` der Erinnerung an den Wochenrückblick (Wochenbeginn, Unix-Sekunden).
     public static let reviewKey = "weeklyReview"
+    /// Routine oder Gewohnheit (stableID).
+    public static let habitKey = "habit"
+    /// Vertrag, Frist oder Geburtstag (Bereich „Leben“).
+    public static let lifeKey = "life"
 
     /// Präfixe der Mitteilungs-IDs. Beim Neuplanen werden nur diese ersetzt.
     public enum Prefix {
@@ -109,11 +113,16 @@ public enum NotificationIDs {
         public static let training = "training."
         /// Wochenrückblick am Sonntag.
         public static let review = "review."
+        /// Routinen und Gewohnheiten.
+        public static let habit = "habit."
+        /// Kündigungsfristen und Ablaufdaten.
+        public static let life = "life."
+        public static let birthday = "bday."
         /// Pause vorbei (wird nicht beim Neuplanen ersetzt).
         public static let restTimer = "rest."
 
         /// Werden bei jedem Neuplanen komplett ersetzt (Schlummern bleibt bestehen).
-        public static let managed = [task, medication, medicationFollowUp, refill, training, review]
+        public static let managed = [task, medication, medicationFollowUp, refill, training, review, habit, life, birthday]
     }
 
     public static let systemCheckRequest = "tagwerk.systemcheck.notification"

@@ -16,10 +16,12 @@ public struct ExerciseTemplate: Codable, Sendable, Hashable {
     public var note: String?
     /// Kann ohne schlechtes Gewissen wegfallen.
     public var optional: Bool
+    /// Gewicht für die erste Einheit, solange es keinen Verlauf gibt (kg).
+    public var startWeight: Double?
 
     public init(
         exercise: String, name: String? = nil, sets: Int, repMin: Int, repMax: Int, rir: Int, restSec: Int,
-        superset: String? = nil, note: String? = nil, optional: Bool = false
+        superset: String? = nil, note: String? = nil, optional: Bool = false, startWeight: Double? = nil
     ) {
         self.exercise = exercise
         self.name = name
@@ -31,10 +33,11 @@ public struct ExerciseTemplate: Codable, Sendable, Hashable {
         self.superset = superset
         self.note = note
         self.optional = optional
+        self.startWeight = startWeight
     }
 
     private enum CodingKeys: String, CodingKey {
-        case exercise, id, name, sets, repMin, repMax, reps, rir, restSec, rest, superset, note, optional
+        case exercise, id, name, sets, repMin, repMax, reps, rir, restSec, rest, superset, note, optional, startWeight
     }
 
     public init(from decoder: Decoder) throws {
@@ -62,6 +65,9 @@ public struct ExerciseTemplate: Codable, Sendable, Hashable {
         superset = try c.decodeIfPresent(String.self, forKey: .superset)
         note = try c.decodeIfPresent(String.self, forKey: .note)
         optional = try c.decodeIfPresent(Bool.self, forKey: .optional) ?? false
+        if let weight = try? c.decodeIfPresent(Double.self, forKey: .startWeight), weight > 0, weight < 1_000 {
+            startWeight = weight
+        }
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -76,6 +82,7 @@ public struct ExerciseTemplate: Codable, Sendable, Hashable {
         try c.encodeIfPresent(superset, forKey: .superset)
         try c.encodeIfPresent(note, forKey: .note)
         if optional { try c.encode(true, forKey: .optional) }
+        try c.encodeIfPresent(startWeight, forKey: .startWeight)
     }
 
     /// „4 × 6–8 · RIR 2“
@@ -175,10 +182,30 @@ public struct PlanTemplate: Codable, Sendable, Hashable {
 
     /// Dein Startplan „Oberkörper 4er – Hypertrophie“.
     public static func bundledUpperFourDay() -> PlanTemplate? {
-        guard let url = Bundle.module.url(forResource: "plan-upper-4day", withExtension: "json"),
+        bundled("plan-upper-4day")
+    }
+
+    /// „Oberkörper 4er – meine Übungen“: deine Maschinen- und Kabelübungen mit Startgewichten.
+    public static func bundledOwnFourDay() -> PlanTemplate? {
+        bundled("plan-own-4day")
+    }
+
+    static func bundled(_ name: String) -> PlanTemplate? {
+        guard let url = Bundle.module.url(forResource: name, withExtension: "json"),
               let data = try? Data(contentsOf: url)
         else { return nil }
         return try? decode(data)
+    }
+
+    /// Startgewichte je Übung (die erste Angabe gilt, falls eine Übung mehrfach vorkommt).
+    public var startWeights: [String: Double] {
+        var result: [String: Double] = [:]
+        for item in (days + modules).flatMap(\.exercises) {
+            if let weight = item.startWeight, result[item.exercise] == nil {
+                result[item.exercise] = weight
+            }
+        }
+        return result
     }
 }
 

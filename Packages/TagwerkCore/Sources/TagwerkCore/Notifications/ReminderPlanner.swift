@@ -14,6 +14,11 @@ public struct ReminderCandidate: Sendable, Equatable, Hashable {
         case training
         /// Wochenrückblick am Sonntagabend.
         case review
+        /// Routine oder Gewohnheit.
+        case habit
+        /// Kündigungsfrist oder Ablauf eines Dokuments.
+        case lifeDeadline
+        case birthday
 
         /// Höherer Wert = wichtiger.
         public var rank: Int {
@@ -21,8 +26,11 @@ public struct ReminderCandidate: Sendable, Equatable, Hashable {
             case .medication: 10
             case .medicationFollowUp: 8
             case .refill: 5
+            case .lifeDeadline: 4
             case .training: 3
+            case .birthday: 3
             case .review: 2
+            case .habit: 1
             case .task: 0
             }
         }

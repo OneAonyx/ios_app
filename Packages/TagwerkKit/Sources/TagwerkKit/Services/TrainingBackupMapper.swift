@@ -51,7 +51,7 @@ enum TrainingBackupMapper {
                 )
             },
             customExercises: custom.map(\.info),
-            preferences: preferences.map { ExercisePreferenceRecord(exerciseID: $0.exerciseID, increment: $0.increment, note: $0.note) },
+            preferences: preferences.map { ExercisePreferenceRecord(exerciseID: $0.exerciseID, increment: $0.increment, note: $0.note, startWeight: $0.startWeight) },
             bodyMetrics: metrics.map { BodyMetricRecord(stableID: $0.stableID, date: $0.date, type: $0.typeRaw, value: $0.value, note: $0.note) }
         )
     }
@@ -125,6 +125,7 @@ enum TrainingBackupMapper {
             let preference = ExercisePreference(exerciseID: record.exerciseID)
             preference.increment = record.increment
             preference.note = record.note
+            preference.startWeight = record.startWeight
             context.insert(preference)
         }
         for record in backup.bodyMetrics {

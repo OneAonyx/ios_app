@@ -80,7 +80,8 @@ public enum BackupService {
             },
             training: try TrainingBackupMapper.makeBackup(context: context),
             nutrition: try NutritionBackupMapper.makeBackup(context: context),
-            insights: try InsightsBackupMapper.makeBackup(context: context)
+            insights: try InsightsBackupMapper.makeBackup(context: context),
+            life: try LifeBackupMapper.makeBackup(context: context)
         )
     }
 
@@ -124,6 +125,8 @@ public enum BackupService {
         public let workouts: Int
         public let meals: Int
         public let checkIns: Int
+        /// Routinen, Gewohnheiten, Verträge und Geburtstage.
+        public let lifeEntries: Int
     }
 
     /// Ersetzt alle Aufgaben, Listen, Medikamente, Trainings-, Ernährungs- und Einblicke-Daten durch den Inhalt der Sicherung.
@@ -236,6 +239,10 @@ public enum BackupService {
         if let insights = document.insights {
             try InsightsBackupMapper.restore(insights, context: context)
         }
+        // Ebenso ohne Leben (Sicherungen vor Version 0.7).
+        if let life = document.life {
+            try LifeBackupMapper.restore(life, context: context)
+        }
 
         let defaults = UserDefaults.standard
         for (key, value) in document.settings where SettingsKeys.backedUp.contains(key) {
@@ -262,7 +269,8 @@ public enum BackupService {
             medications: document.medications?.count ?? 0,
             workouts: document.training?.sessions.count ?? 0,
             meals: document.nutrition?.meals.count ?? 0,
-            checkIns: document.insights?.checkIns.count ?? 0
+            checkIns: document.insights?.checkIns.count ?? 0,
+            lifeEntries: document.life.map { $0.habits.count + $0.contracts.count + $0.birthdays.count } ?? 0
         )
     }
 }

@@ -74,7 +74,8 @@ public enum ClaudeBridgeActions {
             stagnating: stagnating,
             weeklyVolume: volume,
             wish: wish,
-            exerciseNames: catalog.sorted.map(\.name)
+            exerciseNames: catalog.sorted.map(\.name),
+            body: TrainingActions.bodySummary(in: context)
         )
     }
 

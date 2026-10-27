@@ -1,0 +1,54 @@
+{
+  "format": "orbit.plan.v1",
+  "id": "own-4day",
+  "name": "Oberkörper 4er – meine Übungen",
+  "summary": "Deine Maschinen- und Kabelübungen, je 3 × 7–10. Push, Pull, Arme & Schultern, Brust & Rücken. Rotation statt fester Wochentage, 6-Wochen-Zyklus mit Deload.",
+  "mesoWeeks": 6,
+  "days": [
+    {
+      "name": "Push", "shortName": "A", "focus": "Brust, Schultern, Trizeps",
+      "exercises": [
+        {"exercise": "chest-press-lying", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 150, "startWeight": 35, "note": "Gewicht je Seite."},
+        {"exercise": "shoulder-press-machine", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 120, "startWeight": 27},
+        {"exercise": "pec-deck", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 90, "startWeight": 93},
+        {"exercise": "lateral-raise-cable", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 60, "startWeight": 5.4, "note": "Gewicht je Seite."},
+        {"exercise": "pushdown-bar", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 75, "startWeight": 54},
+        {"exercise": "overhead-extension-cable", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 75, "startWeight": 32}
+      ]
+    },
+    {
+      "name": "Pull", "shortName": "B", "focus": "Rücken, Bizeps, Unterarme",
+      "exercises": [
+        {"exercise": "lat-pulldown-wide", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 150, "startWeight": 66},
+        {"exercise": "machine-row", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 120, "startWeight": 59},
+        {"exercise": "reverse-fly-machine", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 75, "startWeight": 66},
+        {"exercise": "preacher-curl-machine", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 75, "startWeight": 50},
+        {"exercise": "hammer-curl-cable", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 60, "startWeight": 45},
+        {"exercise": "wrist-curl-barbell", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 60}
+      ]
+    },
+    {
+      "name": "Arme & Schultern", "shortName": "C", "focus": "Bizeps und Trizeps als Supersätze, Schultern",
+      "exercises": [
+        {"exercise": "shoulder-press-machine", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 120},
+        {"exercise": "lateral-raise-cable", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 60, "note": "Gewicht je Seite."},
+        {"exercise": "preacher-curl-machine", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 90, "superset": "A"},
+        {"exercise": "pushdown-bar", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 90, "superset": "A"},
+        {"exercise": "hammer-curl-cable", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 90, "superset": "B"},
+        {"exercise": "overhead-extension-cable", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 90, "superset": "B"},
+        {"exercise": "reverse-curl-barbell", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 60, "startWeight": 20}
+      ]
+    },
+    {
+      "name": "Brust & Rücken", "shortName": "D", "focus": "Brust und Rücken im Wechsel",
+      "exercises": [
+        {"exercise": "chest-press-lying", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 150, "note": "Gewicht je Seite."},
+        {"exercise": "lat-pulldown-wide", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 150},
+        {"exercise": "pec-deck", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 90},
+        {"exercise": "machine-row", "sets": 3, "repMin": 7, "repMax": 10, "rir": 2, "restSec": 120},
+        {"exercise": "reverse-fly-machine", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 75},
+        {"exercise": "lateral-raise-cable", "sets": 3, "repMin": 7, "repMax": 10, "rir": 1, "restSec": 60, "note": "Gewicht je Seite."}
+      ]
+    }
+  ]
+}

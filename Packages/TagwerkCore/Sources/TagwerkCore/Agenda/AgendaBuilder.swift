@@ -9,6 +9,10 @@ public struct AgendaItem: Sendable, Equatable, Identifiable, Hashable {
         case medication
         /// Geplanter Trainingstag.
         case training
+        /// Geburtstag (ganztägig).
+        case birthday
+        /// Kündigungsfrist oder Ablauf eines Dokuments (ganztägig).
+        case deadline
     }
 
     public var id: String

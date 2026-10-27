@@ -44,6 +44,21 @@ public enum TrainingActions {
         save(context)
     }
 
+    /// Gewicht für die erste Einheit ohne Verlauf (z. B. aus dem bisherigen Training).
+    public static func startWeight(for exerciseID: String, in context: ModelContext) -> Double? {
+        preference(for: exerciseID, in: context)?.startWeight
+    }
+
+    public static func setStartWeight(_ value: Double?, for exerciseID: String, in context: ModelContext) {
+        let record = preference(for: exerciseID, in: context) ?? {
+            let created = ExercisePreference(exerciseID: exerciseID)
+            context.insert(created)
+            return created
+        }()
+        record.startWeight = value.flatMap { $0 > 0 ? $0 : nil }
+        save(context)
+    }
+
     @discardableResult
     public static func createCustomExercise(_ info: ExerciseInfo, in context: ModelContext) -> CustomExercise {
         let exercise = CustomExercise(stableID: info.id, name: info.name)
@@ -97,8 +112,39 @@ public enum TrainingActions {
         for (index, moduleTemplate) in template.modules.enumerated() {
             insertDay(moduleTemplate, order: 100 + index, isModule: true, into: plan, context: context)
         }
+        // Startgewichte aus der Vorlage (gelten nur, solange es zur Übung keinen Verlauf gibt).
+        for (exerciseID, weight) in template.startWeights {
+            let record = preference(for: exerciseID, in: context) ?? {
+                let created = ExercisePreference(exerciseID: exerciseID)
+                context.insert(created)
+                return created
+            }()
+            record.startWeight = weight
+        }
         save(context)
         return plan
+    }
+
+    /// Einmalig: „Oberkörper 4er – meine Übungen“ anlegen und aktiv setzen (Version 0.7).
+    /// Gibt den neuen Plan zurück, wenn er gerade angelegt wurde.
+    @discardableResult
+    public static func ensureOwnPlan(in context: ModelContext, defaults: UserDefaults = .standard, now: Date = .now) -> WorkoutPlan? {
+        let key = "tagwerk.training.ownPlanApplied"
+        guard !defaults.bool(forKey: key), let template = PlanTemplate.bundledOwnFourDay() else { return nil }
+        defaults.set(true, forKey: key)
+        if plans(in: context).contains(where: { $0.templateID == template.id }) { return nil }
+        let plan = createPlan(from: template, in: context, now: now)
+        // Fünfmal pro Woche: Mo, Di, Mi, Fr, Sa.
+        plan.preferredWeekdays = [2, 3, 4, 6, 7]
+        save(context)
+        return plan
+    }
+
+    /// „1,83 m, 82,4 kg“ für Claude, leer ohne Angaben.
+    public static func bodySummary(in context: ModelContext) -> String {
+        let height = metrics(.height, in: context).last?.value
+        let weight = metrics(.weight, in: context).last?.value
+        return [height.map(BodyIndex.heightText), weight.map { "\(WeightFormat.number($0)) kg" }].compactMap { $0 }.joined(separator: ", ")
     }
 
     private static func insertDay(_ template: DayTemplate, order: Int, isModule: Bool, into plan: WorkoutPlan, context: ModelContext) {
@@ -299,7 +345,8 @@ public enum TrainingActions {
             let suggestion = ProgressionEngine.suggest(
                 exercise: exercise, sets: sets, repMin: item.repMin, repMax: item.repMax, rir: item.rir,
                 isDeload: deload, history: history(for: item.exerciseID, in: context),
-                increment: increment(for: exercise, in: context)
+                increment: increment(for: exercise, in: context),
+                startWeight: startWeight(for: item.exerciseID, in: context)
             )
             // Aufwärmen nur vor der ersten Grundübung des Tages (und nur mit bekanntem Gewicht).
             if !warmupDone, exercise.isCompound {

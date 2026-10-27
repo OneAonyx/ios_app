@@ -92,8 +92,10 @@ public enum ClaudePromptBuilder {
         public var weeklyVolume: [String]
         public var wish: String
         public var exerciseNames: [String]
+        /// „1,83 m, 82,4 kg“, leer ohne Angaben.
+        public var body: String
 
-        public init(goal: String, experience: String, sessionsPerWeek: Int, planJSON: String, recentSets: [String], stagnating: [String], weeklyVolume: [String], wish: String, exerciseNames: [String]) {
+        public init(goal: String, experience: String, sessionsPerWeek: Int, planJSON: String, recentSets: [String], stagnating: [String], weeklyVolume: [String], wish: String, exerciseNames: [String], body: String = "") {
             self.goal = goal
             self.experience = experience
             self.sessionsPerWeek = sessionsPerWeek
@@ -103,6 +105,7 @@ public enum ClaudePromptBuilder {
             self.weeklyVolume = weeklyVolume
             self.wish = wish
             self.exerciseNames = exerciseNames
+            self.body = body
         }
     }
 
@@ -114,6 +117,7 @@ public enum ClaudePromptBuilder {
             "WUNSCH: " + (context.wish.isEmpty ? "Prüfe den Plan und verbessere, was sinnvoll ist (Volumen je Muskel 10–20 Sätze, Erholung, Abwechslung)." : context.wish),
             "AKTUELLER PLAN (JSON):\n\(context.planJSON)",
         ]
+        if !context.body.isEmpty { parts.insert("KÖRPER: \(context.body)", at: 2) }
         if !context.recentSets.isEmpty { parts.append("LETZTE TOP-SÄTZE:\n" + context.recentSets.map { "- \($0)" }.joined(separator: "\n")) }
         if !context.stagnating.isEmpty { parts.append("STAGNIERT: " + context.stagnating.joined(separator: ", ")) }
         if !context.weeklyVolume.isEmpty { parts.append("SÄTZE JE MUSKEL DIESE WOCHE: " + context.weeklyVolume.joined(separator: ", ")) }
@@ -121,6 +125,7 @@ public enum ClaudePromptBuilder {
         parts.append("Gib den vollständigen neuen Plan zurück, nicht nur die Änderungen. Begründe Änderungen kurz im Feld \"note\" der jeweiligen Übung.")
         parts.append(outputRule(format: ClaudeTask.trainingPlan.format, ref: ref, example: example))
         var data = ["Ziel, Erfahrung, Trainingstage", "Aktueller Plan (Tage, Übungen, Sätze)"]
+        if !context.body.isEmpty { data.append("Größe und Gewicht") }
         if !context.recentSets.isEmpty { data.append("Top-Sätze der letzten Wochen (\(context.recentSets.count) Übungen)") }
         if !context.stagnating.isEmpty { data.append("Stagnierende Übungen") }
         if !context.weeklyVolume.isEmpty { data.append("Sätze je Muskel") }

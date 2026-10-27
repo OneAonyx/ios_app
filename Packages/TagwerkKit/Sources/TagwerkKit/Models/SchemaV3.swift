@@ -249,7 +249,7 @@ public typealias PlanExercise = TagwerkSchemaV3.PlanExercise
 public typealias WorkoutSession = TagwerkSchemaV3.WorkoutSession
 public typealias SetLog = TagwerkSchemaV3.SetLog
 public typealias CustomExercise = TagwerkSchemaV3.CustomExercise
-public typealias ExercisePreference = TagwerkSchemaV3.ExercisePreference
+// `ExercisePreference` zeigt ab Schema 6 auf `TagwerkSchemaV6.ExercisePreference` (mit Startgewicht).
 public typealias BodyMetric = TagwerkSchemaV3.BodyMetric
 
 // MARK: - Bequeme Zugriffe

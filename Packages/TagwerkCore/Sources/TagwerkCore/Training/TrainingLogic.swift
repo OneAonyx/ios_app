@@ -189,12 +189,19 @@ public enum ProgressionEngine {
         rir: Int,
         isDeload: Bool,
         history: [ExercisePerformance],
-        increment: Double? = nil
+        increment: Double? = nil,
+        startWeight: Double? = nil
     ) -> ProgressionSuggestion {
         let step = increment ?? exercise.increment
         let recent = history.filter { !$0.workingSets.isEmpty }.sorted { $0.date > $1.date }
         let repRange = repMin == repMax ? "\(repMin)" : "\(repMin)–\(repMax)"
         guard let last = recent.first, let lastWeight = last.topWeight else {
+            if let startWeight, startWeight > 0 {
+                return ProgressionSuggestion(
+                    kind: .firstTime, weight: startWeight, targetReps: Array(repeating: repMin, count: sets),
+                    message: "Startwert aus deinem bisherigen Training: \(WeightFormat.kg(startWeight)) kg für \(repRange) Wdh. Passt es nicht, ändere es einfach."
+                )
+            }
             return ProgressionSuggestion(
                 kind: .firstTime, weight: nil, targetReps: Array(repeating: repMin, count: sets),
                 message: "Erstes Mal: Wähle ein Gewicht für \(repRange) Wdh. mit noch \(rir) Wdh. im Tank."
