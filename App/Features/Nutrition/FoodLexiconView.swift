@@ -133,7 +133,11 @@ struct FoodPickerView: View {
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         let favorites = preferences.filter(\.isFavorite).compactMap { catalog.food(id: $0.foodID) }
             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-        let recent = NutritionActions.recentFoodIDs(limit: 10, in: context).compactMap { catalog.food(id: $0) }
+        let favoriteIDs = Set(favorites.map(\.id))
+        let recent = NutritionActions.recentFoodIDs(limit: 14, in: context)
+            .filter { !favoriteIDs.contains($0) }
+            .prefix(10)
+            .compactMap { catalog.food(id: $0) }
         let results = query.isEmpty ? [] : catalog.search(query, limit: 60)
         NavigationStack {
             List {

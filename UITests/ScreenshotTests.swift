@@ -48,13 +48,15 @@ final class ScreenshotTests: XCTestCase {
             snap(app, "27-mahlzeit")
             if tapIfPresent(app.buttons["mealEditor.addFood"]) {
                 snap(app, "28-auswahl")
-                if !tapIfPresent(app.buttons["foodPicker.haehnchenbrust"], timeout: 2) {
-                    tapIfPresent(app.buttons["Abbrechen"].firstMatch)
+                if !tapIfPresent(app.buttons.matching(identifier: "foodPicker.haehnchenbrust").firstMatch, timeout: 2) {
+                    closeSheets(in: app)
                 }
             }
-            tapIfPresent(app.buttons["mealEditor.save"], timeout: 2)
-            tapIfPresent(app.buttons["Abbrechen"].firstMatch, timeout: 1)
+            if tapIfPresent(app.buttons["mealEditor.save"], timeout: 2) == false {
+                closeSheets(in: app)
+            }
         }
+        closeSheets(in: app)
 
         let links: [(String, String)] = [
             ("nutrition.ingredients", "32-zutaten"),
@@ -76,8 +78,9 @@ final class ScreenshotTests: XCTestCase {
                     snap(app, "31-lebensmittel")
                     tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
                 }
-                tapIfPresent(app.buttons["Abbrechen"].firstMatch, timeout: 1)
-                tapIfPresent(app.buttons["Cancel"].firstMatch, timeout: 1)
+                // Suche beenden, dann zurück zum Tab.
+                let cancel = app.buttons.matching(NSPredicate(format: "label IN %@", ["Abbrechen", "Cancel"]))
+                if cancel.count > 0 { tapHittable(cancel) }
             }
             tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
         }
@@ -106,8 +109,32 @@ final class ScreenshotTests: XCTestCase {
         if scrollTo(symptom, in: app), tapIfPresent(symptom) {
             tapIfPresent(app.buttons["symptom.headache"], timeout: 2)
             snap(app, "39-beschwerden")
-            tapIfPresent(app.buttons["Abbrechen"].firstMatch)
+            closeSheets(in: app)
         }
+    }
+
+    /// Schließt offene Blätter über den Knopf „Abbrechen“, der gerade antippbar ist.
+    @MainActor
+    private func closeSheets(in app: XCUIApplication) {
+        for _ in 0..<3 {
+            let cancel = app.buttons.matching(NSPredicate(format: "label == %@", "Abbrechen"))
+            guard cancel.count > 0, tapHittable(cancel) else { return }
+            Thread.sleep(forTimeInterval: 0.8)
+        }
+    }
+
+    /// Tippt das erste antippbare Element einer Abfrage an.
+    @MainActor
+    @discardableResult
+    private func tapHittable(_ query: XCUIElementQuery) -> Bool {
+        for index in 0..<query.count {
+            let element = query.element(boundBy: index)
+            if element.exists, element.isHittable {
+                element.tap()
+                return true
+            }
+        }
+        return false
     }
 
     /// Training: Tab, Plan, Statistik, Übungen, Körper, Einheit mit Pause, Satz, Zusammenfassung.

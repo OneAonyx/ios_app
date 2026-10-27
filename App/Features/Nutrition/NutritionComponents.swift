@@ -136,7 +136,7 @@ struct FoodRow: View {
                 }
                 Text(detail ?? subtitle)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.secondary)
                     .lineLimit(1)
             }
             Spacer(minLength: Spacing.xs)
@@ -207,6 +207,29 @@ struct NutritionRing: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
+}
+
+/// Eiweiß und Wasser nebeneinander, bei sehr großer Schrift untereinander.
+struct NutritionRings: View {
+    let day: NutritionDay
+
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.s))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: Spacing.s))
+        layout {
+            NutritionRing(title: "Eiweiß", value: day.proteinLabel, fraction: day.proteinFraction, tint: ModuleAccent.training, symbol: "bolt.fill")
+            NutritionRing(title: "Wasser", value: day.waterLabel, fraction: day.waterFraction, tint: .cyan, symbol: "drop.fill")
+        }
+    }
+}
+
+/// „Vor allem: Tomate, Reste“ bzw. bei ruhiger Last „Kleine Beiträge: Mandeln“.
+func loadContributorsText(_ load: HistamineLoad) -> String {
+    let names = load.contributors.prefix(3).map(\.name).joined(separator: ", ")
+    return (load.level == .calm ? "Kleine Beiträge: " : "Vor allem: ") + names
 }
 
 /// Hinweis, dass Bewertungen nur Orientierung sind.

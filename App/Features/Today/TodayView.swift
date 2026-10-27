@@ -482,10 +482,7 @@ private struct NutritionTodayCard: View {
                 if !todayMeals.isEmpty {
                     LoadBar(load: load)
                 }
-                HStack(spacing: Spacing.s) {
-                    NutritionRing(title: "Eiweiß", value: day.proteinLabel, fraction: day.proteinFraction, tint: ModuleAccent.training, symbol: "bolt.fill")
-                    NutritionRing(title: "Wasser", value: day.waterLabel, fraction: day.waterFraction, tint: .cyan, symbol: "drop.fill")
-                }
+                NutritionRings(day: day)
                 HStack(spacing: Spacing.xs) {
                     Button {
                         app.logMeal()

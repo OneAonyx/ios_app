@@ -236,7 +236,7 @@ private struct MealMedicationSection: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 case .asNeeded:
-                    Text("Bei Bedarf vor dem Essen")
+                    Text(medication.schedule.isScheduled ? "Jetzt keine Einnahme geplant. Zusätzlich genommen?" : "Bei Bedarf vor dem Essen")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

@@ -167,21 +167,12 @@ private struct DayOverviewCard: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("Vor allem: " + load.contributors.prefix(3).map(\.name).joined(separator: ", "))
+                    Text(loadContributorsText(load))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 Divider()
-                HStack(alignment: .center, spacing: Spacing.s) {
-                    NutritionRing(
-                        title: "Eiweiß", value: day.proteinLabel, fraction: day.proteinFraction,
-                        tint: ModuleAccent.training, symbol: "bolt.fill"
-                    )
-                    NutritionRing(
-                        title: "Wasser", value: day.waterLabel, fraction: day.waterFraction,
-                        tint: .cyan, symbol: "drop.fill"
-                    )
-                }
+                NutritionRings(day: day)
                 HStack(spacing: Spacing.xs) {
                     Button {
                         NutritionActions.addWater(at: isToday ? .now : date, in: context)
@@ -280,13 +271,11 @@ private struct MealRow: View {
                     .frame(width: 28)
                     .padding(.top, 2)
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(meal.type.title)
-                            .font(.subheadline.weight(.semibold))
-                        Text(GermanCalendar.time(meal.date, calendar: AppModel.calendar))
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
+                    // Ein Text, damit Name und Uhrzeit bei großer Schrift gemeinsam umbrechen.
+                    (Text(meal.type.title).font(.subheadline.weight(.semibold))
+                        + Text("  " + GermanCalendar.time(meal.date, calendar: AppModel.calendar))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(Color.secondary))
                     Text(meal.itemSummary.isEmpty ? "Ohne Lebensmittel" : meal.itemSummary)
                         .font(.subheadline)
                         .foregroundStyle(Color.primary)

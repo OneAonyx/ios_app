@@ -356,8 +356,11 @@ public enum NutritionActions {
             }
             if medication.schedule.isScheduled {
                 let entries = medication.entries(from: now.addingTimeInterval(-window), to: now.addingTimeInterval(window), now: now, calendar: calendar)
-                guard let due = entries.first(where: { $0.state == .due || $0.state == .late || $0.state == .upcoming }) else { return nil }
-                return MealMedicationPrompt(medication: medication, state: .due(due))
+                if let due = entries.first(where: { $0.state == .due || $0.state == .late || $0.state == .upcoming }) {
+                    return MealMedicationPrompt(medication: medication, state: .due(due))
+                }
+                // Keine geplante Einnahme in der Nähe: als zusätzliche Einnahme anbieten.
+                return MealMedicationPrompt(medication: medication, state: .asNeeded)
             }
             return MealMedicationPrompt(medication: medication, state: .asNeeded)
         }
