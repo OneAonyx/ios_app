@@ -1,3 +1,4 @@
+import CoreSpotlight
 import SwiftUI
 import TagwerkKit
 
@@ -6,6 +7,10 @@ struct TagwerkApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @State private var model = AppModel.shared
+
+    init() {
+        OrbitTips.configure()
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -23,10 +28,18 @@ struct TagwerkApp: App {
             .onOpenURL { url in
                 model.handle(url: url)
             }
+            .onContinueUserActivity(CSSearchableItemActionType) { activity in
+                if let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String {
+                    model.openSpotlight(identifier: identifier)
+                }
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 model.appBecameActive()
+                AppLock.shared.appBecameActive()
+            } else if phase == .background {
+                AppLock.shared.lock()
             }
         }
         .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {

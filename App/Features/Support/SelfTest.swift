@@ -23,11 +23,14 @@ enum SelfTest {
 
     static func runAll() -> [Result] {
         [
-            run("Migration V1 → V5", migrationKeepsTasks),
-            run("Migration V2 → V5", migrationKeepsMedications),
-            run("Migration V3 → V5", migrationKeepsTraining),
-            run("Migration V4 → V5", migrationKeepsNutrition),
+            run("Migration V1 → V6", migrationKeepsTasks),
+            run("Migration V2 → V6", migrationKeepsMedications),
+            run("Migration V3 → V6", migrationKeepsTraining),
+            run("Migration V4 → V6", migrationKeepsNutrition),
+            run("Migration V5 → V6", migrationKeepsInsights),
             run("Training: Einheit und Progression", trainingFlow),
+            run("Training: eigener Plan mit Startgewichten", ownPlanFlow),
+            run("Leben: Routine, Vertrag, Geburtstag, Tagebuch", lifeFlow),
             run("Ernährung: Tageslast, Muster, Einkauf", nutritionFlow),
             run("Einblicke: Check-in, Rückblick, Bericht", insightsFlow),
             run("Claude: Anfrage, Antwort, Übernahme", claudeFlow),
@@ -37,6 +40,7 @@ enum SelfTest {
             run("Datensicherung mit Training", trainingBackupRoundTrip),
             run("Datensicherung mit Ernährung", nutritionBackupRoundTrip),
             run("Datensicherung mit Einblicken", insightsBackupRoundTrip),
+            run("Datensicherung mit Leben", lifeBackupRoundTrip),
             run("Widget-Daten", snapshotContainsTodayAndTomorrow),
         ]
     }
@@ -89,13 +93,13 @@ enum SelfTest {
         context.insert(Medication(name: "Test"))
         try context.save()
         try check(try context.fetchCount(FetchDescriptor<Medication>()) == 1, "Medikament nicht gespeichert")
-        let copy = folder.appendingPathComponent("Test-vor-v5.store")
+        let copy = folder.appendingPathComponent("Test-vor-v6.store")
         try check(FileManager.default.fileExists(atPath: copy.path), "Keine Kopie vor der Migration")
-        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 5, "Schema-Version nicht gemerkt")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 6, "Schema-Version nicht gemerkt")
         return "3 Aufgaben übernommen, Kopie angelegt"
     }
 
-    /// Eine Datenbank aus Version 0.3 (Schema 2) mit Medikamenten wird auf Schema 5 gebracht.
+    /// Eine Datenbank aus Version 0.3 (Schema 2) mit Medikamenten wird auf Schema 6 gebracht.
     private static func migrationKeepsMedications() throws -> String {
         let folder = try temporaryFolder()
         let url = folder.appendingPathComponent("Meds.store")
@@ -125,11 +129,11 @@ enum SelfTest {
         try check(try context.fetchCount(FetchDescriptor<TaskItem>()) == 1, "Aufgabe verloren")
         let plan = TrainingActions.ensureStarterPlan(in: context)
         try check(plan?.rotationDays.count == 4, "Startplan nicht angelegt")
-        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Meds-vor-v5.store").path), "Keine Kopie vor der Migration")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Meds-vor-v6.store").path), "Keine Kopie vor der Migration")
         return "Medikament, Protokoll und Aufgabe übernommen, Startplan angelegt"
     }
 
-    /// Eine Datenbank aus Version 0.4 (Schema 3) mit Training wird auf Schema 5 gebracht.
+    /// Eine Datenbank aus Version 0.4 (Schema 3) mit Training wird auf Schema 6 gebracht.
     private static func migrationKeepsTraining() throws -> String {
         let folder = try temporaryFolder()
         let url = folder.appendingPathComponent("Training.store")
@@ -154,12 +158,12 @@ enum SelfTest {
         NutritionActions.addMeal(type: .lunch, date: .now, items: [(foodID: "reis", grams: 70)], catalog: NutritionActions.bundledFoods, in: context)
         try check(try context.fetchCount(FetchDescriptor<MealEntry>()) == 1, "Mahlzeit nicht gespeichert")
         try check(NutritionActions.proteinTarget(in: context) == 147, "Eiweißziel aus Körpergewicht: \(NutritionActions.proteinTarget(in: context))")
-        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Training-vor-v5.store").path), "Keine Kopie vor der Migration")
-        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 5, "Schema-Version nicht gemerkt")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Training-vor-v6.store").path), "Keine Kopie vor der Migration")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 6, "Schema-Version nicht gemerkt")
         return "Plan, Gewicht und Medikament übernommen, Mahlzeit gespeichert"
     }
 
-    /// Eine Datenbank aus Version 0.5 (Schema 4) mit Ernährung wird auf Schema 5 gebracht.
+    /// Eine Datenbank aus Version 0.5 (Schema 4) mit Ernährung wird auf Schema 6 gebracht.
     private static func migrationKeepsNutrition() throws -> String {
         let folder = try temporaryFolder()
         let url = folder.appendingPathComponent("Food.store")
@@ -187,9 +191,107 @@ enum SelfTest {
         try check(try context.fetchCount(FetchDescriptor<CustomRecipe>()) == 1, "Rezept verloren")
         InsightsActions.set(.mood, 4, calendar: calendar, in: context)
         try check(try context.fetchCount(FetchDescriptor<DailyCheckIn>()) == 1, "Check-in nicht gespeichert")
-        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Food-vor-v5.store").path), "Keine Kopie vor der Migration")
-        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 5, "Schema-Version nicht gemerkt")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Food-vor-v6.store").path), "Keine Kopie vor der Migration")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 6, "Schema-Version nicht gemerkt")
         return "Mahlzeit, Beschwerde und Rezept übernommen, Check-in gespeichert"
+    }
+
+    /// Eine Datenbank aus Version 0.6 (Schema 5) wird auf Schema 6 gebracht. Die Einstellungen
+    /// je Übung bekommen das neue Feld „Startgewicht“.
+    private static func migrationKeepsInsights() throws -> String {
+        let folder = try temporaryFolder()
+        let url = folder.appendingPathComponent("Insights.store")
+        let defaults = UserDefaults(suiteName: "tagwerk.selftest.\(UUID().uuidString)")!
+        defaults.set(5, forKey: "tagwerk.store.schemaVersion")
+
+        do {
+            let schemaV5 = Schema(versionedSchema: TagwerkSchemaV5.self)
+            let container = try ModelContainer(for: schemaV5, configurations: [ModelConfiguration(schema: schemaV5, url: url)])
+            let context = ModelContext(container)
+            let preference = TagwerkSchemaV3.ExercisePreference(exerciseID: "pec-deck")
+            preference.increment = 2.5
+            context.insert(preference)
+            InsightsActions.set(.mood, 4, calendar: calendar, in: context)
+            context.insert(TaskItem(title: "Aufgabe"))
+            try context.save()
+        }
+
+        let container = try TagwerkStore.makeContainer(at: url, defaults: defaults)
+        let context = ModelContext(container)
+        let preferences = try context.fetch(FetchDescriptor<ExercisePreference>())
+        try check(preferences.count == 1 && preferences[0].increment == 2.5, "Steigerung verloren")
+        try check(preferences[0].startWeight == nil, "Startgewicht sollte leer sein")
+        try check(try context.fetchCount(FetchDescriptor<DailyCheckIn>()) == 1, "Check-in verloren")
+        try check(try context.fetchCount(FetchDescriptor<TaskItem>()) == 1, "Aufgabe verloren")
+        LifeActions.createHabit(from: LifeTemplates.habits[0], in: context)
+        try check(LifeActions.habits(in: context).count == 1, "Routine nicht gespeichert")
+        TrainingActions.setStartWeight(80, for: "pec-deck", in: context)
+        try check(TrainingActions.startWeight(for: "pec-deck", in: context) == 80, "Startgewicht nicht gespeichert")
+        try check(FileManager.default.fileExists(atPath: folder.appendingPathComponent("Insights-vor-v6.store").path), "Keine Kopie vor der Migration")
+        try check(defaults.integer(forKey: "tagwerk.store.schemaVersion") == 6, "Schema-Version nicht gemerkt")
+        return "Steigerung, Check-in und Aufgabe übernommen, Routine und Startgewicht gespeichert"
+    }
+
+    /// Eigener Plan wird einmal angelegt, die erste Einheit startet mit den bisherigen Gewichten.
+    private static func ownPlanFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let defaults = UserDefaults(suiteName: "tagwerk.selftest.\(UUID().uuidString)")!
+        let catalog = TrainingActions.catalog(in: context)
+        guard let plan = TrainingActions.ensureOwnPlan(in: context, defaults: defaults), let push = plan.nextDay else {
+            throw Failure(description: "Eigener Plan nicht angelegt")
+        }
+        try check(TrainingActions.ensureOwnPlan(in: context, defaults: defaults) == nil, "Plan doppelt angelegt")
+        try check(plan.rotationDays.count == 4 && plan.isActive, "Plan: \(plan.rotationDays.count) Tage")
+        try check(TrainingActions.startWeight(for: "pec-deck", in: context) == 93, "Startgewicht Butterfly fehlt")
+        let session = TrainingActions.startSession(plan: plan, day: push, includeModule: false, catalog: catalog, in: context)
+        let working = session.sortedSets.filter { $0.kind == .working }
+        let pecDeck = working.filter { $0.exerciseID == "pec-deck" }
+        let chestPress = working.filter { $0.exerciseID == "chest-press-lying" }
+        try check(pecDeck.count == 3 && pecDeck.first?.weight == 93, "Butterfly: \(pecDeck.count) Sätze, \(pecDeck.first?.weight ?? -1) kg")
+        try check(chestPress.first?.weight == 35, "Brustpresse: \(chestPress.first?.weight ?? -1) kg statt 35")
+        try check(working.allSatisfy { $0.targetRepMin == 7 && $0.targetRepMax == 10 }, "Wiederholungen nicht 7–10")
+        TrainingActions.discard(session, in: context)
+        TrainingActions.addMetric(.height, value: 183, in: context)
+        TrainingActions.addMetric(.weight, value: 82, in: context)
+        let body = TrainingActions.bodySummary(in: context)
+        try check(body == "1,83 m, 82 kg", "Körper: \(body)")
+        return "4 Tage, Butterfly 93 kg, Brustpresse 35 kg je Seite, Körper „\(body)“"
+    }
+
+    /// Routine abhaken, Kündigungsfrist erkennen, Geburtstag in der Agenda, Tagebuch und Top 3.
+    private static func lifeFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let now = Date.now
+        let today = calendar.startOfDay(for: now)
+        let routine = LifeActions.createHabit(from: LifeTemplates.habits[0], now: now, in: context)
+        for step in routine.steps {
+            LifeActions.toggleStep(step.id, of: routine, on: now, calendar: calendar, in: context)
+        }
+        try check(LifeActions.isDone(routine, on: now, calendar: calendar, in: context), "Routine nicht erledigt")
+        try check(LifeActions.stats(for: routine, now: now, calendar: calendar, in: context).current == 1, "Serie nicht 1")
+
+        let gym = LifeActions.createContract(from: LifeTemplates.contracts[0], now: now, in: context)
+        gym.cost = 29.9
+        gym.minimumTermMonths = 12
+        gym.renewalMonths = 1
+        gym.startDate = calendar.date(byAdding: .month, value: -11, to: today).flatMap { calendar.date(byAdding: .day, value: 10, to: $0) }
+        guard case .dueSoon = ContractLogic.status(gym.fact, now: now, calendar: calendar) else {
+            throw Failure(description: "Vertrag: \(ContractLogic.statusText(gym.fact, now: now, calendar: calendar))")
+        }
+
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? today
+        LifeActions.addBirthday(name: "Lena", day: calendar.component(.day, from: tomorrow), month: calendar.component(.month, from: tomorrow), year: 1996, in: context)
+        let end = calendar.date(byAdding: .day, value: 60, to: today) ?? today
+        let items = LifeActions.agendaItems(from: today, to: end, now: now, calendar: calendar, in: context)
+        try check(items.contains { $0.kind == .birthday } && items.contains { $0.kind == .deadline }, "Agenda: \(items.map(\.title))")
+        let reminders = LifeActions.reminderCandidates(now: now, calendar: calendar, in: context)
+        try check(reminders.contains { $0.kind == .birthday } && reminders.contains { $0.kind == .lifeDeadline }, "Erinnerungen fehlen")
+
+        LifeActions.saveJournal(answer: "Gutes Training", text: "Notiz", on: now, calendar: calendar, in: context)
+        try check(LifeActions.journal(on: now, calendar: calendar, in: context)?.answer == "Gutes Training", "Tagebuch nicht gespeichert")
+        let planned = LifeActions.planTomorrow(["Einkaufen", "Steuer"], now: now, calendar: calendar, in: context)
+        try check(planned.count == 2 && planned.allSatisfy { $0.facts.isFocus(on: tomorrow, calendar: calendar) }, "Top 3 nicht im Fokus von morgen")
+        return "Serie 1, Frist erkannt, Geburtstag und Frist in Agenda und Erinnerungen"
     }
 
     /// Check-ins als Umstände, Wochenrückblick, Arztbericht mit PDF.
@@ -533,6 +635,35 @@ enum SelfTest {
         let restored = try target.fetch(FetchDescriptor<ClaudeExchange>())
         try check(restored.count == 1 && restored[0].ref == prompt.ref && restored[0].response == "Antwort" && restored[0].status == .answered, "Claude-Verlauf unvollständig")
         return "Check-in und Claude-Verlauf"
+    }
+
+    private static func lifeBackupRoundTrip() throws -> String {
+        let source = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let routine = LifeActions.createHabit(from: LifeTemplates.habits[0], in: source)
+        if let step = routine.steps.first {
+            LifeActions.toggleStep(step.id, of: routine, calendar: calendar, in: source)
+        }
+        let contract = LifeActions.createContract(from: LifeTemplates.contracts[1], in: source)
+        contract.cost = 17.99
+        contract.provider = "Telekom"
+        LifeActions.addBirthday(name: "Papa", day: 3, month: 4, year: 1965, in: source)
+        LifeActions.saveJournal(answer: "Ruhig", text: "", calendar: calendar, in: source)
+        LifeActions.save(source)
+
+        let document = try BackupService.makeDocument(context: source)
+        let file = try temporaryFolder().appendingPathComponent("life.json")
+        try BackupCodec.encode(document).write(to: file)
+        let target = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let summary = try BackupService.restore(from: file, context: target, calendar: calendar)
+        try check(summary.lifeEntries == 3, "Leben: \(summary.lifeEntries) statt 3")
+        let habits = LifeActions.habits(in: target)
+        try check(habits.count == 1 && habits[0].steps.count == routine.steps.count, "Routine unvollständig")
+        try check(LifeActions.logs(for: habits[0], in: target).first?.doneSteps.count == 1, "Abgehakter Schritt fehlt")
+        let contracts = LifeActions.contracts(in: target)
+        try check(contracts.first?.cost == 17.99 && contracts.first?.provider == "Telekom", "Vertrag unvollständig")
+        try check(LifeActions.birthdays(in: target).first?.year == 1965, "Geburtstag unvollständig")
+        try check(LifeActions.journalEntries(in: target).count == 1, "Tagebuch fehlt")
+        return "Routine mit Verlauf, Vertrag, Geburtstag und Tagebuch"
     }
 
     private static func snapshotContainsTodayAndTomorrow() throws -> String {

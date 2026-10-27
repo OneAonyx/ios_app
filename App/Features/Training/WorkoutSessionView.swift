@@ -229,7 +229,7 @@ private struct ExercisePage: View {
                     Text(exercise.name)
                         .font(.title2.weight(.bold))
                         .fixedSize(horizontal: false, vertical: true)
-                    Text([exercise.muscleSummary, exercise.equipment.title].filter { !$0.isEmpty }.joined(separator: " · "))
+                    Text([exercise.muscleSummary, exercise.equipment.title, exercise.unilateral ? "Gewicht je Seite" : ""].filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     if let partner {

@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 import TagwerkCore
 import TagwerkKit
+import TipKit
 
 /// Startseite: Was steht heute an, was ist als Nächstes dran, wie weit bin ich?
 struct TodayView: View {
@@ -16,6 +17,8 @@ struct TodayView: View {
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
     @AppStorage(SettingsKeys.showCheckIns) private var showCheckIns = true
     @State private var isPickingFocus = false
+    private let quickAddTip = QuickAddTip()
+    private let widgetTip = WidgetTip()
 
     var body: some View {
         NavigationStack {
@@ -36,17 +39,19 @@ struct TodayView: View {
         let calendar = AppModel.calendar
         let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: 1, to: start) ?? now
-        let plan = plans.last(where: \.isActive) ?? plans.last
+        let filter = app.focusFilter
+        let plan = filter.hideTraining ? nil : (plans.last(where: \.isActive) ?? plans.last)
+        let visibleTasks = filter.listID.map { listID in tasks.filter { $0.list?.stableID == listID } } ?? tasks
         let source = AgendaSource(
-            tasks: tasks, medications: medications, training: (plan, workouts),
+            tasks: visibleTasks, medications: medications, training: (plan, workouts),
             calendarService: calendarService, showEvents: showEvents, hiddenCalendarIDsText: hiddenCalendarIDs
         )
         let todayItems = source.items(from: start, to: end, now: now)
         let doses = DayDoses(medications: medications.filter { $0.schedule.isScheduled }, day: now, now: now, calendar: calendar)
         let events = todayItems.filter { $0.kind == .event }.sorted { $0.start < $1.start }
-        let progress = TodayProgress.compute(tasks.map(\.facts), now: now, calendar: calendar)
+        let progress = TodayProgress.compute(visibleTasks.map(\.facts), now: now, calendar: calendar)
         let todayTasks = TaskOrdering.sorted(
-            tasks.filter { SmartList.today.includes($0.facts, now: now, calendar: calendar) },
+            visibleTasks.filter { SmartList.today.includes($0.facts, now: now, calendar: calendar) },
             facts: \.facts, now: now, calendar: calendar
         )
         let focusTasks = todayTasks.filter { $0.facts.isFocus(on: now, calendar: calendar) }
@@ -57,9 +62,13 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: Spacing.m) {
                 TodayHeader(now: now, userName: userName)
                 SigningBanner()
+                if filter.isActive {
+                    FocusFilterBanner(filter: filter)
+                }
                 if let storeError = app.storeError {
                     WarningCard(title: "Speicherproblem", message: storeError)
                 }
+                TipView(widgetTip)
                 OverviewCard(progress: progress, doses: doses, eventCount: events.count, showsEvents: showEvents && calendarService.canRead)
                 if let nextUp {
                     NextUpCard(item: nextUp, now: now, task: source.task(for: nextUp))
@@ -67,6 +76,8 @@ struct TodayView: View {
                 if showCheckIns {
                     CheckInTodayCard(now: now)
                 }
+                HabitsTodayCard(now: now)
+                LifeTodayCard(now: now)
                 ReviewTodayCard(now: now)
                 if doses.total > 0 {
                     TodayDosesCard(today: doses, now: now, title: "Medikamente", collapsesResolved: true)
@@ -74,12 +85,15 @@ struct TodayView: View {
                 if let plan {
                     TrainingTodayCard(plan: plan, workouts: workouts, now: now)
                 }
-                NutritionTodayCard(now: now)
+                if !filter.hideNutrition {
+                    NutritionTodayCard(now: now)
+                }
                 FocusCard(tasks: focusTasks, allTasks: tasks, onPick: { isPickingFocus = true })
                 DueTodayCard(tasks: otherTasks, allTasks: tasks, hasFocus: !focusTasks.isEmpty)
                 if showEvents {
                     EventsCard(events: events)
                 }
+                JournalTodayCard(now: now)
             }
             .padding(.horizontal, Spacing.m)
             .padding(.bottom, Spacing.xl)
@@ -113,11 +127,32 @@ struct TodayView: View {
             }
             .accessibilityLabel("Neue Aufgabe")
             .accessibilityIdentifier("today.quickadd")
+            .popoverTip(quickAddTip)
         }
     }
 }
 
 // MARK: - Karten
+
+/// Hinweis, solange ein Fokus-Filter etwas ausblendet.
+private struct FocusFilterBanner: View {
+    let filter: FocusFilterState
+
+    var body: some View {
+        Label {
+            Text("Fokus: \(filter.summary)")
+                .font(.subheadline)
+        } icon: {
+            Image(systemName: "moon.circle.fill")
+                .foregroundStyle(.indigo)
+        }
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.s)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .accessibilityIdentifier("today.focusFilter")
+    }
+}
 
 private struct TodayHeader: View {
     let now: Date
@@ -265,6 +300,8 @@ private struct NextUpCard: View {
         case .task: "checklist"
         case .medication: "pills.fill"
         case .training: "dumbbell.fill"
+        case .birthday: "gift.fill"
+        case .deadline: "doc.badge.clock"
         }
     }
 
@@ -274,6 +311,8 @@ private struct NextUpCard: View {
         case .task: ModuleAccent.tasks
         case .medication: ModuleAccent.medication
         case .training: ModuleAccent.training
+        case .birthday: .pink
+        case .deadline: .orange
         }
     }
 

@@ -210,6 +210,22 @@ final class ScreenshotTests: XCTestCase {
             }
         }
 
+        // Fortschritt: Tempo je Übung, Körpergewicht, Fotos mit Vergleich.
+        let progress = app.buttons["training.progress"]
+        if scrollTo(progress, in: app), tapIfPresent(progress) {
+            snap(app, "61-fortschritt")
+            let photos = app.buttons["progress.photos"]
+            if scrollTo(photos, in: app), tapIfPresent(photos) {
+                snap(app, "62-fotos")
+                if tapIfPresent(app.buttons["photos.compare"]) {
+                    snap(app, "63-fotovergleich")
+                    dismissSheet(in: app, doneIdentifier: "compare.done")
+                }
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+
         // Nach oben und Einheit starten.
         let start = app.buttons["training.start"]
         for _ in 0..<4 where !(start.exists && start.isHittable) { app.swipeDown() }
@@ -233,6 +249,59 @@ final class ScreenshotTests: XCTestCase {
         }
         tapTab("Heute", in: app)
         snap(app, "25-heute-nach-training")
+    }
+
+    /// Leben: Übersicht, Routine, Gewohnheiten, Verträge, Geburtstage, Tagebuch.
+    @MainActor
+    func testLife() {
+        let app = launch(extraArguments: ["-forceLight"])
+        let habitsCard = app.descendants(matching: .any)["today.habits"]
+        if scrollTo(habitsCard, in: app, attempts: 3) {
+            snap(app, "50-heute-routinen")
+        }
+        tapTab("Planer", in: app)
+        guard tapIfPresent(app.buttons["Leben"].firstMatch) else { return }
+        snap(app, "51-leben")
+        if tapIfPresent(app.buttons["habit.toggle.Morgenroutine"]) {
+            snap(app, "52-routine")
+            tapIfPresent(app.buttons["Fertig"].firstMatch)
+        }
+        let details = [
+            ("life.habits", "53-gewohnheiten", "Lesen", "54-gewohnheit"),
+            ("life.contracts", "55-vertraege", "Fitnessstudio", "56-vertrag"),
+            ("life.birthdays", "57-geburtstage", "", ""),
+        ]
+        for (identifier, name, detail, detailName) in details {
+            let link = app.buttons[identifier]
+            guard scrollTo(link, in: app), tapIfPresent(link) else { continue }
+            snap(app, name)
+            if !detail.isEmpty {
+                let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", detail)).firstMatch
+                if tapIfPresent(row) {
+                    snap(app, detailName)
+                    tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+                }
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        let journal = app.buttons["life.journal"]
+        if scrollTo(journal, in: app), tapIfPresent(journal) {
+            snap(app, "58-tagebuch")
+            dismissSheet(in: app, doneIdentifier: "journal.done")
+        }
+        // Einstellungen: App-Sperre und Gym-Ankunft.
+        tapTab("Heute", in: app)
+        if tapIfPresent(app.buttons["today.settings"]) {
+            let gym = app.buttons["settings.gym"]
+            if scrollTo(gym, in: app, attempts: 4) {
+                snap(app, "59-einstellungen-privat")
+                if tapIfPresent(gym) {
+                    snap(app, "60-gym-ankunft")
+                    tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+                }
+            }
+            tapIfPresent(app.buttons["settings.done"])
+        }
     }
 
     /// Prüft im Simulator, was unter Linux nicht geht: Migration, Medikamenten-Aktionen, Sicherung.

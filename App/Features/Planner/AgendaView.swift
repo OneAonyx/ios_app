@@ -32,8 +32,9 @@ struct AgendaSource {
         let taskItems = tasks.compactMap { $0.agendaItem() }
         let doseItems = medications.flatMap { $0.agendaItems(from: start, to: end, now: now, calendar: AppModel.calendar) }
         let trainingItems = TrainingActions.agendaItems(plan: training.0, sessions: training.1, from: start, to: end, now: now, calendar: AppModel.calendar)
-        guard showEvents else { return taskItems + doseItems + trainingItems }
-        return taskItems + doseItems + trainingItems + calendarService.items(from: start, to: end, hiddenCalendarIDs: hiddenCalendarIDs)
+        let lifeItems = LifeActions.agendaItems(from: start, to: end, now: now, calendar: AppModel.calendar, in: AppModel.shared.context)
+        guard showEvents else { return taskItems + doseItems + trainingItems + lifeItems }
+        return taskItems + doseItems + trainingItems + lifeItems + calendarService.items(from: start, to: end, hiddenCalendarIDs: hiddenCalendarIDs)
     }
 
     /// Medikament einer Einnahme in Agenda oder Woche.
@@ -144,6 +145,11 @@ struct AgendaRow: View {
                     .font(.system(size: 18))
                     .foregroundStyle(item.isDone ? Color.green : ModuleAccent.training)
                     .frame(width: 28)
+            } else if item.kind == .birthday || item.kind == .deadline {
+                Image(systemName: item.kind == .birthday ? "gift.fill" : "doc.badge.clock")
+                    .font(.system(size: 18))
+                    .foregroundStyle(item.kind == .birthday ? Color.pink : Color.orange)
+                    .frame(width: 28)
             } else {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(Color(hex: item.colorHex))
@@ -177,6 +183,8 @@ struct AgendaRow: View {
                 app.openMedications()
             } else if item.kind == .training {
                 app.openTraining()
+            } else if item.kind == .birthday || item.kind == .deadline {
+                app.openLife()
             } else if let url = CalendarService.calendarAppURL(for: item.start) {
                 openURL(url)
             }

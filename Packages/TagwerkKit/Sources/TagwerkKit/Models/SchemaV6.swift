@@ -41,6 +41,7 @@ public enum TagwerkSchemaV6: VersionedSchema {
             Contract.self,
             Birthday.self,
             JournalEntry.self,
+            ProgressPhoto.self,
         ]
     }
 
@@ -156,6 +157,26 @@ public enum TagwerkSchemaV6: VersionedSchema {
         }
     }
 
+    /// Fortschrittsfoto. Bleibt in der App (nicht in der Fotomediathek) und nicht in der Datensicherung.
+    @Model
+    public final class ProgressPhoto {
+        public var stableID: String = UUID().uuidString
+        public var date: Date = Date()
+        public var poseRaw: String = PhotoPose.front.rawValue
+        @Attribute(.externalStorage) public var imageData: Data?
+        @Attribute(.externalStorage) public var thumbnailData: Data?
+        public var note: String = ""
+        /// Körpergewicht am Tag des Fotos (falls bekannt).
+        public var weight: Double?
+        public var createdAt: Date = Date()
+
+        public init(date: Date, pose: PhotoPose, stableID: String = UUID().uuidString) {
+            self.stableID = stableID
+            self.date = date
+            self.poseRaw = pose.rawValue
+        }
+    }
+
     /// Tagebuch: Antwort auf die Frage des Tages und freie Notiz.
     @Model
     public final class JournalEntry {
@@ -181,6 +202,14 @@ public typealias HabitLog = TagwerkSchemaV6.HabitLog
 public typealias Contract = TagwerkSchemaV6.Contract
 public typealias Birthday = TagwerkSchemaV6.Birthday
 public typealias JournalEntry = TagwerkSchemaV6.JournalEntry
+public typealias ProgressPhoto = TagwerkSchemaV6.ProgressPhoto
+
+public extension TagwerkSchemaV6.ProgressPhoto {
+    var pose: PhotoPose {
+        get { PhotoPose(rawValue: poseRaw) ?? .front }
+        set { poseRaw = newValue.rawValue }
+    }
+}
 
 // MARK: - Bequeme Zugriffe
 

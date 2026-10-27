@@ -34,6 +34,13 @@ public enum SettingsKeys {
     /// Trainingsziel und Erfahrung für Claude-Anfragen zum Trainingsplan.
     public static let trainingGoal = "tagwerk.settings.trainingGoal"
     public static let trainingExperience = "tagwerk.settings.trainingExperience"
+    /// App-Sperre mit Face ID oder Code (nicht in der Sicherung).
+    public static let appLock = "tagwerk.settings.appLock"
+    /// Gym-Ankunft: Ort und Schalter (nicht in der Sicherung, gerätebezogen).
+    public static let gymArrival = "tagwerk.settings.gymArrival"
+    public static let gymLatitude = "tagwerk.settings.gymLatitude"
+    public static let gymLongitude = "tagwerk.settings.gymLongitude"
+    public static let gymLastNotified = "tagwerk.settings.gymLastNotified"
 
     /// Diese Einstellungen wandern mit in die Datensicherung.
     public static let backedUp = [
@@ -60,6 +67,12 @@ public enum SharedKeys {
     public static let nutritionSnapshot = "tagwerk.widget.nutrition.snapshot"
     /// Wasser aus Widget oder Kontrollzentrum, bis die App es übernimmt.
     public static let pendingWater = "tagwerk.nutrition.pendingWater"
+    /// Stand von „Heute“ für die Widgets „Heute“ und „Aufgaben“.
+    public static let todaySnapshot = "tagwerk.widget.today.snapshot"
+    /// Im Widget abgehakte Aufgaben, bis die App sie übernimmt.
+    public static let pendingTaskCompletions = "tagwerk.tasks.pendingCompletions"
+    /// Fokus-Filter (Fokus-Modus des iPhones).
+    public static let focusFilter = "tagwerk.focus.filter"
 }
 
 /// Kennungen der Widgets und Steuerelemente.
@@ -71,6 +84,10 @@ public enum WidgetKinds {
     public static let trainingControl = "de.tagwerk.control.training"
     public static let nutrition = "TagwerkNutritionWidget"
     public static let waterControl = "de.tagwerk.control.water"
+    public static let today = "TagwerkTodayWidget"
+    public static let tasks = "TagwerkTasksWidget"
+    public static let quickTaskControl = "de.tagwerk.control.quicktask"
+    public static let checkInControl = "de.tagwerk.control.checkin"
 }
 
 /// Kennungen für Mitteilungen und ihre Aktionsknöpfe.

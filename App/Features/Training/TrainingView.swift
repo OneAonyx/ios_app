@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 import TagwerkCore
 import TagwerkKit
+import TipKit
 
 /// Tab „Training“: nächste Einheit, Zyklus, Wochenvolumen, letzte Einheiten.
 struct TrainingView: View {
@@ -67,6 +68,10 @@ struct TrainingView: View {
             TrainingStatsView()
         case .body:
             BodyView()
+        case .progress:
+            ProgressOverviewView()
+        case .photos:
+            ProgressPhotosView()
         case .history:
             SessionHistoryView()
         case .session(let id):
@@ -350,15 +355,18 @@ struct SessionRow: View {
 
 private struct LinksCard: View {
     var body: some View {
+        TipView(ProgressTip())
         Card(padding: Spacing.xs) {
             VStack(spacing: 0) {
                 link("Plan und Tage", "list.bullet.rectangle", .plan, id: "training.plan")
                 Divider().padding(.leading, 52)
                 link("Übungen", "books.vertical", .library, id: "training.library")
                 Divider().padding(.leading, 52)
+                link("Fortschritt", "chart.line.uptrend.xyaxis", .progress, id: "training.progress")
+                Divider().padding(.leading, 52)
                 link("Statistik", "chart.xyaxis.line", .stats, id: "training.stats")
                 Divider().padding(.leading, 52)
-                link("Körper", "figure.arms.open", .body, id: "training.body")
+                link("Körper und Fotos", "figure.arms.open", .body, id: "training.body")
             }
         }
     }

@@ -59,6 +59,12 @@ final class AppModel {
     var presentedReview: ReviewLink?
     var isShowingClaudeHub = false
     var presentedExchange: ExchangeLink?
+    /// Treffer aus der iPhone-Suche (Spotlight).
+    var spotlightLink: SpotlightLink?
+    /// Vom Fokus-Modus gesetzt (Einstellungen → Fokus → Orbit).
+    var focusFilter: FocusFilterState = FocusFilterStore.read()
+    /// Planer-Ansicht, die beim nächsten Anzeigen gewählt werden soll („Leben“).
+    var plannerModeRequest: String?
     /// Claude-Anfrage, die gerade auf dem Bildschirm ist (dann kein zweites Blatt öffnen).
     @ObservationIgnored var visibleExchangeID: String?
 
@@ -101,6 +107,17 @@ final class AppModel {
         }
         NutritionActionCenter.symptomHandler = {
             AppModel.shared.openSymptomEntry()
+        }
+        // Aufgaben aus dem Widget „Aufgaben“ abhaken.
+        TaskActionCenter.handler = { taskID in
+            AppModel.shared.completeTaskFromWidget(taskID)
+            // Sofort, nicht gebündelt: Bei einem Hintergrundstart bleibt nur wenig Zeit.
+            AppModel.shared.refreshTask?.cancel()
+            await AppModel.shared.refreshNow()
+        }
+        // Kontrollzentrum: Schnellerfassung, Check-in.
+        RouteCenter.handler = { url in
+            AppModel.shared.handle(url: url)
         }
     }
 
@@ -178,6 +195,15 @@ final class AppModel {
             openReview(weekStart: nil)
         case "claude":
             openClaudeHub()
+        case "leben", "life":
+            openLife()
+        case "heute", "today":
+            dismissPanels()
+            selectedTab = .today
+        case "aufgaben", "tasks":
+            dismissPanels()
+            plannerModeRequest = "Aufgaben"
+            selectedTab = .planner
         default:
             break
         }
@@ -188,6 +214,16 @@ final class AppModel {
     /// Nach jeder Änderung an Aufgaben: Erinnerungen neu planen (gebündelt).
     func tasksChanged() {
         scheduleRefresh()
+    }
+
+    /// Aufgabe aus dem Widget erledigt (auch bei einem Hintergrundstart der App).
+    func completeTaskFromWidget(_ taskID: String) {
+        guard storeError == nil, let task = TaskActions.fetchTask(stableID: taskID, in: context), !task.isDone else { return }
+        TaskActions.complete(task, in: context, calendar: Self.calendar)
+        if let snapshot = TodaySnapshotStore.read() {
+            TodaySnapshotStore.write(snapshot.completing(taskID: taskID))
+        }
+        tasksChanged()
     }
 
     /// Nach Änderungen am Training: Widget-Daten und Erinnerungen an Trainingstage.
@@ -236,6 +272,10 @@ final class AppModel {
         writeMedicationSnapshot(now: now)
         writeTrainingSnapshot(now: now)
         writeNutritionSnapshot(now: now)
+        TodayWidgetWriter.write(app: self, now: now)
+        if storeError == nil {
+            await SpotlightIndexer.refresh(context: context, now: now)
+        }
         let alarmsActive = AlarmProbe.isAuthorized && !AppInfo.isUITesting
         if alarmsActive {
             await MedicationAlarmScheduler.reschedule(medications: MedicationActions.fetchAll(in: context), now: now, calendar: calendar)
@@ -274,6 +314,8 @@ final class AppModel {
             }
         }
         calendarService.refreshAccess()
+        let state = FocusFilterStore.read()
+        if state != focusFilter { focusFilter = state }
         scheduleRefresh()
         if storeError == nil, !AppInfo.isUITesting {
             BackupService.autoBackupIfNeeded(context: context, calendar: Self.calendar)
@@ -281,6 +323,10 @@ final class AppModel {
         systemCheck.refreshOnActivate()
         BackgroundRefresh.schedule()
         if storeError == nil, !AppInfo.isUITesting {
+            // Einmalig: dein eigener Plan mit Startgewichten (Version 0.7), sonst der Startplan.
+            if TrainingActions.ensureOwnPlan(in: context) != nil {
+                trainingChanged()
+            }
             TrainingActions.ensureStarterPlan(in: context)
         }
         for command in WorkoutActionCenter.takeQueued() {
@@ -298,7 +344,51 @@ final class AppModel {
         if NutritionActionCenter.takePendingSymptomEntry() {
             openSymptomEntry()
         }
+        for taskID in TaskActionCenter.takeQueued() {
+            completeTaskFromWidget(taskID)
+        }
+        if let route = RouteCenter.takePending() {
+            handle(url: route)
+        }
         deliverClaudeInbox()
+    }
+
+    // MARK: Fokus
+
+    func focusFilterChanged() {
+        let state = FocusFilterStore.read()
+        if state != focusFilter { focusFilter = state }
+        scheduleRefresh()
+    }
+
+    // MARK: Spotlight
+
+    /// Treffer aus der iPhone-Suche öffnen.
+    func openSpotlight(identifier: String) {
+        guard let link = SpotlightIndexer.link(for: identifier) else { return }
+        dismissPanels()
+        switch link.kind {
+        case .task:
+            if let task = TaskActions.fetchTask(stableID: link.itemID, in: context) {
+                selectedTab = .planner
+                editingTask = task
+            }
+        default:
+            spotlightLink = link
+        }
+    }
+
+    // MARK: Leben
+
+    func openLife() {
+        dismissPanels()
+        plannerModeRequest = "Leben"
+        selectedTab = .planner
+    }
+
+    /// Nach Änderungen an Routinen, Verträgen, Geburtstagen: Erinnerungen und Widget-Daten.
+    func lifeChanged() {
+        scheduleRefresh()
     }
 
     // MARK: Einblicke

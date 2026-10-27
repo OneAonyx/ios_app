@@ -14,7 +14,7 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.6.0"
+    MARKETING_VERSION: "0.7.0"
     CURRENT_PROJECT_VERSION: "1"
     # Phase 0: Swift-5-Modus für App und Widget (Nebenläufigkeit als Warnung).
     # TagwerkCore läuft bereits im Swift-6-Modus. Umstellung in Phase 1.
@@ -83,7 +83,10 @@ targets:
         NSHealthUpdateUsageDescription: "Orbit speichert Workouts, Gewicht, Wasser, Symptome und Stimmung in Apple Health."
         NSAlarmKitUsageDescription: "Orbit stellt Wecker für wichtige Medikamente, damit du sie auch im Stummmodus nicht verpasst."
         NSCalendarsFullAccessUsageDescription: "Orbit zeigt deine Termine auf „Heute“, in der Agenda und in der Woche und legt auf Wunsch neue Termine an."
-        NSCameraUsageDescription: "Orbit liest mit der Kamera Barcodes und Zutatenlisten, um Lebensmittel auf Histamin zu prüfen. Bilder werden nicht gespeichert."
+        NSCameraUsageDescription: "Orbit liest mit der Kamera Barcodes und Zutatenlisten und nimmt auf Wunsch Fortschrittsfotos auf. Fotos bleiben privat in Orbit."
+        NSFaceIDUsageDescription: "Mit Face ID entsperrst du Orbit, wenn die App-Sperre an ist."
+        NSLocationWhenInUseUsageDescription: "Orbit speichert den Ort deines Gyms, damit es dich bei der Ankunft an dein Training erinnern kann."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Damit Orbit dich auch bei geschlossener App an dein Training erinnert, wenn du im Gym ankommst."
     entitlements:
       path: App/Supporting/Tagwerk.entitlements
       properties:

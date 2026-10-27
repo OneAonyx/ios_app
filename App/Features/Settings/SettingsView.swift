@@ -75,6 +75,8 @@ struct SettingsView: View {
                     Text("Morgens fragt der Check-in nach Schlaf und Energie, abends nach Stimmung und Stress. Der Wochenrückblick kommt sonntags um 18 Uhr.")
                 }
 
+                PrivacyGymSection()
+
                 BackupSection()
 
                 Section("Orbit") {
@@ -256,7 +258,7 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 5
+    private let currentPhase = 6
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
@@ -264,8 +266,8 @@ struct RoadmapView: View {
         Phase(id: 2, title: "Medikamente", detail: "Abgeschlossen: Einnahmepläne, Erinnerungen, Wecker, Vorrat, Widget, Kontrollzentrum, Siri.", systemImage: "pills"),
         Phase(id: 3, title: "Training", detail: "Abgeschlossen: Oberkörper-4er, Satz-Tracking mit Vorschlag, Pausen-Timer in der Dynamic Island, Statistik.", systemImage: "dumbbell"),
         Phase(id: 4, title: "Ernährung & Histamin", detail: "Abgeschlossen: Lexikon, Barcode- und Zutaten-Scan, Tagebuch mit Tageslast, Beschwerden und Muster, Einkauf, Rezepte, Wochenplan.", systemImage: "fork.knife"),
-        Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Check-ins, Wochenrückblick, Arztbericht als PDF, Claude für Trainingsplan, Lebensmittel, Rezepte, Muster und Rückblick.", systemImage: "sparkles"),
-        Phase(id: 6, title: "Leben & Feinschliff", detail: "Routinen, Fristen, Verträge, Widgets, Fokus-Filter.", systemImage: "wand.and.stars"),
+        Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Abgeschlossen: Check-ins, Wochenrückblick, Arztbericht als PDF, Claude für Trainingsplan, Lebensmittel, Rezepte, Muster und Rückblick.", systemImage: "sparkles"),
+        Phase(id: 6, title: "Leben & Feinschliff", detail: "Routinen, Verträge, Fristen, Geburtstage, Tagebuch, Fortschritt und Fotos, Widgets Heute und Aufgaben, Spotlight, Fokus-Filter, App-Sperre, Gym-Ankunft.", systemImage: "wand.and.stars"),
         Phase(id: 7, title: "Developer-Account & iCloud", detail: "TestFlight, Apple Health, iCloud-Sync.", systemImage: "icloud"),
     ]
 

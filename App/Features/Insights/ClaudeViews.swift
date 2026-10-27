@@ -31,7 +31,11 @@ struct ClaudeHubView: View {
             Section("Neue Anfrage") {
                 ForEach(ClaudeTask.allCases) { task in
                     NavigationLink {
-                        ClaudeRequestView(task: task)
+                        if task == .photos {
+                            ProgressPhotosView()
+                        } else {
+                            ClaudeRequestView(task: task)
+                        }
                     } label: {
                         HStack(spacing: Spacing.s) {
                             IconBadge(systemImage: task.symbol, tint: .purple)
@@ -143,7 +147,7 @@ extension ClaudeExchange {
 }
 
 extension ClaudeTask {
-    var isTextAnswer: Bool { self == .weeklyReview || self == .patterns }
+    var isTextAnswer: Bool { self == .weeklyReview || self == .patterns || self == .progress || self == .photos }
 }
 
 // MARK: - Anfrage
@@ -204,6 +208,7 @@ struct ClaudeRequestView: View {
         var review: WeeklyReview?
         var recipes: ClaudePromptBuilder.RecipeContext?
         var patterns: ClaudeBridgeActions.PatternsInput?
+        var progress: ClaudePromptBuilder.ProgressContext?
     }
 
     var body: some View {
@@ -343,6 +348,28 @@ struct ClaudeRequestView: View {
                 Stepper("\(recipeCount) Rezepte", value: $recipeCount, in: 1...5)
                 Stepper(servings == 1 ? "1 Portion" : "\(servings) Portionen", value: $servings, in: 1...6)
             }
+        case .progress:
+            Section {
+                LabeledField(title: "Frage (optional)", text: $wish, prompt: "z. B. Soll ich mehr essen?", lines: 1...4)
+            } header: {
+                Text("Deine Angaben")
+            } footer: {
+                if let data = inputs.progress, data.exerciseTrends.isEmpty, data.bodyweight == nil {
+                    Text("Noch wenig Daten: Nach ein paar Wochen Training und Gewichtseinträgen wird die Einschätzung genauer.")
+                } else {
+                    Text("Claude sieht Kraftverlauf, Gewicht und Maße, keine Fotos. Für Fotos: Training → Körper und Fotos.")
+                }
+            }
+        case .photos:
+            Section {
+                NavigationLink {
+                    ProgressPhotosView()
+                } label: {
+                    Label("Fotos auswählen", systemImage: "person.crop.rectangle.stack")
+                }
+            } footer: {
+                Text("Fotos gehen über das Teilen-Menü an die Claude-App.")
+            }
         case .patterns:
             Section {
                 LabeledField(title: "Frage (optional)", text: $wish, prompt: "z. B. Liegt es am Käse?", lines: 1...4)
@@ -390,6 +417,10 @@ struct ClaudeRequestView: View {
             return ClaudePromptBuilder.recipes(data, ref: ref)
         case .patterns:
             return inputs.patterns?.prompt(wish: trimmedWish, ref: ref)
+        case .progress:
+            return inputs.progress.map { ClaudePromptBuilder.progress($0, wish: trimmedWish, ref: ref) }
+        case .photos:
+            return nil
         }
     }
 
@@ -413,6 +444,10 @@ struct ClaudeRequestView: View {
             inputs.recipes = ClaudeBridgeActions.recipeContext(in: context)
         case .patterns:
             inputs.patterns = ClaudeBridgeActions.patternsInput(calendar: calendar, in: context)
+        case .progress:
+            inputs.progress = ProgressActions.claudeContext(in: context)
+        case .photos:
+            break
         }
         loaded = true
     }
@@ -425,6 +460,8 @@ struct ClaudeRequestView: View {
         case .food: return "Lebensmittel: \(foodName.trimmingCharacters(in: .whitespaces))"
         case .recipes: return trimmedWish.isEmpty ? "Rezeptideen" : "Rezepte: \(trimmedWish)"
         case .patterns: return trimmedWish.isEmpty ? "Muster deuten" : "Muster: \(trimmedWish)"
+        case .progress: return trimmedWish.isEmpty ? "Fortschritt bewerten" : "Fortschritt: \(trimmedWish)"
+        case .photos: return "Fotos bewerten"
         }
     }
 

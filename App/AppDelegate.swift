@@ -13,6 +13,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
         NotificationSetup.registerCategories()
+        // Gym-Ankunft: Überwachung sofort wieder aufnehmen, auch bei einem Start im Hintergrund.
+        GymArrival.shared.startIfEnabled()
         return true
     }
 
@@ -54,6 +56,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         if content.userInfo[NotificationIDs.trainingKey] != nil || response.notification.request.identifier.hasPrefix(NotificationIDs.Prefix.restTimer) {
             await MainActor.run {
                 AppModel.shared.openTraining()
+            }
+            return
+        }
+
+        if content.userInfo[NotificationIDs.habitKey] != nil || content.userInfo[NotificationIDs.lifeKey] != nil {
+            await MainActor.run {
+                AppModel.shared.openLife()
             }
             return
         }

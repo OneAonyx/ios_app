@@ -266,3 +266,25 @@ struct BirthdayTests {
         #expect(NotificationIDs.Prefix.managed.contains(NotificationIDs.Prefix.birthday))
     }
 }
+
+@Suite("Leben: Widget-Stand und Fokus-Filter")
+struct TodaySnapshotTests {
+    @Test func completingRemovesTaskAndCounts() throws {
+        let snapshot = TodayWidgetSnapshot.placeholder(now: now)
+        let done = snapshot.completing(taskID: "2")
+        #expect(done.tasks.map(\.id) == ["1", "3"])
+        #expect(done.tasksOpen == 2 && done.tasksDone == 3)
+        #expect(done.completing(taskID: "x") == done)
+        let decoded = try #require(TodayWidgetSnapshot.decode(try done.encoded()))
+        #expect(decoded.tasks == done.tasks)
+        #expect(PendingTaskQueue.decode(PendingTaskQueue.appending("a", to: PendingTaskQueue.appending("a", to: nil))) == ["a"])
+    }
+
+    @Test func focusFilterSummary() {
+        #expect(FocusFilterState.none.isActive == false)
+        #expect(FocusFilterState.none.summary == "alles sichtbar")
+        let work = FocusFilterState(hideTraining: true, hideNutrition: true, listID: "l", listName: "Arbeit")
+        #expect(work.isActive)
+        #expect(work.summary == "Training und Ernährung ausgeblendet · nur Liste Arbeit")
+    }
+}

@@ -7,6 +7,10 @@ public enum ClaudeTask: String, Codable, Sendable, CaseIterable, Identifiable {
     case food
     case recipes
     case patterns
+    /// Kraft- und Körperverlauf einschätzen (nur Zahlen).
+    case progress
+    /// Fortschrittsfotos einschätzen (Fotos gehen über das Teilen-Menü an die Claude-App).
+    case photos
 
     public var id: String { rawValue }
 
@@ -17,6 +21,8 @@ public enum ClaudeTask: String, Codable, Sendable, CaseIterable, Identifiable {
         case .food: "Lebensmittel bewerten"
         case .recipes: "Rezeptideen"
         case .patterns: "Muster deuten"
+        case .progress: "Fortschritt bewerten"
+        case .photos: "Fotos bewerten"
         }
     }
 
@@ -27,6 +33,8 @@ public enum ClaudeTask: String, Codable, Sendable, CaseIterable, Identifiable {
         case .food: "Für Lebensmittel, die nicht im Lexikon stehen."
         case .recipes: "Histaminarme, eiweißreiche Rezepte nach deinen Wünschen."
         case .patterns: "Claude ordnet die gefundenen Muster ein und schlägt Tests vor."
+        case .progress: "Geht es zu schnell oder zu langsam? Kraftverlauf, Gewicht und Maße mit Tipps."
+        case .photos: "Fortschrittsfotos im Vergleich, über die Claude-App mit Bildern."
         }
     }
 
@@ -37,6 +45,8 @@ public enum ClaudeTask: String, Codable, Sendable, CaseIterable, Identifiable {
         case .food: "carrot"
         case .recipes: "book"
         case .patterns: "magnifyingglass.circle"
+        case .progress: "chart.line.uptrend.xyaxis"
+        case .photos: "person.crop.rectangle.stack"
         }
     }
 
@@ -44,7 +54,7 @@ public enum ClaudeTask: String, Codable, Sendable, CaseIterable, Identifiable {
     public var format: String {
         switch self {
         case .trainingPlan: "orbit.plan.v1"
-        case .weeklyReview, .patterns: ClaudeTextAnswer.format
+        case .weeklyReview, .patterns, .progress, .photos: ClaudeTextAnswer.format
         case .food: ClaudeFoodAnswer.format
         case .recipes: ClaudeRecipesAnswer.format
         }
@@ -231,6 +241,78 @@ public enum ClaudePromptBuilder {
         return ClaudePrompt(task: .patterns, ref: ref, text: parts.compactMap { $0 }.joined(separator: "\n\n"), includedData: data)
     }
 
+    /// Zahlen für die Fortschritts-Einschätzung.
+    public struct ProgressContext: Sendable {
+        public var goal: String
+        public var experience: String
+        /// „1,83 m, 82,4 kg“
+        public var body: String
+        /// „Latzug breit: 85 → 92 kg e1RM in 6 Wochen (+1,2 % pro Woche, gutes Tempo)“
+        public var exerciseTrends: [String]
+        /// „80,5 → 82 kg in 6 Wochen (+0,25 kg pro Woche)“
+        public var bodyweight: String?
+        /// „Oberarm 36 → 37 cm (8 Wochen)“
+        public var measurements: [String]
+        /// „Ø 4,5 Einheiten pro Woche in den letzten 4 Wochen“
+        public var frequency: String
+
+        public init(goal: String, experience: String, body: String, exerciseTrends: [String], bodyweight: String?, measurements: [String], frequency: String) {
+            self.goal = goal
+            self.experience = experience
+            self.body = body
+            self.exerciseTrends = exerciseTrends
+            self.bodyweight = bodyweight
+            self.measurements = measurements
+            self.frequency = frequency
+        }
+
+        var lines: [String] {
+            var result = ["ZIEL: \(goal). ERFAHRUNG: \(experience)."]
+            if !body.isEmpty { result.append("KÖRPER: \(body)") }
+            if !frequency.isEmpty { result.append("TRAINING: \(frequency)") }
+            if !exerciseTrends.isEmpty { result.append("KRAFTVERLAUF (geschätztes Maximalgewicht):\n" + exerciseTrends.map { "- \($0)" }.joined(separator: "\n")) }
+            if let bodyweight { result.append("KÖRPERGEWICHT: \(bodyweight)") }
+            if !measurements.isEmpty { result.append("MASSE: " + measurements.joined(separator: ", ")) }
+            return result
+        }
+
+        var dataList: [String] {
+            var data = ["Ziel und Erfahrung"]
+            if !body.isEmpty { data.append("Größe und Gewicht") }
+            if !frequency.isEmpty { data.append("Trainingshäufigkeit") }
+            if !exerciseTrends.isEmpty { data.append("Kraftverlauf (\(exerciseTrends.count == 1 ? "1 Übung" : "\(exerciseTrends.count) Übungen"))") }
+            if bodyweight != nil { data.append("Gewichtsverlauf") }
+            if !measurements.isEmpty { data.append("Körpermaße") }
+            return data
+        }
+    }
+
+    public static func progress(_ context: ProgressContext, wish: String, ref: String) -> ClaudePrompt {
+        let example = #"{"format":"orbit.text.v1","ref":"\#(ref)","title":"Dein Fortschritt","text":"**Kraft:** …\n\n**Körper:** …\n\n**Anpassen:**\n- …"}"#
+        let parts: [String?] = [
+            intro,
+            "AUFGABE: Bewerte meinen Fortschritt beim Muskelaufbau. Geht es zu schnell, passend oder zu langsam? Welche Übungen laufen gut, wo hakt es, und was soll ich konkret anpassen (Training, Essen, Erholung)? Höchstens 250 Wörter, Markdown erlaubt. Keine Diagnosen.",
+            wish.isEmpty ? nil : "FRAGE: \(wish)",
+        ] + context.lines.map { Optional($0) } + [outputRule(format: ClaudeTextAnswer.format, ref: ref, example: example)]
+        var data = context.dataList
+        if !wish.isEmpty { data.append("Deine Frage") }
+        return ClaudePrompt(task: .progress, ref: ref, text: parts.compactMap { $0 }.joined(separator: "\n\n"), includedData: data)
+    }
+
+    /// Text zu Fortschrittsfotos. Die Fotos selbst hängt die App beim Teilen an.
+    public static func photos(_ context: ProgressContext, photos: [String], wish: String, ref: String) -> ClaudePrompt {
+        let list = photos.enumerated().map { "Foto \($0.offset + 1): \($0.element)" }.joined(separator: "\n")
+        let parts: [String?] = [
+            "Ich nutze die App Orbit und schicke dir \(photos.count == 1 ? "ein Fortschrittsfoto" : "\(photos.count) Fortschrittsfotos") von mir. Antworte auf Deutsch, freundlich und knapp.",
+            "AUFGABE: Vergleiche die Fotos und schätze vorsichtig ein, was sich bei Schultern, Brust, Rücken, Armen und Taille sichtbar verändert hat. Licht, Pose, Pump und Kamerawinkel verfälschen Fotos: Sag ehrlich, wo man nichts sicher erkennen kann, und was ich beim nächsten Foto gleich machen soll. Körperfett nur als grobe Spanne. Gib 3 konkrete Tipps fürs Training. Höchstens 250 Wörter, Markdown erlaubt.",
+            "FOTOS:\n\(list)",
+            wish.isEmpty ? nil : "FRAGE: \(wish)",
+        ] + context.lines.map { Optional($0) } + ["Kennung der Anfrage: \(ref)"]
+        var data = ["\(photos.count) \(photos.count == 1 ? "Foto" : "Fotos") mit Datum"] + context.dataList
+        if !wish.isEmpty { data.append("Deine Frage") }
+        return ClaudePrompt(task: .photos, ref: ref, text: parts.compactMap { $0 }.joined(separator: "\n\n"), includedData: data)
+    }
+
     /// 6 Zeichen, gut lesbar.
     public static func makeRef() -> String {
         String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(6))
@@ -320,7 +402,7 @@ public enum ClaudeAnswerParser {
             } catch {
                 throw ClaudeAnswerError.noJSON
             }
-        case .weeklyReview, .patterns:
+        case .weeklyReview, .patterns, .progress, .photos:
             if let answer = ClaudeResponseExtractor.decodeFirst(ClaudeTextAnswer.self, from: trimmed), !answer.text.isEmpty {
                 return .text(title: answer.title ?? task.title, body: answer.text)
             }

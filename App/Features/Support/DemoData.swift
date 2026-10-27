@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import TagwerkCore
 import TagwerkKit
+import UIKit
 
 /// Beispieldaten nur für die UI-Tests im CI (Screenshots). Werden nie in echte Speicher geschrieben.
 @MainActor
@@ -62,7 +63,96 @@ enum DemoData {
         seedTraining(into: context, now: now, calendar: calendar)
         seedNutrition(into: context, now: now, calendar: calendar)
         seedInsights(into: context, now: now, calendar: calendar)
+        seedLife(into: context, now: now, calendar: calendar)
         try? context.save()
+    }
+
+    /// Routinen mit Verlauf, Verträge mit Fristen, Geburtstage, Tagebuch.
+    private static func seedLife(into context: ModelContext, now: Date, calendar: Calendar) {
+        let today = calendar.startOfDay(for: now)
+        func day(_ offset: Int) -> Date { calendar.date(byAdding: .day, value: offset, to: today) ?? today }
+
+        let templates = LifeTemplates.habits
+        let morning = LifeActions.createHabit(from: templates[0], now: day(-30), in: context)
+        let evening = LifeActions.createHabit(from: templates[1], now: day(-30), in: context)
+        let reading = LifeActions.createHabit(from: templates[3], now: day(-30), in: context)
+        let walking = LifeActions.createHabit(from: templates[4], now: day(-30), in: context)
+        for offset in -28 ... -1 where offset % 5 != 0 {
+            for step in morning.steps {
+                LifeActions.toggleStep(step.id, of: morning, on: day(offset), calendar: calendar, in: context)
+            }
+            if offset % 3 != 0 {
+                LifeActions.toggleDone(evening, on: day(offset), calendar: calendar, in: context)
+            }
+            if offset % 2 == 0 {
+                LifeActions.add(offset % 4 == 0 ? 25 : 12, to: reading, on: day(offset), calendar: calendar, in: context)
+                LifeActions.toggleDone(walking, on: day(offset), calendar: calendar, in: context)
+            }
+        }
+        for step in morning.steps.prefix(2) {
+            LifeActions.toggleStep(step.id, of: morning, on: today, calendar: calendar, in: context)
+        }
+
+        func contract(_ name: String, cost: Double?, start: Int?, end: Int? = nil, minimum: Int? = nil, renewal: Int? = nil, provider: String = "") {
+            guard let template = LifeTemplates.contracts.first(where: { $0.name == name }) else { return }
+            let contract = LifeActions.createContract(from: template, now: day(-60), in: context)
+            contract.cost = cost
+            contract.provider = provider
+            contract.startDate = start.map(day)
+            contract.endDate = end.map(day)
+            contract.minimumTermMonths = minimum
+            contract.renewalMonths = renewal
+        }
+        contract("Fitnessstudio", cost: 29.9, start: -360, minimum: 12, renewal: 1, provider: "FitX")
+        contract("Handyvertrag", cost: 17.99, start: -420, minimum: 24, renewal: 1, provider: "Telekom")
+        contract("Streaming", cost: 13.99, start: -200, provider: "Netflix")
+        contract("Haftpflichtversicherung", cost: 64, start: -700, renewal: 12)
+        contract("Personalausweis", cost: nil, start: nil, end: 45)
+
+        func birthday(_ name: String, inDays: Int, year: Int?) {
+            let date = day(inDays)
+            _ = LifeActions.addBirthday(name: name, day: calendar.component(.day, from: date), month: calendar.component(.month, from: date), year: year, in: context)
+        }
+        birthday("Lena", inDays: 5, year: 1996)
+        birthday("Papa", inDays: 23, year: 1965)
+        birthday("Jonas", inDays: 71, year: nil)
+
+        LifeActions.saveJournal(answer: "Training lief gut, neues Gewicht beim Latzug.", text: "Abends früh ins Bett.", on: day(-1), calendar: calendar, in: context)
+        LifeActions.saveJournal(answer: "Ruhiger Tag, viel gelesen.", text: "", on: day(-2), calendar: calendar, in: context)
+        if let chore = LifeTemplates.chores.first {
+            LifeActions.addChore(chore, now: now, calendar: calendar, in: context)
+        }
+        LifeActions.save(context)
+
+        // Zwei Fortschrittsfotos (gezeichnet, keine echten Fotos).
+        for (index, offset) in [-56, -2].enumerated() {
+            guard let image = demoPhoto(index: index),
+                  let data = image.jpegData(compressionQuality: 0.8),
+                  let thumbnail = ImageResizer.jpeg(image, maxSide: 420, quality: 0.7) else { continue }
+            let photo = ProgressActions.addPhoto(imageData: data, thumbnailData: thumbnail, date: day(offset).addingTimeInterval(8 * 3_600), pose: .front, in: context)
+            photo.weight = index == 0 ? 80.4 : 82.3
+        }
+        ProgressActions.save(context)
+    }
+
+    private static func demoPhoto(index: Int) -> UIImage? {
+        let size = CGSize(width: 600, height: 800)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { renderer in
+            let colors = index == 0
+                ? [UIColor(red: 0.20, green: 0.24, blue: 0.32, alpha: 1), UIColor(red: 0.36, green: 0.40, blue: 0.50, alpha: 1)]
+                : [UIColor(red: 0.18, green: 0.30, blue: 0.34, alpha: 1), UIColor(red: 0.32, green: 0.50, blue: 0.52, alpha: 1)]
+            let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors.map(\.cgColor) as CFArray, locations: [0, 1])
+            if let gradient {
+                renderer.cgContext.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: 0, y: size.height), options: [])
+            }
+            let configuration = UIImage.SymbolConfiguration(pointSize: index == 0 ? 360 : 380, weight: index == 0 ? .regular : .semibold)
+            if let figure = UIImage(systemName: "figure.arms.open", withConfiguration: configuration)?.withTintColor(.white.withAlphaComponent(0.85), renderingMode: .alwaysOriginal) {
+                let rect = CGRect(x: (size.width - figure.size.width) / 2, y: (size.height - figure.size.height) / 2, width: figure.size.width, height: figure.size.height)
+                figure.draw(in: rect)
+            }
+        }
     }
 
     /// Zwei Wochen Check-ins und ein paar Claude-Anfragen mit Antwort.
@@ -193,7 +283,7 @@ enum DemoData {
 
     /// Startplan mit gut drei Wochen Verlauf, damit Vorschläge, Rekorde und Diagramme etwas zeigen.
     private static func seedTraining(into context: ModelContext, now: Date, calendar: Calendar) {
-        guard let template = PlanTemplate.bundledUpperFourDay() else { return }
+        guard let template = PlanTemplate.bundledOwnFourDay() else { return }
         let plan = TrainingActions.createPlan(from: template, in: context, now: now.addingTimeInterval(-30 * 86_400))
         plan.reminderMinute = 17 * 60 + 30
         let catalog = TrainingActions.catalog(in: context)
@@ -204,6 +294,8 @@ enum DemoData {
             "incline-dumbbell-curl": 12, "overhead-extension-cable": 20, "preacher-curl-machine": 30, "lateral-raise-cable": 7.5,
             "reverse-fly-machine": 30, "reverse-curl": 20, "incline-press-barbell": 60, "t-bar-row": 50, "dips-chest": 0,
             "lat-pulldown-wide": 60, "pec-deck": 45, "cable-pullover": 25,
+            "chest-press-lying": 35, "shoulder-press-machine": 27, "pushdown-bar": 54, "machine-row": 59,
+            "hammer-curl-cable": 45, "wrist-curl-barbell": 20, "reverse-curl-barbell": 20,
         ]
         let today = calendar.startOfDay(for: now)
         // Neun Einheiten in drei Wochen, jeweils 18:00.
@@ -229,6 +321,7 @@ enum DemoData {
                 TrainingActions.addMetric(.weight, value: 81.2 + Double(week) * 0.3, date: date.addingTimeInterval(7 * 3_600), in: context)
             }
         }
+        TrainingActions.addMetric(.height, value: 183, date: today.addingTimeInterval(-40 * 86_400), in: context)
         TrainingActions.addMetric(.upperArm, value: 37.5, date: today.addingTimeInterval(-3 * 86_400), in: context)
         TrainingActions.addMetric(.waist, value: 84, date: today.addingTimeInterval(-3 * 86_400), in: context)
     }

@@ -197,7 +197,29 @@ struct ExerciseDetailView: View {
             } footer: {
                 Text("Um so viel steigt das Gewicht, wenn alle Sätze das obere Ende erreichen. Passe es an die Hanteln und Gewichte in deinem Gym an.")
             }
+            Section {
+                LabeledContent("Startgewicht") {
+                    TextField("–", value: Binding(
+                        get: { TrainingActions.startWeight(for: exerciseID, in: context) },
+                        set: { TrainingActions.setStartWeight($0, for: exerciseID, in: context) }
+                    ), format: .number, prompt: Text("–"))
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 100)
+                    .accessibilityIdentifier("exercise.startWeight")
+                    Text(exercise.unilateral ? "kg je Seite" : "kg")
+                        .foregroundStyle(.secondary)
+                }
+            } footer: {
+                Text(history.isEmpty
+                    ? "Gilt für die erste Einheit. Danach schlägt Orbit das Gewicht aus deinen Sätzen vor."
+                    : "Wird nicht mehr gebraucht: Orbit kennt deine Sätze. Gilt nur, falls der Verlauf gelöscht wird.")
+            }
             if !history.isEmpty {
+                let trend = ProgressActions.trend(for: exerciseID, catalog: catalog, in: context)
+                Section("Fortschritt") {
+                    ProgressTrendRow(trend: trend, name: nil)
+                }
                 Section("Verlauf") {
                     HStack {
                         StatTile(title: "Höchstgewicht", value: bestWeight.map { "\(WeightFormat.number($0)) kg" } ?? "–")

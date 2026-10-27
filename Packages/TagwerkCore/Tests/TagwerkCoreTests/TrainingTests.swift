@@ -408,3 +408,76 @@ struct OwnPlanTests {
         #expect(prompt.includedData.contains("Größe und Gewicht"))
     }
 }
+
+@Suite("Training: Fortschrittstempo")
+struct ProgressAssessmentTests {
+    private func perfAt(_ month: Int, _ day: Int, weight: Double, reps: Int) -> ExercisePerformance {
+        ExercisePerformance(date: date(2026, month, day, 18), sets: [LoggedSet(weight: weight, reps: reps, rir: 0)])
+    }
+
+    @Test func goodPaceForSteadyGain() {
+        // Etwa +1 % pro Woche über 6 Wochen.
+        var points: [ExercisePerformance] = []
+        for week in 0..<7 {
+            let day = date(2026, 9, 14, 18).addingTimeInterval(Double(week) * 7 * 86_400)
+            points.append(ExercisePerformance(date: day, sets: [LoggedSet(weight: 60 + Double(week) * 0.6, reps: 8, rir: 0)]))
+        }
+        let trend = ProgressAssessment.exercise("lat", history: points, isCompound: true, now: date(2026, 10, 27, 10))
+        #expect(trend.pace == .good)
+        #expect(trend.percentPerWeek > 0.8 && trend.percentPerWeek < 1.2)
+        #expect(trend.rateText.hasPrefix("+1"))
+    }
+
+    @Test func stalledAndDeclining() {
+        let flat = (0..<5).map { ExercisePerformance(date: date(2026, 9, 22, 18).addingTimeInterval(Double($0) * 7 * 86_400), sets: [LoggedSet(weight: 80, reps: 8, rir: 0)]) }
+        #expect(ProgressAssessment.exercise("x", history: flat, isCompound: true, now: date(2026, 10, 27, 10)).pace == .stalled)
+        let down = (0..<5).map { ExercisePerformance(date: date(2026, 9, 22, 18).addingTimeInterval(Double($0) * 7 * 86_400), sets: [LoggedSet(weight: 80 - Double($0) * 2, reps: 8, rir: 0)]) }
+        #expect(ProgressAssessment.exercise("x", history: down, isCompound: true, now: date(2026, 10, 27, 10)).pace == .declining)
+        let fast = (0..<4).map { ExercisePerformance(date: date(2026, 10, 1, 18).addingTimeInterval(Double($0) * 7 * 86_400), sets: [LoggedSet(weight: 40 + Double($0) * 5, reps: 8, rir: 0)]) }
+        #expect(ProgressAssessment.exercise("x", history: fast, isCompound: false, now: date(2026, 10, 27, 10)).pace == .tooFast)
+    }
+
+    @Test func needsThreeSessionsOverTwoWeeks() {
+        let two = [perfAt(10, 20, weight: 50, reps: 8), perfAt(10, 22, weight: 52, reps: 8)]
+        let trend = ProgressAssessment.exercise("x", history: two, isCompound: true, now: date(2026, 10, 27, 10))
+        #expect(trend.pace == .notEnoughData)
+        #expect(ProgressAssessment.summary([trend]) == "Noch zu wenig Daten")
+    }
+
+    @Test func bodyweightPaceForLeanBulk() throws {
+        let now = date(2026, 10, 27, 10)
+        let good = (0..<6).map { (date: now.addingTimeInterval(-Double(35 - $0 * 7) * 86_400), value: 80 + Double($0) * 0.25) }
+        let trend = try #require(ProgressAssessment.bodyweight(good, now: now))
+        #expect(trend.pace == .good)
+        #expect(trend.rateText == "+0,25 kg pro Woche")
+        let fast = (0..<6).map { (date: now.addingTimeInterval(-Double(35 - $0 * 7) * 86_400), value: 80 + Double($0) * 0.6) }
+        #expect(ProgressAssessment.bodyweight(fast, now: now)?.pace == .tooFast)
+        let flat = (0..<6).map { (date: now.addingTimeInterval(-Double(35 - $0 * 7) * 86_400), value: 80.0) }
+        #expect(ProgressAssessment.bodyweight(flat, now: now)?.pace == .slow)
+        #expect(ProgressAssessment.bodyweight(Array(good.prefix(2)), now: now) == nil)
+    }
+
+    @Test func progressAndPhotoPrompts() {
+        let context = ClaudePromptBuilder.ProgressContext(
+            goal: "Muskelaufbau", experience: "1 Jahr", body: "1,83 m, 82 kg",
+            exerciseTrends: ["Latzug breit: 85 → 92 kg (+1,2 % pro Woche, gutes Tempo)"], bodyweight: "80,5 → 82 kg",
+            measurements: ["Oberarm 36 → 37 cm"], frequency: "Ø 4,5 Einheiten pro Woche"
+        )
+        let progress = ClaudePromptBuilder.progress(context, wish: "", ref: "R1")
+        #expect(progress.task == .progress)
+        #expect(progress.text.contains("KRAFTVERLAUF"))
+        #expect(progress.text.contains("orbit.text.v1"))
+        #expect(progress.includedData.contains("Kraftverlauf (1 Übung)"))
+        let photos = ClaudePromptBuilder.photos(context, photos: ["12. Okt., vorne", "27. Okt., vorne"], wish: "Sieht man was?", ref: "R2")
+        #expect(photos.text.contains("Foto 2: 27. Okt., vorne"))
+        #expect(photos.includedData.first == "2 Fotos mit Datum")
+        // Freitext-Antwort aus der Claude-App wird übernommen.
+        let answer = try? ClaudeAnswerParser.parse("**Schultern** wirken breiter.", task: .photos, foods: FoodCatalog.bundled())
+        if case let .text(title, body)? = answer {
+            #expect(title == "Fotos bewerten")
+            #expect(body.contains("Schultern"))
+        } else {
+            Issue.record("Antwort nicht erkannt")
+        }
+    }
+}

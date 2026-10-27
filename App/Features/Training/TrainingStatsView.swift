@@ -218,7 +218,38 @@ struct BodyView: View {
     var body: some View {
         let ofType = metrics.filter { $0.type == selectedType }
         let latest = Dictionary(grouping: metrics, by: \.type).compactMapValues(\.first)
+        let bmi = latest[.weight].flatMap { weight in latest[.height].flatMap { BodyIndex.bmi(weight: weight.value, heightCM: $0.value) } }
+        let weightTrend = ProgressAssessment.bodyweight(
+            metrics.filter { $0.type == .weight }.map { (date: $0.date, value: $0.value) }, now: .now
+        )
         List {
+            Section {
+                if let bmi {
+                    LabeledContent("BMI", value: BodyIndex.format(bmi))
+                } else if latest[.height] == nil {
+                    Button {
+                        selectedType = .height
+                        adding = true
+                    } label: {
+                        Label("Größe eintragen", systemImage: "figure.stand")
+                    }
+                    .accessibilityIdentifier("body.addHeight")
+                }
+                if let weightTrend {
+                    BodyweightTrendRow(trend: weightTrend)
+                }
+                NavigationLink(value: TrainingRoute.photos) {
+                    Label("Fortschrittsfotos", systemImage: "person.crop.rectangle.stack")
+                }
+                .accessibilityIdentifier("body.photos")
+                NavigationLink(value: TrainingRoute.progress) {
+                    Label("Fortschritt aller Übungen", systemImage: "chart.line.uptrend.xyaxis")
+                }
+            } footer: {
+                if bmi != nil {
+                    Text("Der BMI unterscheidet nicht zwischen Muskeln und Fett. Bei viel Muskelmasse ist er wenig aussagekräftig.")
+                }
+            }
             Section {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.xs) {
                     ForEach(BodyMetricType.allCases) { type in
@@ -305,15 +336,19 @@ private struct BodyMetricEditor: View {
                         Text(item.title).tag(item)
                     }
                 }
-                Stepper(value: $value, in: 0...400, step: selected.step) {
-                    HStack {
-                        Text("Wert")
-                        Spacer()
-                        Text(selected.label(value))
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
+                HStack {
+                    Text("Wert")
+                    Spacer()
+                    TextField("Wert", value: $value, format: .number)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
+                        .frame(maxWidth: 90)
+                        .accessibilityIdentifier("body.value")
+                    Text(selected.unit)
+                        .foregroundStyle(.secondary)
                 }
+                Stepper("Feiner einstellen", value: $value, in: 0...400, step: selected.step)
                 DatePicker("Datum", selection: $date, in: ...Date.now)
             }
             .navigationTitle("Neuer Eintrag")
@@ -335,7 +370,19 @@ private struct BodyMetricEditor: View {
             guard !didLoad else { return }
             didLoad = true
             selected = type
-            value = last ?? (type == .weight ? 80 : (type == .bodyFat ? 15 : 40))
+            value = last ?? Self.defaultValue(type)
+        }
+        .onChange(of: selected) { _, newType in
+            if !newType.range.contains(value) { value = Self.defaultValue(newType) }
+        }
+    }
+
+    static func defaultValue(_ type: BodyMetricType) -> Double {
+        switch type {
+        case .weight: 80
+        case .height: 180
+        case .bodyFat: 15
+        default: 40
         }
     }
 }

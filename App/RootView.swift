@@ -73,6 +73,9 @@ struct RootView: View {
         .sheet(item: $app.presentedExchange) { link in
             ClaudeExchangeSheet(stableID: link.id)
         }
+        .sheet(item: $app.spotlightLink) { link in
+            SpotlightSheet(link: link)
+        }
         .fullScreenCover(isPresented: onboardingBinding) {
             OnboardingView()
         }

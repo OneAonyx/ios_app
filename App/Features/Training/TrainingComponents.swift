@@ -9,6 +9,8 @@ enum TrainingRoute: Hashable {
     case library
     case stats
     case body
+    case progress
+    case photos
     case history
     case session(String)
     case exercise(String)

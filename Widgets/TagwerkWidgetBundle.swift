@@ -6,6 +6,7 @@ import WidgetKit
 @main
 struct TagwerkWidgetBundle: WidgetBundle {
     var body: some Widget {
+        DailyWidgets().body
         MedicationWidget()
         TrainingWidget()
         NutritionWidget()
@@ -15,5 +16,16 @@ struct TagwerkWidgetBundle: WidgetBundle {
         WorkoutLiveActivity()
         SystemCheckWidget()
         AlarmLiveActivity()
+    }
+}
+
+/// Heute, Aufgaben und die Knöpfe fürs Kontrollzentrum (eigenes Bündel, weil ein
+/// Bündel höchstens zehn Einträge direkt enthalten kann).
+struct DailyWidgets: WidgetBundle {
+    var body: some Widget {
+        TodayWidget()
+        TasksWidget()
+        QuickTaskControl()
+        CheckInControl()
     }
 }
