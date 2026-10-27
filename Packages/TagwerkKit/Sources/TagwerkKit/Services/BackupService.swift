@@ -79,7 +79,8 @@ public enum BackupService {
                 )
             },
             training: try TrainingBackupMapper.makeBackup(context: context),
-            nutrition: try NutritionBackupMapper.makeBackup(context: context)
+            nutrition: try NutritionBackupMapper.makeBackup(context: context),
+            insights: try InsightsBackupMapper.makeBackup(context: context)
         )
     }
 
@@ -122,9 +123,10 @@ public enum BackupService {
         public let medications: Int
         public let workouts: Int
         public let meals: Int
+        public let checkIns: Int
     }
 
-    /// Ersetzt alle Aufgaben, Listen, Medikamente, Trainings- und Ernährungsdaten durch den Inhalt der Sicherung.
+    /// Ersetzt alle Aufgaben, Listen, Medikamente, Trainings-, Ernährungs- und Einblicke-Daten durch den Inhalt der Sicherung.
     /// Ältere Sicherungen ohne Medikamente, Training oder Ernährung lassen diese Daten stehen.
     /// Vorher wird automatisch eine Sicherung des aktuellen Stands angelegt.
     @discardableResult
@@ -230,6 +232,10 @@ public enum BackupService {
         if let nutrition = document.nutrition {
             try NutritionBackupMapper.restore(nutrition, context: context)
         }
+        // Ebenso ohne Check-ins und Claude-Verlauf (Sicherungen vor Version 0.6).
+        if let insights = document.insights {
+            try InsightsBackupMapper.restore(insights, context: context)
+        }
 
         let defaults = UserDefaults.standard
         for (key, value) in document.settings where SettingsKeys.backedUp.contains(key) {
@@ -242,7 +248,7 @@ public enum BackupService {
                 if let number = Double(value) { defaults.set(number, forKey: key) }
             case SettingsKeys.waterTarget:
                 if let number = Int(value) { defaults.set(number, forKey: key) }
-            case SettingsKeys.askBeforeMealMedication:
+            case SettingsKeys.askBeforeMealMedication, SettingsKeys.showCheckIns, SettingsKeys.weeklyReviewReminder:
                 defaults.set(value == "1" || value.lowercased() == "true", forKey: key)
             default:
                 defaults.set(value, forKey: key)
@@ -255,7 +261,8 @@ public enum BackupService {
             tasks: document.tasks.count,
             medications: document.medications?.count ?? 0,
             workouts: document.training?.sessions.count ?? 0,
-            meals: document.nutrition?.meals.count ?? 0
+            meals: document.nutrition?.meals.count ?? 0,
+            checkIns: document.insights?.checkIns.count ?? 0
         )
     }
 }

@@ -31,11 +31,14 @@ public enum SettingsKeys {
     public static let showCheckIns = "tagwerk.settings.showCheckIns"
     /// Sonntags um 18 Uhr an den Wochenrückblick erinnern.
     public static let weeklyReviewReminder = "tagwerk.settings.weeklyReviewReminder"
+    /// Trainingsziel und Erfahrung für Claude-Anfragen zum Trainingsplan.
+    public static let trainingGoal = "tagwerk.settings.trainingGoal"
+    public static let trainingExperience = "tagwerk.settings.trainingExperience"
 
     /// Diese Einstellungen wandern mit in die Datensicherung.
     public static let backedUp = [
         userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget,
-        askBeforeMealMedication, showCheckIns, weeklyReviewReminder,
+        askBeforeMealMedication, showCheckIns, weeklyReviewReminder, trainingGoal, trainingExperience,
     ]
 }
 

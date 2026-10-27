@@ -261,7 +261,9 @@ public enum NutritionActions {
         let catalog = catalog(in: context)
         let mealFacts = facts(meals(from: start, to: now.addingTimeInterval(1), in: context), catalog: catalog, in: context)
         let symptomFacts = symptoms(from: start, to: now.addingTimeInterval(86_400), in: context).map(\.fact)
-        return TriggerAnalysis.analyze(meals: mealFacts, symptoms: symptomFacts, only: type)
+        // Wenig Schlaf und viel Stress aus den Check-ins zählen als Umstände mit.
+        let factors = InsightsActions.dayFactors(from: start, to: now.addingTimeInterval(86_400), calendar: .current, in: context)
+        return TriggerAnalysis.analyze(meals: mealFacts, symptoms: symptomFacts, dayFactors: factors, only: type)
     }
 
     // MARK: Wasser
