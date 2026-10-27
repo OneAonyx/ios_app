@@ -31,6 +31,12 @@ Einstellungen → Einblicke. Hast du den Kurzbefehl in Phase 0 angelegt, musst d
 | Lebensmittel | Name, Marke, Zutaten | `orbit.food.v1` | Bewertung, „Ins Lexikon übernehmen“ |
 | Rezepte | Anzahl, Portionen, Eiweiß je Portion, gut verträgliche und gemiedene Lebensmittel, Wunsch | `orbit.recipes.v1` | Vorschau mit Bewertung je Zutat, „Rezepte speichern“ |
 | Muster | Anzahl Mahlzeiten und Beschwerden, auffällige Lebensmittel und Umstände, häufigste Beschwerden, Befinden, gemiedene Lebensmittel, Frage | `orbit.text.v1` | Text |
+| Fortschritt bewerten (ab 0.7) | Ziel, Erfahrung, Größe und Gewicht, Tempo je Übung (Kraftzuwachs pro Woche), Gewichtstempo, Maße, Trainingshäufigkeit, Frage | `orbit.text.v1` | Text: zu schnell, gut, zu langsam, was ändern |
+| Fotos bewerten (ab 0.7) | Fotos mit Datum und Gewicht, dazu die Fortschritts-Kennzahlen | `orbit.text.v1` | Text, den du in Orbit einfügst |
+
+**Fotos** passen nicht in einen Kurzbefehl-Link. Orbit öffnet deshalb das Teilen-Menü mit den
+Fotos und der Anfrage: **Claude** wählen, senden, Claudes Antwort kopieren und in Orbit bei der
+Anfrage **Einfügen**. Die Fotos selbst bleiben in Orbit und landen nicht in der Datensicherung.
 
 **Nie dabei:** dein Name, Geburtsdatum, einzelne Einträge mit Datum, Notizen.
 

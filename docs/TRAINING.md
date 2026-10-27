@@ -2,6 +2,55 @@
 
 Ab Version 0.4 (Phase 3). Alles liegt im Tab **Training**.
 
+## Dein eigener Plan (ab 0.7)
+
+Ab Version 0.7 legt Orbit einmalig **„Oberkörper 4er – meine Übungen“** an und macht ihn aktiv.
+Er nutzt deine Übungen aus dem Gym, alle mit **3 × 7–10** Wiederholungen, und startet mit deinen
+bisherigen Gewichten. Der alte Startplan bleibt unter **Pläne** erhalten.
+
+| Tag | Übungen (Startgewicht) |
+|---|---|
+| A · Push | Brustpresse liegend (35 kg je Seite), Schulterpresse (27), Butterfly (93), Seitheben am Kabel (5,4 je Seite), Trizepsdrücken Stange (54), Überkopf-Trizeps am Kabel (32) |
+| B · Pull | Latzug breit (66), Rudern an der Maschine (59), Reverse Butterfly (66), Scottcurls (50), Hammercurls am Kabel (45), Handgelenk-Curls |
+| C · Arme & Schultern | Schulterpresse, Seitheben, Supersatz Scottcurls + Trizepsdrücken, Supersatz Hammercurls + Überkopf-Trizeps, Reverse Curls (20) |
+| D · Brust & Rücken | Brustpresse, Latzug, Butterfly, Rudern, Reverse Butterfly, Seitheben |
+
+Wunsch-Wochentage: Mo, Di, Mi, Fr, Sa. Das **Startgewicht** gilt nur, solange es für eine Übung
+noch keinen Satz gibt. Danach rechnet die Progression. Du änderst es unter
+**Training → Übungen → (Übung) → Startgewicht**. Bei Übungen „je Seite“ (Brustpresse liegend,
+Seitheben am Kabel) trägst du das Gewicht einer Seite ein.
+
+## Fortschritt (ab 0.7)
+
+**Training → Fortschritt** bewertet pro Übung das Tempo der letzten 8 Wochen. Grundlage ist das
+geschätzte Maximalgewicht (e1RM) jeder Einheit, als Trend pro Woche:
+
+| Bewertung | Grundübung | Isolation |
+|---|---|---|
+| Zu schnell | ab 2,5 % pro Woche | ab 3,5 % |
+| Gut | 0,5–2,5 % | 0,4–3,5 % |
+| Langsam | 0,1–0,5 % | 0,1–0,4 % |
+| Stillstand | −0,5 bis 0,1 % | |
+| Rückläufig | unter −0,5 % | |
+
+„Zu schnell“ heißt: Technik und Wiederholungsbereich prüfen, oft wurden RIR-Ziele unterschritten.
+Für eine Bewertung braucht es mindestens 3 Einheiten über 2 Wochen.
+
+**Körpergewicht:** Beim Muskelaufbau gelten 0,1–0,5 % pro Woche als gut (6 Wochen Trend). Darüber
+ist es meist zu viel Fett, darunter zu wenig Überschuss. Die **Größe** trägst du unter
+**Training → Körper** ein, Orbit zeigt dann auch den BMI.
+
+**Mit Claude bewerten** schickt die Kennzahlen (keine Fotos) über die Claude-Brücke.
+
+### Fortschrittsfotos
+
+**Training → Körper → Fotos** (oder **Fortschritt → Fortschrittsfotos**): Foto aufnehmen oder
+aus der Mediathek wählen, Ansicht (vorne, seitlich, hinten) und Gewicht dazu. **Vergleichen** legt
+zwei Fotos übereinander, mit Schieberegler. **Claude** öffnet das Teilen-Menü mit den Fotos und der
+Anfrage für die Claude-App, die Antwort fügst du in Orbit ein.
+
+Fotos bleiben privat in Orbit (nicht in der Mediathek) und sind **nicht** Teil der Datensicherung.
+
 ## Der Startplan
 
 Beim ersten Start legt Orbit den Plan **„Oberkörper 4er – Hypertrophie“** an. Er baut auf deinem
@@ -139,8 +188,8 @@ und legt sie beim Übernehmen als eigene Übungen an.
 - **Statistik**: Arbeitssätze pro Muskel und Woche gegen den Zielbereich (Hauptmuskel zählt 1,
   Nebenmuskel ½), Einheiten pro Woche, Verlauf des geschätzten Maximums (Epley) der
   Grundübungen, alle Einheiten mit Details.
-- **Körper**: Gewicht und Maße (Brust, Taille, Oberarm, Schultern, Oberschenkel, Körperfett) mit
-  Verlauf.
+- **Körper**: Größe (mit BMI), Gewicht mit Tempo-Bewertung und Maße (Brust, Taille, Oberarm,
+  Schultern, Oberschenkel, Körperfett) mit Verlauf, dazu die Fortschrittsfotos.
 
 ## Außerhalb der App
 
@@ -153,17 +202,18 @@ und legt sie beim Übernehmen als eigene Übungen an.
 | **Kontrollzentrum** | **Training starten** öffnet die nächste Einheit |
 | **Live Activity** | Pause, Übung und Knöpfe während der Einheit |
 | **Siri** | „Starte mein Training in Orbit“, „Was trainiere ich als Nächstes in Orbit“ |
+| **Gym-Ankunft** (ab 0.7) | einmal am Tag „Du bist im Gym – Pull starten?“, siehe [`LEBEN.md`](LEBEN.md) |
 | **URL** | `tagwerk://training`, `tagwerk://training/start` |
 
 ## Noch nicht dabei
 
 - **Apple Health** (Workouts, Gewicht): kommt mit dem Developer-Account, siehe
   [`PHASE0-ERGEBNIS.md`](PHASE0-ERGEBNIS.md). Bis dahin speichert Orbit alles selbst.
-- **Fortschrittsfotos** und **Muskel-Karte**: Phase 6.
-- **Plan mit Claude anpassen** über den Kurzbefehl: Phase 5. Der Import oben funktioniert schon.
+- **Muskel-Karte** (Körper-Silhouette): später.
 
 ## Daten
 
-Pläne, Einheiten, eigene Übungen und Körperwerte stehen in der täglichen Sicherung
-(Dateien → Orbit → Backups) und lassen sich mit ihr wiederherstellen. Vor dem Update auf 0.4
-kopiert Orbit die Datenbank nach `Tagwerk-vor-v3.store`.
+Pläne, Einheiten, eigene Übungen, Startgewichte und Körperwerte stehen in der täglichen
+Sicherung (Dateien → Orbit → Backups) und lassen sich mit ihr wiederherstellen. Fortschrittsfotos
+nicht: Sie bleiben nur in der App. Vor dem Update auf 0.7 kopiert Orbit die Datenbank nach
+`Tagwerk-vor-v6.store`.

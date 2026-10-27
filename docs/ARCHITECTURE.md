@@ -200,6 +200,30 @@ in der Kurzbefehle-App bleibt.
 Arztbericht mit 3 PDF-Seiten, Claude-Ablauf (Zuordnung über `ref`, Lebensmittel, Plan mit
 unbekannter Übung, Rezept mit neuer Zutat), Sicherung mit Einblicken.
 
+## Phase 6: Leben und Feinschliff
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Routinen und Gewohnheiten | `TagwerkCore/Life/Habits.swift` | Zeitplan (täglich, Wochentage, x-mal pro Woche), Schritte, Serien, Quote, Erinnerungen |
+| Verträge und Fristen | `…/Life/Contracts.swift` | Kosten pro Monat, Laufzeit, Verlängerung, nächste erreichbare Kündigungsfrist, Ablauf von Dokumenten |
+| Geburtstage, Tagebuch | `…/Life/Birthdays.swift` | nächster Termin (29.2. → 28.2.), Alter, Fragen fürs Tagebuch |
+| Vorlagen | `…/Life/LifeTemplates.swift` | Haushalt, Routinen, Verträge und Dokumente |
+| Fortschritt | `…/Training/ProgressAssessment.swift` | Trend des e1RM je Übung (lineare Regression, % pro Woche), Gewichtstempo |
+| Widget-Stand „Heute“, Fokus | `…/Life/TodaySnapshot.swift`, `…/Life/FocusFilter.swift` | Stand für zwei Widgets, Warteschlange fürs Abhaken, Fokus-Filter |
+| `TagwerkSchemaV6` | `TagwerkKit/…/Models/SchemaV6.swift` | `Habit`, `HabitLog`, `Contract`, `Birthday`, `JournalEntry`, `ProgressPhoto` (Bild als externe Datei), `ExercisePreference` mit Startgewicht; V5 → V6 leicht |
+| `LifeActions`, `ProgressActions` | `…/Models/` | Abhaken, Agenda, Erinnerungen, Top 3 für morgen, Fotos |
+| Sicherung | `…/Services/LifeBackupMapper.swift` | Leben-Daten (ohne Fotos) |
+| Widgets | `Widgets/TodayWidget.swift` | „Heute“ (klein bis groß, Sperrbildschirm), „Aufgaben“ mit `CompleteTaskIntent`, Controls „Neue Aufgabe“ und „Check-in“ |
+| iPhone-Integration | `App/Services/` | `SpotlightIndexer` (CoreSpotlight), `AppLock` (LocalAuthentication, eigenes Fenster über allem), `GymArrival` (`CLMonitor`), `TodayWidgetWriter` |
+| Fokus-Filter | `App/Intents/FocusFilterIntent.swift` | `SetFocusFilterIntent` mit Listen-Entity |
+| Tipps | `App/Features/OrbitTips.swift` | TipKit, im UI-Test ausgeblendet |
+
+**Widget-Bündel:** Ein `WidgetBundle` nimmt höchstens zehn Einträge direkt auf. Heute, Aufgaben
+und die zwei neuen Controls stehen deshalb in `DailyWidgets`.
+
+**Selbsttest:** zusätzlich Migration V5 → V6 (Startgewicht leer, Steigerung bleibt), eigener Plan
+mit Startgewichten, Leben-Ablauf, Sicherung mit Leben.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
@@ -223,6 +247,8 @@ unbekannter Übung, Rezept mit neuer Zutat), Sicherung mit Einblicken.
 | `tagwerk://checkin` | öffnet den Check-in des Tages |
 | `tagwerk://rueckblick` | öffnet den Wochenrückblick |
 | `tagwerk://claude` | öffnet die Claude-Zentrale |
+| `tagwerk://leben` | öffnet Planer → Leben |
+| `tagwerk://heute`, `tagwerk://aufgaben` | öffnet „Heute“ bzw. Planer → Aufgaben (Widgets) |
 | `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ (Anfrage oder Systemcheck) |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
 
