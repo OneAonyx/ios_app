@@ -126,6 +126,31 @@ struct ContractRow: View {
     }
 }
 
+/// Vorlagen einer Art plus „Eigene(r) …“.
+private struct ContractTemplateSection: View {
+    let kind: ContractKind
+    let onPick: (LifeTemplates.ContractTemplate) -> Void
+
+    var body: some View {
+        let templates: [LifeTemplates.ContractTemplate] = LifeTemplates.contracts.filter { $0.kind == kind }
+        Section(kind.title) {
+            ForEach(templates) { template in
+                Button {
+                    onPick(template)
+                } label: {
+                    Label(template.name, systemImage: kind.symbol)
+                }
+                .accessibilityIdentifier("contractTemplate.\(template.name)")
+            }
+            Button {
+                onPick(.blank(kind))
+            } label: {
+                Label("Eigene(r) \(kind.title)", systemImage: "plus")
+            }
+        }
+    }
+}
+
 /// Vorlage wählen (Fitnessstudio, Personalausweis …) oder leer anfangen.
 struct ContractTemplatePicker: View {
     @Environment(\.dismiss) private var dismiss
@@ -136,24 +161,8 @@ struct ContractTemplatePicker: View {
         NavigationStack {
             List {
                 ForEach(ContractKind.allCases) { kind in
-                    let templates = LifeTemplates.contracts.filter { $0.kind == kind }
-                    Section(kind.title) {
-                        ForEach(templates) { template in
-                            Button {
-                                created = LifeActions.createContract(from: template, in: context)
-                            } label: {
-                                Label(template.name, systemImage: kind.symbol)
-                            }
-                            .accessibilityIdentifier("contractTemplate.\(template.name)")
-                        }
-                        Button {
-                            created = LifeActions.createContract(
-                                from: LifeTemplates.ContractTemplate(name: "", kind: kind, billing: kind == .document ? .once : .monthly, notice: .none, reminderDaysBefore: kind == .document ? 60 : 14),
-                                in: context
-                            )
-                        } label: {
-                            Label("Eigene(r) \(kind.title)", systemImage: "plus")
-                        }
+                    ContractTemplateSection(kind: kind) { template in
+                        created = LifeActions.createContract(from: template, in: context)
                     }
                 }
             }

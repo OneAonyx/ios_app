@@ -9,6 +9,12 @@ public enum LifeTemplates {
         public var symbol: String
         public var id: String { title }
 
+        public init(title: String, everyDays: Int, symbol: String) {
+            self.title = title
+            self.everyDays = everyDays
+            self.symbol = symbol
+        }
+
         /// „alle 7 Tage nach Erledigung“
         public var recurrence: RecurrenceRule {
             RecurrenceRule(frequency: .daily, interval: everyDays, mode: .afterCompletion)
@@ -36,6 +42,17 @@ public enum LifeTemplates {
         public var unit: String
         public var steps: [String]
         public var id: String { name }
+
+        public init(name: String, kind: HabitKind, symbol: String, period: HabitPeriod, schedule: HabitSchedule, target: Double, unit: String, steps: [String]) {
+            self.name = name
+            self.kind = kind
+            self.symbol = symbol
+            self.period = period
+            self.schedule = schedule
+            self.target = target
+            self.unit = unit
+            self.steps = steps
+        }
     }
 
     public static let habits: [HabitTemplate] = [
@@ -56,6 +73,20 @@ public enum LifeTemplates {
         public var notice: NoticePeriod
         public var reminderDaysBefore: Int
         public var id: String { name }
+
+        public init(name: String, kind: ContractKind, billing: BillingCycle, notice: NoticePeriod, reminderDaysBefore: Int) {
+            self.name = name
+            self.kind = kind
+            self.billing = billing
+            self.notice = notice
+            self.reminderDaysBefore = reminderDaysBefore
+        }
+
+        /// Leere Vorlage für eigene Einträge.
+        public static func blank(_ kind: ContractKind) -> ContractTemplate {
+            let isDocument = kind == .document
+            return ContractTemplate(name: "", kind: kind, billing: isDocument ? .once : .monthly, notice: .none, reminderDaysBefore: isDocument ? 60 : 14)
+        }
     }
 
     public static let contracts: [ContractTemplate] = [
