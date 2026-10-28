@@ -8,7 +8,7 @@ Version 1.4.0 (enthält auch Phase 10 und 11). Etwa 15 Minuten. Die Datenbank ä
 |---|---|---|
 | 1 | **Gesundheit → Einblicke → Monat und Jahr** | Dieser Monat mit Kennzahlen und Vergleich zum Vormonat (grün besser, orange schlechter) |
 | 2 | Pfeil nach links | Voriger Monat |
-| 3 | Oben **Jahr** | Jahr mit Diagramm „Einheiten je Monat“ |
+| 3 | Oben **Jahr** | Jahr mit Diagramm „Einheiten je Monat“; gezählt wird ab deinem ersten Eintrag (Hinweis unten), nicht ab Januar |
 | 4 | **Arztbericht → Paket mit Tabellen (ZIP)** | Zeile „Orbit-Arztpaket-….zip teilen“ |
 | 5 | Teilen → „In Dateien sichern“, ZIP in der Dateien-App öffnen | Arztbericht.pdf, Mahlzeiten.csv, Beschwerden.csv, … |
 | 6 | Eine CSV in Numbers oder Excel öffnen | Spalten richtig getrennt, Umlaute korrekt |
