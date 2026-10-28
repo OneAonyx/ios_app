@@ -6,12 +6,38 @@ import TagwerkCore
 @MainActor
 public enum ReviewActions {
     /// Rückblick für den Zeitraum mit Vergleich zum Zeitraum davor.
+    /// Gezählt wird erst ab dem ersten Eintrag, sonst stünde im Jahresrückblick „an 8 von 301 Tagen“,
+    /// obwohl Orbit erst seit ein paar Wochen genutzt wird.
     public static func review(_ period: ReviewPeriod, start: Date, now: Date = .now, calendar: Calendar, in context: ModelContext) -> PeriodReview {
         let end = period.shifted(start, by: 1, calendar: calendar)
         let previousStart = period.shifted(start, by: -1, calendar: calendar)
-        let current = metrics(from: start, to: end, now: now, calendar: calendar, in: context)
-        let previous = metrics(from: previousStart, to: start, now: now, calendar: calendar, in: context)
-        return PeriodReview.make(period: period, start: start, current: current, previous: previous, calendar: calendar)
+        let first = firstRecordDay(calendar: calendar, in: context) ?? previousStart
+        let current = metrics(from: max(start, first), to: end, now: now, calendar: calendar, in: context)
+        let previous = metrics(from: max(previousStart, first), to: start, now: now, calendar: calendar, in: context)
+        var review = PeriodReview.make(period: period, start: start, current: current, previous: previous, calendar: calendar)
+        review.since = first > start && first < end ? first : nil
+        return review
+    }
+
+    /// Erster Tag mit eigenen Einträgen. Importe aus Health und Körperwerte zählen nicht,
+    /// weil sie weiter zurückreichen können als die Nutzung von Orbit.
+    public static func firstRecordDay(calendar: Calendar, in context: ModelContext) -> Date? {
+        func first<T: PersistentModel>(_ type: T.Type, _ key: KeyPath<T, Date>) -> Date? {
+            var descriptor = FetchDescriptor<T>(sortBy: [SortDescriptor(key)])
+            descriptor.fetchLimit = 1
+            return (try? context.fetch(descriptor))?.first?[keyPath: key]
+        }
+        let dates: [Date?] = [
+            first(TaskItem.self, \.createdAt),
+            first(DoseLog.self, \.createdAt),
+            first(WorkoutSession.self, \.startedAt),
+            first(MealEntry.self, \.date),
+            first(SymptomEntry.self, \.date),
+            first(DailyCheckIn.self, \.day),
+            first(PainEntry.self, \.date),
+            first(ActivityEntry.self, \.date),
+        ]
+        return dates.compactMap { $0 }.min().map { calendar.startOfDay(for: $0) }
     }
 
     /// Kennzahlen von `start` bis `end` (exklusiv), beim laufenden Zeitraum nur bis heute.

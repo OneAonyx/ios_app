@@ -115,6 +115,8 @@ public struct PeriodReview: Sendable {
     public var title: String
     public var lines: [PeriodReviewLine]
     public var highlights: [String]
+    /// Erster Tag mit Einträgen, wenn er im Zeitraum liegt (davor zählt nichts mit).
+    public var since: Date?
 
     public var isEmpty: Bool { lines.isEmpty }
 

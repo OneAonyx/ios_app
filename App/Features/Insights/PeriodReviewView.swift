@@ -65,9 +65,7 @@ struct PeriodReviewView: View {
                             ReviewLineRow(line: line)
                         }
                     } footer: {
-                        Text(period == .month
-                             ? "Vergleich zum Vormonat je Woche bzw. als Anteil der Tage, damit ein laufender Monat fair gegen einen ganzen steht."
-                             : "Vergleich zum Vorjahr je Woche bzw. als Anteil der Tage.")
+                        Text(footer(review, calendar: calendar))
                     }
                     if period == .year, months.contains(where: { $0.value > 0 }) {
                         Section("Einheiten je Monat") {
@@ -109,13 +107,25 @@ struct PeriodReviewView: View {
     }
 }
 
+extension PeriodReviewView {
+    private func footer(_ review: PeriodReview, calendar: Calendar) -> String {
+        var text = period == .month
+            ? "Vergleich zum Vormonat je Woche bzw. als Anteil der Tage, damit ein laufender Monat fair gegen einen ganzen steht."
+            : "Vergleich zum Vorjahr je Woche bzw. als Anteil der Tage."
+        if let since = review.since {
+            text = "Ausgewertet ab deinem ersten Eintrag am \(WeeklyReview.dayMonth(since, calendar: calendar)). " + text
+        }
+        return text
+    }
+}
+
 /// Eine Kennzahl mit Vergleich, grün wenn besser, orange wenn schlechter.
 private struct ReviewLineRow: View {
     let line: PeriodReviewLine
 
     var body: some View {
         HStack(spacing: Spacing.s) {
-            IconBadge(systemImage: line.symbol, tint: tint, size: 32)
+            IconBadge(systemImage: line.symbol, tint: areaTint, size: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(line.title)
                     .font(.subheadline)
@@ -130,6 +140,19 @@ private struct ReviewLineRow: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// Farbe des Bereichs, damit die Liste auch ohne Vergleich lesbar bleibt.
+    private var areaTint: Color {
+        switch line.id {
+        case "workouts", "sets", "weight": ModuleAccent.training
+        case "activity", "steps": .green
+        case "symptoms", "pain", "diary", "mood": ModuleAccent.health
+        case "adherence": ModuleAccent.medication
+        case "sleep": ModuleAccent.sleep
+        case "tasks": ModuleAccent.tasks
+        default: .secondary
+        }
     }
 
     private var tint: Color {

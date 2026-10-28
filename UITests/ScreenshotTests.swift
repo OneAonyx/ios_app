@@ -145,23 +145,6 @@ final class ScreenshotTests: XCTestCase {
                 tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
             }
         }
-        let report = app.buttons["health.report"]
-        if scrollTo(report, in: app), tapIfPresent(report) {
-            snap(app, "45-arztbericht")
-            // Arzt-Paket: PDF und Tabellen als ZIP.
-            let package = app.buttons["report.package"]
-            if scrollTo(package, in: app), tapIfPresent(package) {
-                XCTAssertTrue(app.buttons["report.package.share"].waitForExistence(timeout: 10), "Paket nicht erstellt")
-                snap(app, "90-arzt-paket")
-            }
-            let build = app.buttons["report.build"]
-            if scrollTo(build, in: app), tapIfPresent(build) {
-                Thread.sleep(forTimeInterval: 1.5)
-                snap(app, "46-arztbericht-pdf")
-                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
-            }
-            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
-        }
         // Monats- und Jahresrückblick.
         let period = app.buttons["health.periodReview"]
         if scrollTo(period, in: app), tapIfPresent(period) {
@@ -435,6 +418,12 @@ final class ScreenshotTests: XCTestCase {
             snap(app, "77-arztbericht")
             app.swipeUp()
             snap(app, "78-arztbericht-inhalt")
+            // Arzt-Paket: PDF und Tabellen als ZIP.
+            let package = app.buttons["report.package"]
+            if scrollTo(package, in: app), tapIfPresent(package) {
+                XCTAssertTrue(app.buttons["report.package.share"].waitForExistence(timeout: 10), "Paket nicht erstellt")
+                snap(app, "90-arzt-paket")
+            }
             let build = app.buttons["report.build"]
             if scrollTo(build, in: app), tapIfPresent(build) {
                 Thread.sleep(forTimeInterval: 2)

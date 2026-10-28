@@ -934,6 +934,13 @@ enum SelfTest {
         let review = ReviewActions.review(.month, start: start, now: now, calendar: calendar, in: context)
         let ids = Set(review.lines.map(\.id))
         try check(ids.isSuperset(of: ["activity", "symptoms", "pain", "mood"]), "Rückblick-Zeilen: \(ids.sorted())")
+        // Jahresrückblick zählt erst ab dem ersten Eintrag (heute), nicht ab Januar.
+        let yearStart = ReviewPeriod.year.interval(containing: now, calendar: calendar).start
+        let year = ReviewActions.review(.year, start: yearStart, now: now, calendar: calendar, in: context)
+        let symptoms = year.lines.first { $0.id == "symptoms" }?.value ?? "–"
+        // Kurz nach Mitternacht liegt der Eintrag noch auf gestern.
+        try check(symptoms == "an 1 von 1 Tagen" || symptoms == "an 1 von 2 Tagen", "Jahresrückblick: \(symptoms)")
+        try check(year.since == nil || year.since == calendar.startOfDay(for: moment), "Erster Eintrag: \(String(describing: year.since))")
 
         let tables = ExportActions.doctorTables(from: start, to: now.addingTimeInterval(60), calendar: calendar, in: context)
         let counts = Dictionary(uniqueKeysWithValues: tables.map { ($0.name, $0.rows.count) })
