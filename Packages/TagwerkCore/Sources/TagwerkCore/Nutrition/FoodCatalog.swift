@@ -362,7 +362,8 @@ public struct FoodCatalog: Sendable {
     }
 
     /// Suche in Namen und Aliasen. Treffer am Wortanfang zuerst, dann der Rest.
-    public func search(_ query: String, limit: Int? = nil) -> [FoodInfo] {
+    /// `substrings: false` lässt Treffer mitten im Wort weg (für die globale Suche, z. B. „arzt“ nicht in „Schwarztee“).
+    public func search(_ query: String, limit: Int? = nil, substrings: Bool = true) -> [FoodInfo] {
         let needle = NameMatcher.normalize(query)
         guard !needle.isEmpty else { return limit.map { Array(sorted.prefix($0)) } ?? sorted }
         var ranked: [(FoodInfo, Int)] = []
@@ -377,7 +378,7 @@ public struct FoodCatalog: Sendable {
                     best = min(best, 2 + penalty)
                 } else if normalized.split(separator: " ").contains(where: { $0.hasPrefix(needle) }) {
                     best = min(best, 4 + penalty)
-                } else if normalized.contains(needle) {
+                } else if substrings, normalized.contains(needle) {
                     best = min(best, 6 + penalty)
                 }
             }

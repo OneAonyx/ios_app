@@ -29,7 +29,7 @@ struct SearchView: View {
                 || medication.notes.localizedStandardContains(trimmed)
         }
         let foodCatalog = NutritionActions.catalog(in: context)
-        let foodMatches = trimmed.count < 2 ? [] : foodCatalog.search(trimmed, limit: 5)
+        let foodMatches = trimmed.count < 2 ? [] : foodCatalog.search(trimmed, limit: 5, substrings: trimmed.count >= 5)
         let recipeMatches = trimmed.count < 2 ? [] : Array(NutritionActions.recipes(in: context).search(trimmed, catalog: foodCatalog).prefix(4))
         let exerciseMatches = trimmed.count < 2 ? [] : Array(TrainingActions.catalog(in: context).search(trimmed).prefix(4))
         let featureMatches = trimmed.isEmpty ? [] : FeatureIndex.search(trimmed, limit: 5)

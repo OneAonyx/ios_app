@@ -47,6 +47,10 @@ struct NutritionContentTests {
         #expect(foods.bestMatch(for: "Quark")?.id == "magerquark")
         #expect(foods.search("").count == foods.foods.count)
         #expect(foods.search("xyzxyz").isEmpty)
+        // Mitten im Wort nur auf Wunsch: „arzt“ steckt in „Schwarztee“.
+        #expect(foods.search("arzt").contains { $0.id == "schwarztee" })
+        #expect(!foods.search("arzt", substrings: false).contains { $0.id == "schwarztee" })
+        #expect(foods.search("schwarz", substrings: false).first?.id == "schwarztee")
     }
 
     @Test func groupedKeepsCategoryOrder() {
