@@ -534,29 +534,46 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 - Einmaliger Import aus Apple Erinnerungen (Listen, Fälligkeit, Priorität, Notizen, Wiederholung; kein Abgleich in beide Richtungen). Muskel-Karte im Training (vorne/hinten, gefärbt nach Wochensätzen gegen den Zielbereich).
 - Tempo-Durchgang: Tempo-Test im CI mit zwei Jahren Beispieldaten (~30.000 Einträge); Ansichten laden nur noch den angezeigten Zeitraum. VoiceOver-Beschriftungen für Diagramme, Karte und reine Symbol-Knöpfe.
 
-**Phase 10 – Klarheit** (Version 1.1, umgesetzt)
+**Phase 10 – Klarheit** (umgesetzt, Version 1.4.0)
 - Startseite aufgeräumt: oben der Überblick, darunter eine Leiste „Schnell erfassen“ (Aufgabe, Mahlzeit, Wasser, Beschwerde, Schmerz, Bewegung) statt Knöpfen in vielen Karten. Fokus und fällige Aufgaben in einer Karte. Karten erscheinen nur, wenn es etwas zu tun gibt (Medikamente offen, Termine heute, Check-in fehlt …).
 - „Startseite anpassen“: Karten ein- und ausblenden und sortieren.
 - Verzeichnis aller Funktionen: Die Suche findet auch Funktionen („Arztbericht“, „Muskel-Karte“, „iCloud“), ohne Suchbegriff zeigt sie alles nach Bereichen mit dem Ort in der App.
 - Einstellungen in klare Unterseiten gegliedert.
 
-**Phase 11 – Training-Coach** (Version 1.2, umgesetzt)
+**Phase 11 – Training-Coach** (umgesetzt, Version 1.4.0)
 - Plan-Check: je Übung ein Vorschlag aus Kraftverlauf (8 Wochen) und Sätzen je Muskel (2 Wochen): Satz dazu oder weg, Wiederholungsbereich wechseln, Übung tauschen. Mit einem Tipp übernommen, „Später“ blendet ihn 4 Wochen aus.
 - Wochenziel je Muskel: Hinweis vor der nächsten Einheit (Training-Tab und „Heute“), wo noch Sätze fehlen.
 - (Fortschrittsfotos mit Claude einschätzen gibt es bereits seit Phase 6 unter Training → Fortschritt → Fotos.)
 
-**Phase 12 – Rückblicke und Teilen** (Version 1.3, umgesetzt)
+**Phase 12 – Rückblicke und Teilen** (umgesetzt, Version 1.4.0)
 - Monats- und Jahresrückblick (Gesundheit → Einblicke → Monat und Jahr): Training, Sätze, Bewegung, Schritte, Beschwerden, Schmerzen, Einnahmetreue, Schlaf, Stimmung, Gewicht, Tagebuch, Aufgaben, jeweils mit Vergleich zum Zeitraum davor (je Woche bzw. als Anteil der Tage, damit ein laufender Monat fair verglichen wird).
 - Arzt-Paket: Bericht als PDF plus Tabellen (CSV für Excel und Numbers) für Mahlzeiten, Beschwerden, Schmerzen, Einnahmen, Bewegung und Tageswerte, als ZIP in einem Schritt teilen.
 - Alle Daten als Tabellen exportieren (Einstellungen → Daten und Sicherung → Export).
 
-**Phase 13 – Tag planen** (Version 1.4, umgesetzt)
+**Phase 13 – Tag planen** (umgesetzt, Version 1.4.0)
 - Morgen-Briefing als leise Mitteilung (Standard 7:15, abschaltbar): Termine, Fokus, Aufgaben, Einnahmen, Training, Geburtstage und Fokus der Woche.
 - Tag abschließen (abends auf „Heute“): Offenes auf morgen ziehen oder abhaken, dann Top 3 für morgen.
 - Woche planen (sonntags auf „Heute“): Fokus der Woche, Trainingstage, Wochenansicht, Essensplan, Einkauf.
 
-**Phase 14 – Nach deinen Wünschen**
-- Was im Alltag mit Orbit auffällt: was fehlt, was stört, was schneller gehen soll.
+> **Rückblick nach Version 1.4 (28.10.2026):** Phasen 0–13 sind in drei Tagen entstanden und automatisch
+> geprüft (267 Logik-Tests, 13 UI-Testläufe mit Screenshots, Tempo-Test mit zwei Jahren Daten), aber die
+> Phasen 10–13 sind noch nie auf dem iPhone im Alltag gelaufen. Größtes Risiko im kostenlosen Betrieb:
+> Die Signatur läuft alle 7 Tage ab, Orbit warnt nur innerhalb der App. Läuft sie ab, startet Orbit nicht,
+> und Medikamenten-Erinnerungen sind nicht mehr verlässlich. Deshalb kommt als Nächstes keine große neue
+> Funktion, sondern eine Phase, die den Alltag absichert und Rückmeldungen einsammelt.
+
+**Phase 14 – Alltagstauglich** (geplant, Version 1.5)
+- **Signatur-Erinnerung:** Mitteilung einen Tag und drei Stunden vor Ablauf („Orbit läuft morgen um 14:20 ab – mit iloader auffrischen“), Zeile im Morgen-Briefing, Anleitung zum Auffrischen in der App.
+- **Rückmeldung in der App:** „Notiz zu Orbit“ (Über Orbit, Suche, Schnell erfassen): ein Satz, was fehlt oder stört; Orbit merkt sich Version und Bildschirm. Alle Notizen mit einem Tipp als Text kopieren und an Claude geben. So wird aus „Nach deinen Wünschen“ eine Liste statt Erinnerung.
+- **„Neu in Orbit“:** einmal nach einem Update kurz zeigen, was dazugekommen ist und wo es liegt (Schnell erfassen, Startseite anpassen, Suche mit allen Funktionen, Morgen-Briefing, Tag abschließen).
+- **„Heute“ abends kürzer:** Check-in als eine Zeile mit fünf Gesichtern, Rest aufklappbar; Check-in, Tagebuch-Lücken und „Tag abschließen“ als ein Abend-Block.
+- **Schneller prüfen (unsichtbar):** Zugriffsfehler zwischen App und Paketen schon im Linux-Lauf finden (statt erst nach 30 Minuten Mac-Lauf); die größten Dateien (Selbsttest, Arztbericht, Claude-Brücke) aufteilen.
+
+**Danach: zwei Wochen nutzen, Notizen sammeln.** Phase 15 entsteht aus deinen Notizen. Ideen, falls dir nichts fehlt:
+- **Histamin-Karenz-Programm:** die übliche Ernährungsumstellung in drei Abschnitten (Karenz 10–14 Tage, Testphase mit einzelnen Lebensmitteln, Dauerernährung) mit Tagesplan, Testprotokoll und Auswertung, welches Lebensmittel vertragen wurde.
+- **Arzttermin vorbereiten:** Termin im Kalender mit „Arzt“ erkannt → am Vortag Erinnerung mit fertigem Arzt-Paket und deinen Fragen.
+- **Fokus-Zeit:** Aufgabe mit Timer (25 Minuten) als Live Activity in der Dynamic Island.
+- **Siri und Kontrollzentrum für die neuen Abläufe:** „Tag abschließen“, „Wie war mein Monat?“, Fokus der Woche als Sperrbildschirm-Widget.
 
 ---
 
