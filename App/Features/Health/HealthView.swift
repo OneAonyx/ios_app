@@ -44,6 +44,7 @@ struct HealthView: View {
                 case .doctorReport: DoctorReportView()
                 case .healthBridge: HealthBridgeView()
                 case .symptomHistory: SymptomHistoryView()
+                case .periodReview: PeriodReviewView()
                 }
             }
             .sheet(item: $extraIntake) { medication in
@@ -463,6 +464,11 @@ private struct InsightsHealthCard: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("health.review")
+                NavigationLink(value: HealthRoute.periodReview) {
+                    InsightRow(title: "Monat und Jahr", detail: "Trends mit Vergleich zum Zeitraum davor", systemImage: "chart.xyaxis.line", tint: .indigo)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("health.periodReview")
                 NavigationLink {
                     ClaudeHubView()
                 } label: {
@@ -579,5 +585,5 @@ private struct SymptomsHealthCard: View {
 
 /// Ansichten im Tab „Gesundheit“, die sich direkt öffnen lassen (z. B. aus der Funktions-Suche).
 enum HealthRoute: Hashable {
-    case painHistory, activityHistory, doctorReport, healthBridge, symptomHistory
+    case painHistory, activityHistory, doctorReport, healthBridge, symptomHistory, periodReview
 }

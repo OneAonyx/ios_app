@@ -279,7 +279,7 @@ public enum BackupService {
             switch key {
             case SettingsKeys.showCalendarEvents:
                 defaults.set(value == "1" || value.lowercased() == "true", forKey: key)
-            case SettingsKeys.defaultReminderOffset, SettingsKeys.diaryReminderMinute:
+            case SettingsKeys.defaultReminderOffset, SettingsKeys.diaryReminderMinute, SettingsKeys.briefingMinute:
                 defaults.set(Int(value) ?? -1, forKey: key)
             case SettingsKeys.proteinPerKg:
                 if let number = Double(value) { defaults.set(number, forKey: key) }

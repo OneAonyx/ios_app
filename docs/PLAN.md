@@ -545,15 +545,18 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 - Wochenziel je Muskel: Hinweis vor der nächsten Einheit (Training-Tab und „Heute“), wo noch Sätze fehlen.
 - (Fortschrittsfotos mit Claude einschätzen gibt es bereits seit Phase 6 unter Training → Fortschritt → Fotos.)
 
-**Phase 12 – Rückblicke und Teilen** (Version 1.3)
-- Monatsrückblick und Jahresblick mit Trends (Gewicht, Kraft, Beschwerden, Einnahmetreue, Bewegung, Schlaf).
-- Arzt-Paket: Bericht als PDF plus Tabellen (CSV) für Mahlzeiten, Beschwerden, Schmerzen, Einnahmen und Bewegung, in einem Schritt teilen.
-- Alle Daten als Tabellen exportieren.
+**Phase 12 – Rückblicke und Teilen** (Version 1.3, umgesetzt)
+- Monats- und Jahresrückblick (Gesundheit → Einblicke → Monat und Jahr): Training, Sätze, Bewegung, Schritte, Beschwerden, Schmerzen, Einnahmetreue, Schlaf, Stimmung, Gewicht, Tagebuch, Aufgaben, jeweils mit Vergleich zum Zeitraum davor (je Woche bzw. als Anteil der Tage, damit ein laufender Monat fair verglichen wird).
+- Arzt-Paket: Bericht als PDF plus Tabellen (CSV für Excel und Numbers) für Mahlzeiten, Beschwerden, Schmerzen, Einnahmen, Bewegung und Tageswerte, als ZIP in einem Schritt teilen.
+- Alle Daten als Tabellen exportieren (Einstellungen → Daten und Sicherung → Export).
 
-**Phase 13 – Tag planen** (Version 1.4)
-- Morgen-Briefing als Mitteilung: Termine, Fokus, Medikamente, Training des Tages.
-- Abendabschluss: offene Aufgaben verschieben, Top 3 für morgen werden Fokus.
-- Sonntags-Planung in einem Ablauf: Trainingstage, Essensplan, Fokus der Woche.
+**Phase 13 – Tag planen** (Version 1.4, umgesetzt)
+- Morgen-Briefing als leise Mitteilung (Standard 7:15, abschaltbar): Termine, Fokus, Aufgaben, Einnahmen, Training, Geburtstage und Fokus der Woche.
+- Tag abschließen (abends auf „Heute“): Offenes auf morgen ziehen oder abhaken, dann Top 3 für morgen.
+- Woche planen (sonntags auf „Heute“): Fokus der Woche, Trainingstage, Wochenansicht, Essensplan, Einkauf.
+
+**Phase 14 – Nach deinen Wünschen**
+- Was im Alltag mit Orbit auffällt: was fehlt, was stört, was schneller gehen soll.
 
 ---
 

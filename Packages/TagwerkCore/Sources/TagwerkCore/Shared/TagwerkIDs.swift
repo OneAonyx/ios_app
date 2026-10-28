@@ -31,6 +31,10 @@ public enum SettingsKeys {
     public static let showCheckIns = "tagwerk.settings.showCheckIns"
     /// Karten auf „Heute“: Reihenfolge und ausgeblendete (`TodayLayout.encoded`).
     public static let todayLayout = "tagwerk.settings.todayLayout"
+    /// Morgen-Briefing: Minute des Tages, −1 = aus (Standard 7:15).
+    public static let briefingMinute = "tagwerk.settings.briefingMinute"
+    /// Fokus der Woche (`WeekFocus.store`).
+    public static let weekFocus = "tagwerk.settings.weekFocus"
     /// Sonntags um 18 Uhr an den Wochenrückblick erinnern.
     public static let weeklyReviewReminder = "tagwerk.settings.weeklyReviewReminder"
     /// Trainingsziel und Erfahrung für Claude-Anfragen zum Trainingsplan.
@@ -56,7 +60,7 @@ public enum SettingsKeys {
     public static let backedUp = [
         userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget,
         askBeforeMealMedication, showCheckIns, weeklyReviewReminder, trainingGoal, trainingExperience,
-        diaryReminderMinute, doctorQuestions, todayLayout,
+        diaryReminderMinute, doctorQuestions, todayLayout, briefingMinute,
     ]
 }
 
@@ -150,11 +154,13 @@ public enum NotificationIDs {
         public static let birthday = "bday."
         /// Abendlicher Tagebuch-Check.
         public static let diary = "diary."
+        /// Morgen-Briefing.
+        public static let briefing = "brief."
         /// Pause vorbei (wird nicht beim Neuplanen ersetzt).
         public static let restTimer = "rest."
 
         /// Werden bei jedem Neuplanen komplett ersetzt (Schlummern bleibt bestehen).
-        public static let managed = [task, medication, medicationFollowUp, refill, training, review, habit, life, birthday, diary]
+        public static let managed = [task, medication, medicationFollowUp, refill, training, review, habit, life, birthday, diary, briefing]
     }
 
     public static let systemCheckRequest = "tagwerk.systemcheck.notification"

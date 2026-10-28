@@ -4,7 +4,10 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Version 1.2 – Phase 11 Training-Coach.** Der Plan-Check schlägt je Übung vor, was sich
+**Stand: Version 1.4 – Phase 12 und 13.** Rückblicke für Monat und Jahr mit Vergleich, ein
+Arzt-Paket (PDF plus Tabellen als ZIP) und der Export aller Daten als Tabellen. Dazu „Tag planen“:
+ein leises Morgen-Briefing, „Tag abschließen“ am Abend und „Woche planen“ am Sonntag mit Fokus der
+Woche. Aus Version 1.2 – Phase 11 Training-Coach: Der Plan-Check schlägt je Übung vor, was sich
 lohnt (Satz dazu oder weg, anderer Wiederholungsbereich, Übung tauschen), übernehmbar mit einem Tipp.
 Vor der nächsten Einheit zeigt Orbit, wo diese Woche noch Sätze fehlen. Aus Version 1.1 – Phase 10 Klarheit: Die Startseite ist aufgeräumt: eine Leiste „Schnell
 erfassen“, Fokus und fällige Aufgaben in einer Karte, Karten nur wenn es etwas zu tun gibt, und alles
@@ -38,6 +41,7 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
 | Apple Health über Kurzbefehle einrichten | [`docs/HEALTH-KURZBEFEHL.md`](docs/HEALTH-KURZBEFEHL.md) |
+| Version 1.4 auf dem iPhone testen | [`docs/PHASE12-13-CHECKLIST.md`](docs/PHASE12-13-CHECKLIST.md) |
 | Version 1.2 auf dem iPhone testen | [`docs/PHASE11-CHECKLIST.md`](docs/PHASE11-CHECKLIST.md) |
 | Version 1.1 auf dem iPhone testen | [`docs/PHASE10-CHECKLIST.md`](docs/PHASE10-CHECKLIST.md) |
 | Version 1.0 auf dem iPhone testen | [`docs/PHASE9-CHECKLIST.md`](docs/PHASE9-CHECKLIST.md) |

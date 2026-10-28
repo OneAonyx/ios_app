@@ -21,6 +21,8 @@ public struct ReminderCandidate: Sendable, Equatable, Hashable {
         case birthday
         /// Abendlicher Tagebuch-Check (Arzt-Tagebuch).
         case diary
+        /// Morgen-Briefing: der Tag in zwei Zeilen.
+        case briefing
 
         /// Höherer Wert = wichtiger.
         public var rank: Int {
@@ -33,6 +35,7 @@ public struct ReminderCandidate: Sendable, Equatable, Hashable {
             case .birthday: 3
             case .review: 2
             case .diary: 2
+            case .briefing: 2
             case .habit: 1
             case .task: 0
             }

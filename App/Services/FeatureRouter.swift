@@ -4,7 +4,7 @@ import TagwerkKit
 
 /// Wohin eine Funktion aus dem Verzeichnis führt.
 enum FeatureDestination {
-    case quickAdd, checkIn, review, journal, claude
+    case quickAdd, checkIn, review, journal, claude, dayClosing, weekPlanning
     case planner(String), life
     case startWorkout, training(TrainingRoute)
     case logMeal, water, addSymptom, nutrition(NutritionRoute)
@@ -20,6 +20,9 @@ enum FeatureDestination {
         case "review": .review
         case "journal": .journal
         case "todayLayout": .settings(.todayLayout)
+        case "dayClosing": .dayClosing
+        case "weekPlanning": .weekPlanning
+        case "briefing": .settings(.reminders)
         case "claude": .claude
 
         // Planer
@@ -62,9 +65,10 @@ enum FeatureDestination {
         case "doctorReport": .health(.doctorReport)
         case "healthBridge": .health(.healthBridge)
         case "symptoms": .health(.symptomHistory)
+        case "periodReview": .health(.periodReview)
 
         // Einstellungen
-        case "backup": .settings(.data)
+        case "backup", "exportTables": .settings(.data)
         case "notifications": .settings(.reminders)
         case "calendars": .settings(.calendar)
         case "privacy": .settings(.privacy)
@@ -103,6 +107,8 @@ extension AppModel {
         case .review: openReview(weekStart: nil)
         case .journal: isShowingJournal = true
         case .claude: openClaudeHub()
+        case .dayClosing: isShowingDayClosing = true
+        case .weekPlanning: isShowingWeekPlanning = true
         case .planner(let mode):
             plannerModeRequest = mode
             selectedTab = .planner

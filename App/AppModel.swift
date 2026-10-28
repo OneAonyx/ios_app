@@ -54,6 +54,9 @@ final class AppModel {
     var nutritionPath = NavigationPath()
     /// Abend-Tagebuch im eigenen Blatt (aus der Funktions-Suche).
     var isShowingJournal = false
+    /// Tag planen: Tag abschließen (abends) und Woche planen (sonntags).
+    var isShowingDayClosing = false
+    var isShowingWeekPlanning = false
     /// Trainingseinheit im Vollbild.
     var isShowingWorkout = false
     /// Neue Mahlzeit (vorbelegt) bzw. Mahlzeit im Editor.

@@ -49,7 +49,11 @@ public enum FeatureIndex {
         Feature("quickAdd", "Neue Aufgabe", area: .today, path: "Heute → +", symbol: "plus.circle", keywords: ["aufgabe", "erfassen", "schnellerfassung", "notiz", "termin", "todo"], isAction: true),
         Feature("checkIn", "Check-in", area: .today, path: "Heute → Check-in", symbol: "heart.text.square", keywords: ["befinden", "stimmung", "schlaf", "energie", "stress", "laune"], isAction: true),
         Feature("review", "Wochenrückblick", area: .today, path: "Heute (sonntags)", symbol: "calendar.badge.checkmark", keywords: ["woche", "rückblick", "zusammenfassung", "statistik"]),
+        Feature("periodReview", "Monats- und Jahresrückblick", area: .health, path: "Gesundheit → Einblicke → Monat und Jahr", symbol: "chart.xyaxis.line", keywords: ["monat", "jahr", "trend", "rückblick", "vergleich", "vormonat"]),
         Feature("journal", "Abend-Tagebuch", area: .today, path: "Heute (abends)", symbol: "book.closed", keywords: ["journal", "top 3", "morgen", "notiz", "dankbar"], isAction: true),
+        Feature("dayClosing", "Tag abschließen", area: .today, path: "Heute (abends)", symbol: "moon.stars", keywords: ["abend", "abschluss", "verschieben", "morgen", "offen", "top 3"], isAction: true),
+        Feature("weekPlanning", "Woche planen", area: .today, path: "Heute (sonntags)", symbol: "calendar.badge.plus", keywords: ["woche", "planen", "fokus", "trainingstage", "sonntag"], isAction: true),
+        Feature("briefing", "Morgen-Briefing", area: .today, path: "Einstellungen → Erinnerungen", symbol: "sun.horizon", keywords: ["morgen", "briefing", "zusammenfassung", "mitteilung", "tagesüberblick"]),
         Feature("todayLayout", "Startseite anpassen", area: .today, path: "Heute → ganz unten oder Einstellungen → Startseite", symbol: "rectangle.3.group", keywords: ["karten", "reihenfolge", "ausblenden", "dashboard", "übersicht"]),
         Feature("claude", "Claude-Zentrale", area: .health, path: "Gesundheit → Einblicke", symbol: "sparkles", keywords: ["ki", "ai", "fragen", "plan anpassen", "rezeptideen"]),
 
@@ -94,11 +98,12 @@ public enum FeatureIndex {
         Feature("painHistory", "Schmerzen (Verlauf)", area: .health, path: "Gesundheit → Arzt-Tagebuch → Schmerzen", symbol: "chart.dots.scatter", keywords: ["schmerzen", "verlauf", "körperkarte"]),
         Feature("addActivity", "Bewegung eintragen", area: .health, path: "Heute → Schnell erfassen", symbol: "figure.walk", keywords: ["sport", "spazieren", "radfahren", "laufen", "schwimmen"], isAction: true),
         Feature("activityHistory", "Bewegung (Verlauf)", area: .health, path: "Gesundheit → Arzt-Tagebuch → Bewegung", symbol: "figure.run", keywords: ["bewegung", "minuten", "who", "schritte"]),
-        Feature("doctorReport", "Arztbericht (PDF)", area: .health, path: "Gesundheit → Arzt-Tagebuch → Arztbericht", symbol: "doc.richtext", keywords: ["arzt", "bericht", "pdf", "praxis", "ernährungsberatung", "tagebuch"]),
+        Feature("doctorReport", "Arztbericht (PDF)", area: .health, path: "Gesundheit → Arzt-Tagebuch → Arztbericht", symbol: "doc.richtext", keywords: ["arzt", "bericht", "pdf", "praxis", "ernährungsberatung", "tagebuch", "paket", "zip"]),
         Feature("healthBridge", "Apple Health", area: .health, path: "Gesundheit → Apple Health", symbol: "heart.text.square", keywords: ["health", "schritte", "schlaf", "puls", "kurzbefehl"]),
 
         // Einstellungen
-        Feature("backup", "Datensicherung und iCloud Drive", area: .settings, path: "Einstellungen → Daten und Sicherung", symbol: "externaldrive.badge.icloud", keywords: ["sicherung", "backup", "icloud", "wiederherstellen", "export", "umzug"]),
+        Feature("backup", "Datensicherung und iCloud Drive", area: .settings, path: "Einstellungen → Daten und Sicherung", symbol: "externaldrive.badge.icloud", keywords: ["sicherung", "backup", "icloud", "wiederherstellen", "umzug"]),
+        Feature("exportTables", "Alle Daten als Tabellen", area: .settings, path: "Einstellungen → Daten und Sicherung → Export", symbol: "tablecells", keywords: ["export", "csv", "excel", "numbers", "tabelle"]),
         Feature("notifications", "Erinnerungen und Mitteilungen", area: .settings, path: "Einstellungen → Erinnerungen", symbol: "bell", keywords: ["mitteilung", "benachrichtigung", "erinnerung", "uhrzeit"]),
         Feature("calendars", "Kalender auswählen", area: .settings, path: "Einstellungen → Kalender", symbol: "calendar.badge.plus", keywords: ["kalender", "termine", "ausblenden"]),
         Feature("privacy", "App-Sperre und Gym-Ankunft", area: .settings, path: "Einstellungen → Datenschutz und Gym", symbol: "lock", keywords: ["face id", "sperre", "privat", "gym", "standort", "ort"]),

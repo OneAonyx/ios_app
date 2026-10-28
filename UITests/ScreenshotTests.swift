@@ -148,12 +148,28 @@ final class ScreenshotTests: XCTestCase {
         let report = app.buttons["health.report"]
         if scrollTo(report, in: app), tapIfPresent(report) {
             snap(app, "45-arztbericht")
+            // Arzt-Paket: PDF und Tabellen als ZIP.
+            let package = app.buttons["report.package"]
+            if scrollTo(package, in: app), tapIfPresent(package) {
+                XCTAssertTrue(app.buttons["report.package.share"].waitForExistence(timeout: 10), "Paket nicht erstellt")
+                snap(app, "90-arzt-paket")
+            }
             let build = app.buttons["report.build"]
             if scrollTo(build, in: app), tapIfPresent(build) {
                 Thread.sleep(forTimeInterval: 1.5)
                 snap(app, "46-arztbericht-pdf")
                 tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
             }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        // Monats- und Jahresrückblick.
+        let period = app.buttons["health.periodReview"]
+        if scrollTo(period, in: app), tapIfPresent(period) {
+            _ = app.staticTexts["Gut gelaufen"].waitForExistence(timeout: 5)
+            snap(app, "88-rueckblick-monat")
+            tapIfPresent(app.buttons["Jahr"].firstMatch)
+            Thread.sleep(forTimeInterval: 1)
+            snap(app, "89-rueckblick-jahr")
             tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
         }
         let claude = app.buttons["health.claude"]
@@ -312,7 +328,30 @@ final class ScreenshotTests: XCTestCase {
         if tapIfPresent(app.buttons["today.settings"]) {
             XCTAssertTrue(app.buttons["settings.page.data"].waitForExistence(timeout: 3))
             snap(app, "86-einstellungen")
+            if tapIfPresent(app.buttons["settings.page.reminders"]) {
+                _ = app.switches["settings.briefing"].waitForExistence(timeout: 3)
+                snap(app, "93-einstellungen-erinnerungen")
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
             tapIfPresent(app.buttons["settings.done"])
+        }
+
+        // Tag planen: aus der Suche in ein eigenes Blatt.
+        for (query, feature, title, shot, done) in [
+            ("abschließen", "feature.dayClosing", "Tag abschließen", "91-tag-abschliessen", "closing.done"),
+            ("woche planen", "feature.weekPlanning", "Woche planen", "92-woche-planen", "week.done"),
+        ] {
+            guard tapIfPresent(app.buttons["today.search"]) else { continue }
+            let field = app.searchFields.firstMatch
+            if field.waitForExistence(timeout: 3) {
+                field.tap()
+                field.typeText(query)
+            }
+            if tapIfPresent(app.buttons[feature], timeout: 3) {
+                XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 5), "\(title) nicht geöffnet")
+                snap(app, shot)
+                dismissSheet(in: app, doneIdentifier: done)
+            }
         }
     }
 

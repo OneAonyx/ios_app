@@ -25,7 +25,7 @@ enum SettingsPage: String, Hashable, CaseIterable, Identifiable {
     var detail: String {
         switch self {
         case .todayLayout: "Karten auf „Heute“ wählen und sortieren"
-        case .reminders: "Aufgaben, Rückblick, Tagebuch"
+        case .reminders: "Morgen-Briefing, Aufgaben, Rückblick, Tagebuch"
         case .calendar: "Termine anzeigen, Kalender wählen"
         case .privacy: "App-Sperre, Gym-Ankunft"
         case .data: "Sicherung, iCloud Drive, Import"
@@ -129,7 +129,10 @@ struct SettingsPageView: View {
     @AppStorage(SettingsKeys.weeklyReviewReminder) private var weeklyReviewReminder = true
     @AppStorage(SettingsKeys.todayLayout) private var layoutText = ""
     @AppStorage(SettingsKeys.showCheckIns) private var showCheckIns = true
+    @Environment(\.modelContext) private var context
     @State private var notificationsAllowed: Bool?
+    @State private var exportURL: URL?
+    @State private var exportFailed = false
 
     var body: some View {
         content
@@ -161,6 +164,27 @@ struct SettingsPageView: View {
                 } header: {
                     Text("Übernehmen")
                 }
+                Section {
+                    Button {
+                        exportAll()
+                    } label: {
+                        Label("Alle Daten als Tabellen (ZIP)", systemImage: "tablecells")
+                    }
+                    .accessibilityIdentifier("settings.exportTables")
+                    if let exportURL {
+                        ShareLink(item: exportURL) {
+                            Label("\(exportURL.lastPathComponent) teilen", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                    if exportFailed {
+                        Label("Der Export ließ sich nicht erstellen.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                } header: {
+                    Text("Export")
+                } footer: {
+                    Text("Tabellen für Excel oder Numbers: Mahlzeiten, Beschwerden, Schmerzen, Einnahmen, Bewegung, Tageswerte, Aufgaben, Training, Körperwerte, Routinen. Zum Wiederherstellen dient die Datensicherung oben, nicht dieser Export.")
+                }
             }
         case .shortcuts:
             List {
@@ -181,6 +205,20 @@ struct SettingsPageView: View {
             }
         case .about:
             aboutPage
+        }
+    }
+
+    private func exportAll() {
+        let calendar = AppModel.calendar
+        let tables = ExportActions.allTables(calendar: calendar, in: context)
+        do {
+            exportURL = try ExportActions.zip(
+                files: tables.map { (name: $0.fileName, data: $0.data) },
+                folderName: "Orbit-Tabellen-\(CSVFormat.fileDate(.now, calendar: calendar))"
+            )
+            exportFailed = false
+        } catch {
+            exportFailed = true
         }
     }
 
@@ -211,6 +249,14 @@ struct SettingsPageView: View {
                 Text("Aufgaben")
             } footer: {
                 Text("Gilt für neue Aufgaben mit Uhrzeit. Ganztägige Aufgaben erinnern um 9 Uhr.")
+            }
+
+            Section {
+                BriefingSettings()
+            } header: {
+                Text("Tag planen")
+            } footer: {
+                Text("Eine Mitteilung am Morgen: Termine, Fokus, fällige Aufgaben, Einnahmen, Training und Geburtstage des Tages. Leise, ohne Ton.")
             }
 
             Section {
@@ -473,7 +519,7 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 12
+    private let currentPhase = 14
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
@@ -488,8 +534,9 @@ struct RoadmapView: View {
         Phase(id: 9, title: "Sicherheit & Feinschliff", detail: "Abgeschlossen: Sicherung zusätzlich in iCloud Drive, einmaliger Import aus Apple Erinnerungen, Muskel-Karte im Training, schnelle Ansichten auch nach Jahren an Daten, bessere VoiceOver-Beschriftungen.", systemImage: "lock.shield"),
         Phase(id: 10, title: "Klarheit", detail: "Abgeschlossen: Aufgeräumte Startseite mit „Schnell erfassen“, anpassbare Karten, alle Funktionen über die Suche auffindbar, gegliederte Einstellungen.", systemImage: "rectangle.3.group"),
         Phase(id: 11, title: "Training-Coach", detail: "Abgeschlossen: Plan-Check mit Vorschlägen je Übung zum Übernehmen, Hinweis vor der nächsten Einheit, wo diese Woche noch Sätze fehlen.", systemImage: "figure.strengthtraining.traditional"),
-        Phase(id: 12, title: "Rückblicke und Teilen", detail: "Monats- und Jahresblick mit Trends, Arzt-Paket aus PDF und Tabellen, Export aller Daten.", systemImage: "chart.xyaxis.line"),
-        Phase(id: 13, title: "Tag planen", detail: "Morgen-Briefing, Abendabschluss mit Top 3 als Fokus, Sonntags-Planung in einem Ablauf.", systemImage: "sun.horizon"),
+        Phase(id: 12, title: "Rückblicke und Teilen", detail: "Abgeschlossen: Monats- und Jahresrückblick mit Vergleich, Arzt-Paket aus PDF und Tabellen (ZIP), Export aller Daten als Tabellen.", systemImage: "chart.xyaxis.line"),
+        Phase(id: 13, title: "Tag planen", detail: "Abgeschlossen: Morgen-Briefing als Mitteilung, Tag abschließen mit Top 3 für morgen, Woche planen mit Fokus der Woche und Trainingstagen.", systemImage: "sun.horizon"),
+        Phase(id: 14, title: "Nach deinen Wünschen", detail: "Was dir im Alltag mit Orbit auffällt: Was fehlt, was stört, was schneller gehen soll.", systemImage: "bubble.left.and.text.bubble.right"),
     ]
 
     var body: some View {

@@ -218,6 +218,8 @@ private struct TodayHeader: View {
     let now: Date
     let userName: String
 
+    @AppStorage(SettingsKeys.weekFocus) private var weekFocus = ""
+
     var body: some View {
         let calendar = AppModel.calendar
         let weekday = GermanCalendar.longWeekdays[calendar.component(.weekday, from: now) - 1]
@@ -233,6 +235,13 @@ private struct TodayHeader: View {
                 .font(.system(.largeTitle, design: .rounded, weight: .bold))
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
+            if let focus = WeekFocus.current(weekFocus, now: now, calendar: calendar) {
+                Label(focus, systemImage: "scope")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
+                    .accessibilityLabel("Fokus der Woche: \(focus)")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, Spacing.xs)

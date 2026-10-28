@@ -17,6 +17,9 @@ struct DoctorReportView: View {
     @State private var loaded = false
     @State private var file: ReportFile?
     @State private var failed = false
+    /// Arzt-Paket: PDF plus Tabellen als ZIP.
+    @State private var packageURL: URL?
+    @State private var packageFailed = false
 
     struct ReportFile: Identifiable, Hashable {
         let url: URL
@@ -113,8 +116,24 @@ struct DoctorReportView: View {
                     Label("Das PDF ließ sich nicht erstellen.", systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                 }
+                Button {
+                    buildPackage(report, calendar: calendar)
+                } label: {
+                    Label("Paket mit Tabellen (ZIP)", systemImage: "archivebox")
+                }
+                .accessibilityIdentifier("report.package")
+                if let packageURL {
+                    ShareLink(item: packageURL) {
+                        Label("\(packageURL.lastPathComponent) teilen", systemImage: "square.and.arrow.up")
+                    }
+                    .accessibilityIdentifier("report.package.share")
+                }
+                if packageFailed {
+                    Label("Das Paket ließ sich nicht erstellen.", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                }
             } footer: {
-                Text("Selbst erfasste Daten, keine Diagnose. Das PDF entsteht auf deinem iPhone und wird nur geteilt, wenn du es selbst weitergibst.")
+                Text("Selbst erfasste Daten, keine Diagnose. Das Paket enthält das PDF und Tabellen für Excel oder Numbers (Mahlzeiten, Beschwerden, Schmerzen, Einnahmen, Bewegung, Tageswerte). Alles entsteht auf deinem iPhone und wird nur geteilt, wenn du es selbst weitergibst.")
             }
         }
         .navigationTitle("Arztbericht")
@@ -150,6 +169,35 @@ struct DoctorReportView: View {
         return InsightsActions.doctorReport(
             from: from, to: now, name: name.trimmingCharacters(in: .whitespaces), questions: questions, now: now, calendar: calendar, in: context
         )
+    }
+
+    /// PDF und Tabellen für denselben Zeitraum in einem ZIP.
+    private func buildPackage(_ report: DoctorReport, calendar: Calendar) {
+        packageURL = nil
+        guard let pdf = DoctorReportPDF.render(report, sections: sections, calendar: calendar),
+              let pdfData = try? Data(contentsOf: pdf)
+        else {
+            packageFailed = true
+            return
+        }
+        let tables = ExportActions.doctorTables(from: report.from, to: report.to, calendar: calendar, in: context)
+        let readme = """
+        Orbit – Arzt-Paket vom \(CSVFormat.date(.now, calendar: calendar))
+        Zeitraum: \(CSVFormat.date(report.from, calendar: calendar)) bis \(CSVFormat.date(report.to, calendar: calendar))
+
+        Arztbericht.pdf: Zusammenfassung mit Tag-für-Tag-Tabelle.
+        Die CSV-Dateien öffnen sich in Excel oder Numbers (Trennzeichen Semikolon).
+        Selbst erfasste Daten, keine Diagnose.
+        """
+        let files = [(name: "Arztbericht.pdf", data: pdfData)]
+            + tables.map { (name: $0.fileName, data: $0.data) }
+            + [(name: "LIESMICH.txt", data: Data(readme.utf8))]
+        do {
+            packageURL = try ExportActions.zip(files: files, folderName: "Orbit-Arztpaket-\(CSVFormat.fileDate(.now, calendar: calendar))")
+            packageFailed = false
+        } catch {
+            packageFailed = true
+        }
     }
 
     private func build(_ report: DoctorReport, calendar: Calendar) {

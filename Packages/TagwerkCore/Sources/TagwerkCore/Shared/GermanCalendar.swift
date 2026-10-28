@@ -21,6 +21,7 @@ public enum GermanCalendar {
     /// Monatsabkürzungen wie im Deutschen üblich, Index = Monat − 1.
     /// Eigene Tabelle statt `DateFormatter`, damit iOS und Linux gleich formatieren.
     public static let shortMonths = ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."]
+    public static let longMonths = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
 
     /// Wochentage in deutscher Reihenfolge (Mo zuerst), als `Calendar`-Wochentag (1 = So … 7 = Sa).
     public static let weekdayOrder = [2, 3, 4, 5, 6, 7, 1]

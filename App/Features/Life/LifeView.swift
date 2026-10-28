@@ -310,6 +310,7 @@ struct LifeTodayCard: View {
 struct JournalTodayCard: View {
     let now: Date
 
+    @Environment(AppModel.self) private var app
     @Query(sort: \JournalEntry.day, order: .reverse) private var journal: [JournalEntry]
     @State private var writing = false
 
@@ -322,14 +323,25 @@ struct JournalTodayCard: View {
                     SectionHeader("Tagebuch", systemImage: "book.closed", tint: .brown)
                     Text(JournalPrompts.prompt(for: now, calendar: calendar))
                         .font(.headline)
-                    Button {
-                        writing = true
-                    } label: {
-                        Label("Schreiben und Top 3 für morgen", systemImage: "square.and.pencil")
-                            .frame(maxWidth: .infinity, minHeight: 34)
+                    HStack(spacing: Spacing.xs) {
+                        Button {
+                            app.isShowingDayClosing = true
+                        } label: {
+                            Label("Tag abschließen", systemImage: "moon.stars")
+                                .frame(maxWidth: .infinity, minHeight: 34)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.brown)
+                        .accessibilityIdentifier("today.closeDay")
+                        Button {
+                            writing = true
+                        } label: {
+                            Label("Schreiben", systemImage: "square.and.pencil")
+                                .frame(maxWidth: .infinity, minHeight: 34)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.brown)
                     }
-                    .buttonStyle(.bordered)
-                    .tint(.brown)
                 }
             }
             .sheet(isPresented: $writing) {

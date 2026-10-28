@@ -73,6 +73,12 @@ struct RootView: View {
         .sheet(isPresented: $app.isShowingJournal) {
             JournalEditorView()
         }
+        .sheet(isPresented: $app.isShowingDayClosing) {
+            DayClosingView()
+        }
+        .sheet(isPresented: $app.isShowingWeekPlanning) {
+            WeekPlanningView()
+        }
         .sheet(item: $app.presentedReview) { link in
             WeeklyReviewSheet(weekStart: link.weekStart)
         }

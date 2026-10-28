@@ -241,7 +241,7 @@ public struct WeeklyReview: Sendable, Hashable {
         return "KW \(week) · \(Self.dayMonth(weekStart, calendar: calendar)) – \(Self.dayMonth(end, calendar: calendar))"
     }
 
-    static func dayMonth(_ date: Date, calendar: Calendar) -> String {
+    public static func dayMonth(_ date: Date, calendar: Calendar) -> String {
         let months = ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."]
         let parts = calendar.dateComponents([.day, .month], from: date)
         return "\(parts.day ?? 1). \(months[((parts.month ?? 1) - 1) % 12])"

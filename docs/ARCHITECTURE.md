@@ -303,6 +303,22 @@ kurz danach; zwei Blätter gleichzeitig zu wechseln verträgt SwiftUI nicht.
 | Daten | `TagwerkKit/…/Models/CoachActions.swift` | Plan-Übungen und Trends sammeln, Schnitt der letzten Wochen mit Training, Übernehmen ändert `PlanExercise`, „Später“ merkt sich die ID 28 Tage |
 | Oberfläche | `App/Features/Training/CoachViews.swift` | Karte „Plan-Check“ (rechnet in `.task`, nicht bei jedem Zeichnen), Seite mit allen Vorschlägen, Hinweis in „Als Nächstes“ und auf „Heute“ |
 
+## Phase 12: Rückblicke und Teilen (Version 1.3)
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Rückblick | `TagwerkCore/Insights/PeriodReview.swift`, `…/Models/ReviewActions.swift`, `App/Features/Insights/PeriodReviewView.swift` | `ReviewPeriod` (Monat/Jahr), `PeriodMetrics` aus allen Bereichen, Vergleich je Woche bzw. als Anteil der Tage, Richtung besser/schlechter, Höhepunkte |
+| Tabellen | `TagwerkCore/Shared/CSVTable.swift`, `…/Services/ExportActions.swift` | CSV mit Semikolon, Komma-Dezimal, UTF-8-BOM; Tabellen fürs Arzt-Paket und den vollen Export |
+| ZIP | `ExportActions.zip` | Ordner schreiben, mit `NSFileCoordinator` (`.forUploading`) als ZIP packen, ohne Fremdbibliothek |
+
+## Phase 13: Tag planen (Version 1.4)
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Briefing | `TagwerkCore/Planning/DayPlanning.swift`, `…/Models/PlanningActions.swift` | `BriefingFacts` (Termine über EventKit, Fokus, Aufgaben, Einnahmen, Training, Geburtstage), Text und `ReminderCandidate` der Art `.briefing` (Präfix `brief.`, leise) |
+| Fokus der Woche | `WeekFocus` | Gespeichert als „2026-W44|Text“, gilt nur in dieser ISO-Woche |
+| Oberfläche | `App/Features/Today/PlanningViews.swift` | „Tag abschließen“, „Woche planen“, Einstellung fürs Briefing; Einstiege auf „Heute“ (abends, sonntags) und über die Suche |
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`

@@ -238,26 +238,44 @@ struct ReviewTodayCard: View {
         let calendar = AppModel.calendar
         if let weekStart = Self.weekToShow(now: now, calendar: calendar) {
             let review = InsightsActions.weeklyReview(weekStart: weekStart, now: now, calendar: calendar, in: context)
-            if !review.isEmpty {
+            let planningDay = calendar.component(.weekday, from: now) == 1
+            if !review.isEmpty || planningDay {
                 Card {
                     VStack(alignment: .leading, spacing: Spacing.s) {
                         SectionHeader("Wochenrückblick", systemImage: "calendar.badge.checkmark", tint: .purple)
-                        Text(review.title)
-                            .font(.headline)
-                        ForEach(review.highlights.prefix(3), id: \.self) { highlight in
-                            Label(highlight, systemImage: "checkmark.seal.fill")
-                                .font(.subheadline)
-                                .labelStyle(TintedIconLabelStyle(tint: .green))
+                        if !review.isEmpty {
+                            Text(review.title)
+                                .font(.headline)
+                            ForEach(review.highlights.prefix(3), id: \.self) { highlight in
+                                Label(highlight, systemImage: "checkmark.seal.fill")
+                                    .font(.subheadline)
+                                    .labelStyle(TintedIconLabelStyle(tint: .green))
+                            }
                         }
-                        Button {
-                            app.openReview(weekStart: weekStart)
-                        } label: {
-                            Label("Ansehen", systemImage: "arrow.right")
-                                .frame(maxWidth: .infinity, minHeight: 34)
+                        HStack(spacing: Spacing.xs) {
+                            if !review.isEmpty {
+                                Button {
+                                    app.openReview(weekStart: weekStart)
+                                } label: {
+                                    Label("Ansehen", systemImage: "arrow.right")
+                                        .frame(maxWidth: .infinity, minHeight: 34)
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(.purple)
+                                .accessibilityIdentifier("today.review")
+                            }
+                            if planningDay {
+                                Button {
+                                    app.isShowingWeekPlanning = true
+                                } label: {
+                                    Label("Woche planen", systemImage: "calendar.badge.plus")
+                                        .frame(maxWidth: .infinity, minHeight: 34)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.purple)
+                                .accessibilityIdentifier("today.planWeek")
+                            }
                         }
-                        .buttonStyle(.bordered)
-                        .tint(.purple)
-                        .accessibilityIdentifier("today.review")
                     }
                 }
             }

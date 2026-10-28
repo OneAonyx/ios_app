@@ -53,6 +53,8 @@ enum SelfTest {
             run("Jede Funktion im Verzeichnis führt irgendwohin", featureDirectoryRoutes),
             run("Startseite: Anordnung speichern und laden", todayLayoutStorage),
             run("Training-Coach: Vorschlag, übernehmen, später", coachFlow),
+            run("Rückblick und Export: Monat, Tabellen, ZIP", reviewAndExportFlow),
+            run("Tag planen: Briefing, Tag abschließen", planningFlow),
         ]
     }
 
@@ -913,6 +915,61 @@ enum SelfTest {
         let afterDismiss = CoachActions.suggestions(now: now, calendar: calendar, limit: 30, in: context)
         try check(!afterDismiss.contains { $0.id == other.id }, "„Später“ wirkt nicht")
         return "\(suggestions.count) Vorschläge, „\(add.title)“ übernommen"
+    }
+
+    /// Ein paar Einträge in diesem Monat: Rückblick zählt sie, Tabellen enthalten sie, ZIP entsteht.
+    private static func reviewAndExportFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let now = Date.now
+        let noon = calendar.startOfDay(for: now).addingTimeInterval(12 * 3_600)
+        let moment = min(noon, now.addingTimeInterval(-60))
+        NutritionActions.addMeal(type: .lunch, date: moment, items: [(foodID: "reis", grams: 70)], catalog: NutritionActions.catalog(in: context), in: context)
+        NutritionActions.addSymptom(.headache, severity: 2, date: moment, in: context)
+        DiaryActions.addPain(PainFact(date: moment, regions: [.kneeLeft], intensity: 5, triggers: [.training]), in: context)
+        DiaryActions.addActivity(ActivityFact(date: moment, kind: .cycling, minutes: 45, intensity: .moderate, note: "Arbeitsweg; zurück"), in: context)
+        InsightsActions.set(.mood, 4, on: now, calendar: calendar, in: context)
+        try context.save()
+
+        let start = ReviewPeriod.month.interval(containing: now, calendar: calendar).start
+        let review = ReviewActions.review(.month, start: start, now: now, calendar: calendar, in: context)
+        let ids = Set(review.lines.map(\.id))
+        try check(ids.isSuperset(of: ["activity", "symptoms", "pain", "mood"]), "Rückblick-Zeilen: \(ids.sorted())")
+
+        let tables = ExportActions.doctorTables(from: start, to: now.addingTimeInterval(60), calendar: calendar, in: context)
+        let counts = Dictionary(uniqueKeysWithValues: tables.map { ($0.name, $0.rows.count) })
+        try check(counts["Mahlzeiten"] == 1 && counts["Beschwerden"] == 1 && counts["Schmerzen"] == 1 && counts["Bewegung"] == 1, "Zeilen: \(counts)")
+        let activity = String(decoding: tables.first { $0.name == "Bewegung" }?.data ?? Data(), as: UTF8.self)
+        try check(activity.contains("\"Arbeitsweg; zurück\""), "Semikolon in der Notiz nicht geschützt")
+        try check(ExportActions.allTables(calendar: calendar, in: context).count == 10, "Nicht alle Tabellen")
+
+        let zip = try ExportActions.zip(files: tables.map { (name: $0.fileName, data: $0.data) }, folderName: "Orbit-Test")
+        let data = try Data(contentsOf: zip)
+        try check(data.count > 100 && data.prefix(2) == Data([0x50, 0x4B]), "Kein ZIP (\(data.count) Bytes)")
+        return "\(review.lines.count) Rückblick-Zeilen, \(tables.count) Tabellen, ZIP \(data.count / 1_024 + 1) KB"
+    }
+
+    /// Morgen-Briefing aus Aufgaben und Einnahmen von morgen, offene Aufgaben wandern auf morgen.
+    private static func planningFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let now = Date.now
+        let today = calendar.startOfDay(for: now)
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) else { throw Failure(description: "Kein Morgen") }
+        let medication = Medication(name: "Briefing", schedule: .daily([DoseTime(hour: 8)]), startDate: today.addingTimeInterval(-86_400), createdAt: today.addingTimeInterval(-86_400))
+        context.insert(medication)
+        context.insert(TaskItem(title: "Heute offen", dueDate: today, hasDueTime: false))
+        context.insert(TaskItem(title: "Morgen fällig", dueDate: tomorrow, hasDueTime: false))
+        try context.save()
+
+        let facts = PlanningActions.briefingFacts(for: tomorrow, calendar: calendar, in: context)
+        try check(facts.doses == 1 && facts.dueTasks >= 1, "Briefing: \(facts.doses) Einnahmen, \(facts.dueTasks) Aufgaben")
+        let body = MorningBriefing.body(facts, calendar: calendar)
+        try check(body.contains("Einnahme ab 08:00"), "Briefing-Text: \(body)")
+
+        let open = PlanningActions.openToday(now: now, calendar: calendar, in: context)
+        try check(open.map(\.title) == ["Heute offen"], "Offen heute: \(open.map(\.title))")
+        try check(PlanningActions.moveAllToTomorrow(now: now, calendar: calendar, in: context) == 1, "Nicht verschoben")
+        try check(PlanningActions.openToday(now: now, calendar: calendar, in: context).isEmpty, "Noch offen nach dem Verschieben")
+        return body
     }
 
     /// Kein Eintrag im Verzeichnis ohne Ziel (sonst täte das Antippen nichts).
