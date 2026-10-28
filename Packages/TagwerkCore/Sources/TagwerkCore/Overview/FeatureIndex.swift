@@ -46,7 +46,7 @@ public struct Feature: Sendable, Hashable, Identifiable {
 public enum FeatureIndex {
     public static let all: [Feature] = [
         // Heute
-        Feature("quickAdd", "Neue Aufgabe", area: .today, path: "Heute → +", symbol: "plus.circle", keywords: ["aufgabe", "erfassen", "schnellerfassung", "notiz", "termin", "todo"], isAction: true),
+        Feature("quickAdd", "Neue Aufgabe", area: .today, path: "Heute → Plus oben links", symbol: "plus.circle", keywords: ["aufgabe", "erfassen", "schnellerfassung", "notiz", "termin", "todo"], isAction: true),
         Feature("checkIn", "Check-in", area: .today, path: "Heute → Check-in", symbol: "heart.text.square", keywords: ["befinden", "stimmung", "schlaf", "energie", "stress", "laune"], isAction: true),
         Feature("review", "Wochenrückblick", area: .today, path: "Heute (sonntags)", symbol: "calendar.badge.checkmark", keywords: ["woche", "rückblick", "zusammenfassung", "statistik"]),
         Feature("periodReview", "Monats- und Jahresrückblick", area: .health, path: "Gesundheit → Einblicke → Monat und Jahr", symbol: "chart.xyaxis.line", keywords: ["monat", "jahr", "trend", "rückblick", "vergleich", "vormonat"]),
@@ -79,7 +79,7 @@ public enum FeatureIndex {
         Feature("workoutHistory", "Alle Einheiten", area: .training, path: "Training → Letzte Einheiten → Alle", symbol: "clock.arrow.circlepath", keywords: ["verlauf", "historie", "vergangene"]),
 
         // Ernährung
-        Feature("logMeal", "Mahlzeit eintragen", area: .nutrition, path: "Ernährung → +", symbol: "fork.knife", keywords: ["essen", "mahlzeit", "frühstück", "mittagessen", "abendessen", "snack"], isAction: true),
+        Feature("logMeal", "Mahlzeit eintragen", area: .nutrition, path: "Ernährung → Plus oben rechts", symbol: "fork.knife", keywords: ["essen", "mahlzeit", "frühstück", "mittagessen", "abendessen", "snack"], isAction: true),
         Feature("water", "Wasser trinken (+250 ml)", area: .nutrition, path: "Heute → Schnell erfassen", symbol: "drop", keywords: ["wasser", "trinken", "glas"], isAction: true),
         Feature("lexicon", "Lebensmittel-Lexikon", area: .nutrition, path: "Ernährung → Lexikon", symbol: "text.book.closed", keywords: ["histamin", "lebensmittel", "verträglich", "liste", "bewertung"]),
         Feature("ingredientCheck", "Barcode und Zutaten prüfen", area: .nutrition, path: "Ernährung → Zutaten prüfen", symbol: "barcode.viewfinder", keywords: ["scan", "scanner", "barcode", "zutatenliste", "e-nummer", "kamera"]),
@@ -93,7 +93,7 @@ public enum FeatureIndex {
 
         // Gesundheit
         Feature("medications", "Medikamente", area: .health, path: "Gesundheit", symbol: "pills", keywords: ["tabletten", "einnahme", "vorrat", "wecker", "dosis"]),
-        Feature("addMedication", "Medikament hinzufügen", area: .health, path: "Gesundheit → +", symbol: "plus.circle", keywords: ["neues medikament", "tablette"], isAction: true),
+        Feature("addMedication", "Medikament hinzufügen", area: .health, path: "Gesundheit → Plus oben rechts", symbol: "plus.circle", keywords: ["neues medikament", "tablette"], isAction: true),
         Feature("addPain", "Schmerz eintragen", area: .health, path: "Heute → Schnell erfassen", symbol: "figure.stand", keywords: ["schmerz", "rücken", "knie", "körperkarte", "kopf"], isAction: true),
         Feature("painHistory", "Schmerzen (Verlauf)", area: .health, path: "Gesundheit → Arzt-Tagebuch → Schmerzen", symbol: "chart.dots.scatter", keywords: ["schmerzen", "verlauf", "körperkarte"]),
         Feature("addActivity", "Bewegung eintragen", area: .health, path: "Heute → Schnell erfassen", symbol: "figure.walk", keywords: ["sport", "spazieren", "radfahren", "laufen", "schwimmen"], isAction: true),

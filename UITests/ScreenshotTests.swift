@@ -299,7 +299,8 @@ final class ScreenshotTests: XCTestCase {
 
         let customize = app.buttons["today.customize"]
         if scrollTo(customize, in: app, attempts: 8), tapIfPresent(customize) {
-            XCTAssertTrue(app.switches["layout.nutrition"].waitForExistence(timeout: 3))
+            // Listen bauen nur sichtbare Zeilen; „Schnell erfassen“ steht immer oben.
+            XCTAssertTrue(app.switches["layout.quickCapture"].waitForExistence(timeout: 3))
             snap(app, "82-startseite-anpassen")
             dismissSheet(in: app, doneIdentifier: "layout.done")
         }
