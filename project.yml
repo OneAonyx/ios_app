@@ -14,7 +14,7 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "1.1.0"
+    MARKETING_VERSION: "1.2.0"
     CURRENT_PROJECT_VERSION: "1"
     # Phase 0: Swift-5-Modus für App und Widget (Nebenläufigkeit als Warnung).
     # TagwerkCore läuft bereits im Swift-6-Modus. Umstellung in Phase 1.

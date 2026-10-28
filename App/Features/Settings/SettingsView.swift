@@ -473,7 +473,7 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 10
+    private let currentPhase = 12
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
@@ -486,8 +486,8 @@ struct RoadmapView: View {
         Phase(id: 7, title: "Arzt-Tagebuch", detail: "Abgeschlossen: Schmerzen mit Körperkarte, Bewegung und Sport, beschwerdefreie Tage, Tagebuch-Check, Arztbericht mit Tag-für-Tag-Tabelle.", systemImage: "stethoscope"),
         Phase(id: 8, title: "Apple Health über Kurzbefehle", detail: "Abgeschlossen: Schritte, Strecke, Schlaf, Gewicht und Puls aus Health über einen Kurzbefehl, Wasser und Gewicht zurück nach Health.", systemImage: "heart.text.square"),
         Phase(id: 9, title: "Sicherheit & Feinschliff", detail: "Abgeschlossen: Sicherung zusätzlich in iCloud Drive, einmaliger Import aus Apple Erinnerungen, Muskel-Karte im Training, schnelle Ansichten auch nach Jahren an Daten, bessere VoiceOver-Beschriftungen.", systemImage: "lock.shield"),
-        Phase(id: 10, title: "Klarheit", detail: "Aufgeräumte Startseite mit „Schnell erfassen“, anpassbare Karten, alle Funktionen über die Suche auffindbar, gegliederte Einstellungen.", systemImage: "rectangle.3.group"),
-        Phase(id: 11, title: "Training-Coach", detail: "Vorschläge je Übung zum Übernehmen, Wochenziel je Muskel vor der nächsten Einheit, Fortschrittsfotos mit Claude einschätzen.", systemImage: "figure.strengthtraining.traditional"),
+        Phase(id: 10, title: "Klarheit", detail: "Abgeschlossen: Aufgeräumte Startseite mit „Schnell erfassen“, anpassbare Karten, alle Funktionen über die Suche auffindbar, gegliederte Einstellungen.", systemImage: "rectangle.3.group"),
+        Phase(id: 11, title: "Training-Coach", detail: "Abgeschlossen: Plan-Check mit Vorschlägen je Übung zum Übernehmen, Hinweis vor der nächsten Einheit, wo diese Woche noch Sätze fehlen.", systemImage: "figure.strengthtraining.traditional"),
         Phase(id: 12, title: "Rückblicke und Teilen", detail: "Monats- und Jahresblick mit Trends, Arzt-Paket aus PDF und Tabellen, Export aller Daten.", systemImage: "chart.xyaxis.line"),
         Phase(id: 13, title: "Tag planen", detail: "Morgen-Briefing, Abendabschluss mit Top 3 als Fokus, Sonntags-Planung in einem Ablauf.", systemImage: "sun.horizon"),
     ]

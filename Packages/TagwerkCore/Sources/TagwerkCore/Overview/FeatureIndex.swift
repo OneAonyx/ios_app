@@ -66,6 +66,7 @@ public enum FeatureIndex {
         // Training
         Feature("startWorkout", "Training starten", area: .training, path: "Training", symbol: "play.circle", keywords: ["einheit", "gym", "workout", "fitness"], isAction: true),
         Feature("trainingPlan", "Trainingsplan", area: .training, path: "Training → Plan", symbol: "list.number", keywords: ["plan", "split", "tage", "sätze", "wiederholungen", "deload"]),
+        Feature("coach", "Plan-Check", area: .training, path: "Training → Plan-Check", symbol: "wand.and.stars", keywords: ["coach", "vorschläge", "plan anpassen", "stillstand", "sätze", "wiederholungsbereich", "tauschen"]),
         Feature("trainingStats", "Statistik und Muskel-Karte", area: .training, path: "Training → Statistik", symbol: "chart.bar", keywords: ["volumen", "sätze", "muskel", "karte", "kraftverlauf", "maximum"]),
         Feature("exerciseLibrary", "Übungen", area: .training, path: "Training → Übungen", symbol: "books.vertical", keywords: ["übung", "bibliothek", "technik", "alternativen"]),
         Feature("trainingProgress", "Fortschritt je Übung", area: .training, path: "Training → Fortschritt", symbol: "chart.line.uptrend.xyaxis", keywords: ["fortschritt", "zu schnell", "zu langsam", "stagnation", "bewertung"]),

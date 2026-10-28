@@ -295,6 +295,14 @@ dass die Oberfläche hängt.
 Ein Sprung aus einem Blatt (Suche, Einstellungen) schließt das Blatt zuerst und öffnet das Ziel
 kurz danach; zwei Blätter gleichzeitig zu wechseln verträgt SwiftUI nicht.
 
+## Phase 11: Training-Coach (Version 1.2)
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Regeln | `TagwerkCore/Training/PlanCoach.swift` | Vorschläge aus `ExerciseTrend` (Stillstand/Rückgang → Wiederholungsbereich, ab 5 Wochen Tausch) und Wochensätzen je Muskel (unter Ziel +1 Satz, deutlich darüber −1); `weeklyGaps` und `gapText` für die nächste Einheit |
+| Daten | `TagwerkKit/…/Models/CoachActions.swift` | Plan-Übungen und Trends sammeln, Schnitt der letzten Wochen mit Training, Übernehmen ändert `PlanExercise`, „Später“ merkt sich die ID 28 Tage |
+| Oberfläche | `App/Features/Training/CoachViews.swift` | Karte „Plan-Check“ (rechnet in `.task`, nicht bei jedem Zeichnen), Seite mit allen Vorschlägen, Hinweis in „Als Nächstes“ und auf „Heute“ |
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`

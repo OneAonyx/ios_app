@@ -251,6 +251,14 @@ final class ScreenshotTests: XCTestCase {
         tapTab("Heute", in: app)
         snap(app, "25-heute-nach-training")
 
+        // Plan-Check (Vorschläge erst nach ein paar Einheiten, die Seite gibt es immer).
+        tapTab("Training", in: app)
+        let coach = app.buttons["training.coachLink"]
+        if scrollTo(coach, in: app), tapIfPresent(coach) {
+            snap(app, "87-plan-check")
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+
         // Muskel-Karte: erst nach einer Einheit sichtbar.
         tapTab("Training", in: app)
         let stats = app.buttons["training.stats"]

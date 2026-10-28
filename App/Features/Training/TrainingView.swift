@@ -37,6 +37,7 @@ struct TrainingView: View {
                             NextWorkoutCard(plan: plan)
                         }
                         CycleCard(plan: plan)
+                        CoachCard(refreshKey: sessions.filter { !$0.isActive }.count)
                     } else {
                         Card {
                             VStack(alignment: .leading, spacing: Spacing.s) {
@@ -94,6 +95,8 @@ struct TrainingView: View {
             ExerciseDetailView(exerciseID: id)
         case .day(let id):
             if let day = activePlan?.days?.first(where: { $0.stableID == id }) { DayEditorView(day: day) }
+        case .coach:
+            CoachView()
         }
     }
 }
@@ -202,6 +205,12 @@ private struct NextWorkoutCard: View {
                                 }
                             }
                         }
+                    }
+                    if let gaps = CoachActions.weeklyGapText(calendar: AppModel.calendar, in: context) {
+                        Label(gaps, systemImage: "target")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("training.gaps")
                     }
                     if let module = plan.module {
                         Toggle(isOn: Binding(get: { includeModule }, set: { moduleOverride = $0 })) {
@@ -377,6 +386,8 @@ private struct LinksCard: View {
                 link("Übungen", "books.vertical", .library, id: "training.library")
                 Divider().padding(.leading, 52)
                 link("Fortschritt", "chart.line.uptrend.xyaxis", .progress, id: "training.progress")
+                Divider().padding(.leading, 52)
+                link("Plan-Check", "wand.and.stars", .coach, id: "training.coachLink")
                 Divider().padding(.leading, 52)
                 link("Statistik", "chart.xyaxis.line", .stats, id: "training.stats")
                 Divider().padding(.leading, 52)

@@ -52,6 +52,7 @@ enum SelfTest {
             run("Sicherung in zweitem Ordner", externalBackupFlow),
             run("Jede Funktion im Verzeichnis führt irgendwohin", featureDirectoryRoutes),
             run("Startseite: Anordnung speichern und laden", todayLayoutStorage),
+            run("Training-Coach: Vorschlag, übernehmen, später", coachFlow),
         ]
     }
 
@@ -868,6 +869,50 @@ enum SelfTest {
         let decoded = MedicationWidgetSnapshot.decode(try snapshot.encoded())
         try check(decoded?.doses == snapshot.doses, "Kodierung: Einnahmen weichen ab")
         return "4 Einnahmen (heute und morgen)"
+    }
+
+    /// Zwei Wochen nur Bankdrücken: Der Coach schlägt mehr Sätze vor, Übernehmen ändert den Plan,
+    /// „Später“ blendet den Vorschlag aus.
+    private static func coachFlow() throws -> String {
+        let defaults = UserDefaults.standard
+        let savedDismissals = defaults.object(forKey: "tagwerk.coach.dismissed")
+        defer { defaults.set(savedDismissals, forKey: "tagwerk.coach.dismissed") }
+        defaults.removeObject(forKey: "tagwerk.coach.dismissed")
+
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        guard TrainingActions.ensureStarterPlan(in: context) != nil else { throw Failure(description: "Kein Startplan") }
+        let now = Date.now
+        for weeksBack in 1...2 {
+            guard let start = calendar.date(byAdding: .day, value: -7 * weeksBack, to: now) else { continue }
+            let session = WorkoutSession(dayName: "Test", dayShortName: "T", dayIndex: 0, week: 1, isDeload: false, startedAt: start)
+            session.endedAt = start.addingTimeInterval(3_600)
+            context.insert(session)
+            for index in 0..<4 {
+                let set = SetLog(exerciseID: "bench-press-barbell", slot: 0, setIndex: index, kind: .working, weight: 80, reps: 8, targetRepMin: 6, targetRepMax: 8, targetRIR: 2, restSeconds: 120)
+                set.isDone = true
+                set.completedAt = start
+                context.insert(set)
+                set.session = session
+            }
+        }
+        try context.save()
+
+        let suggestions = CoachActions.suggestions(now: now, calendar: calendar, limit: 30, in: context)
+        guard let add = suggestions.first(where: { $0.change == .addSet }) else {
+            throw Failure(description: "Kein „Satz dazu“: \(suggestions.map(\.title))")
+        }
+        let id = add.planItemID
+        let before = try context.fetch(FetchDescriptor<PlanExercise>(predicate: #Predicate { $0.stableID == id })).first?.sets ?? 0
+        try check(CoachActions.apply(add, in: context), "Übernehmen fehlgeschlagen")
+        let after = try context.fetch(FetchDescriptor<PlanExercise>(predicate: #Predicate { $0.stableID == id })).first?.sets ?? 0
+        try check(after == before + 1, "Sätze \(before) → \(after)")
+
+        let remaining = CoachActions.suggestions(now: now, calendar: calendar, limit: 30, in: context)
+        guard let other = remaining.first else { return "Satz dazu übernommen, keine weiteren Vorschläge" }
+        CoachActions.dismiss(other, now: now)
+        let afterDismiss = CoachActions.suggestions(now: now, calendar: calendar, limit: 30, in: context)
+        try check(!afterDismiss.contains { $0.id == other.id }, "„Später“ wirkt nicht")
+        return "\(suggestions.count) Vorschläge, „\(add.title)“ übernommen"
     }
 
     /// Kein Eintrag im Verzeichnis ohne Ziel (sonst täte das Antippen nichts).

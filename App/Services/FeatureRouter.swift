@@ -33,6 +33,7 @@ enum FeatureDestination {
         case "startWorkout": .startWorkout
         case "trainingPlan": .training(.plan)
         case "trainingStats": .training(.stats)
+        case "coach": .training(.coach)
         case "exerciseLibrary": .training(.library)
         case "trainingProgress": .training(.progress)
         case "photos": .training(.photos)

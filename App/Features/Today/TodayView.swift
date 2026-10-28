@@ -548,6 +548,7 @@ private struct TrainingTodayCard: View {
     let now: Date
 
     @Environment(AppModel.self) private var app
+    @Environment(\.modelContext) private var context
 
     var body: some View {
         let calendar = AppModel.calendar
@@ -590,6 +591,11 @@ private struct TrainingTodayCard: View {
                                 .joined(separator: " · "))
                                 .font(.subheadline)
                                 .foregroundStyle(isTrainingDay ? ModuleAccent.training : Color.secondary)
+                            if isTrainingDay, let gaps = CoachActions.weeklyGapText(now: now, calendar: calendar, in: context) {
+                                Text(gaps)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         Spacer(minLength: 0)
                         Button {

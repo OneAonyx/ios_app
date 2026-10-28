@@ -15,6 +15,7 @@ enum TrainingRoute: Hashable {
     case session(String)
     case exercise(String)
     case day(String)
+    case coach
 }
 
 /// Symbol für eine Übung (Grundübung oder Isolation).
