@@ -114,6 +114,8 @@ jobs:
 
       - name: Ergebnisse auf Branch ci-release ablegen
         if: always()
+        # Ein Fehler hier darf das Release nicht verhindern.
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: Scripts/ci/publish_results.sh release "${{ job.status }}"

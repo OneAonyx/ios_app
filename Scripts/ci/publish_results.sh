@@ -54,5 +54,14 @@ git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 git add -A
 git commit -q -m "CI-Ergebnis ${KIND}: ${STATUS} (${GITHUB_SHA:0:7}, Lauf ${GITHUB_RUN_ID})"
-git push -q --force "$REMOTE" "HEAD:refs/heads/${BRANCH}"
-echo "Ergebnisse auf Branch ${BRANCH} veröffentlicht."
+# Bei Netzwerkfehlern bis zu viermal mit wachsender Pause erneut versuchen.
+for wait in 0 2 4 8 16; do
+  sleep "$wait"
+  if git push -q --force "$REMOTE" "HEAD:refs/heads/${BRANCH}"; then
+    echo "Ergebnisse auf Branch ${BRANCH} veröffentlicht."
+    exit 0
+  fi
+  echo "Push fehlgeschlagen, neuer Versuch …"
+done
+echo "Ergebnisse konnten nicht veröffentlicht werden." >&2
+exit 1
