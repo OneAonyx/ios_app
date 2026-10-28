@@ -124,7 +124,7 @@ mit ärztlicher Begleitung.
 
 ## Noch nicht dabei
 
-- **Apple Health** (Wasser, Eiweiß, Symptome schreiben): mit dem Developer-Account.
+- **Apple Health** (Wasser schreiben): über Kurzbefehle in Phase 8.
 - **Abendrückblick, Check-ins, Arztbericht als PDF, Claude-Rezeptideen**: Phase 5.
 
 ## Daten

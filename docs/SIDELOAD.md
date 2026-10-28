@@ -69,8 +69,8 @@ solange du Orbit nicht löschst.
 | kein iCloud/CloudKit | Datensicherung über Backups in der Dateien-App (ab Phase 1) |
 | Apple Health eventuell nicht erlaubt | Test 2 im Systemcheck zeigt es. Ohne Health laufen alle Funktionen mit lokalen Daten weiter |
 
-## Später: Wechsel zum Developer-Account
+## Kein Developer-Account
 
-Mit dem Apple Developer Program (99 €/Jahr) kommt die App über TestFlight, hält 90 Tage und alle
-Funktionen inkl. iCloud-Sync sind verfügbar. Weil sich dabei die Bundle-ID ändert, werden die Daten
-per Export/Import umgezogen (Phase 7).
+Orbit bleibt bei der kostenlosen Apple-ID. Apple Health, iCloud-Sync und TestFlight gibt es
+deshalb nicht. Health-Werte kommen später über Kurzbefehle (Phase 8), die Datensicherung zusätzlich
+in einen Ordner deiner Wahl, z. B. iCloud Drive (Phase 9).

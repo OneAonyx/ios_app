@@ -16,7 +16,7 @@
 |---|---|---|
 | Gerät | iPhone 15 (kein Pro), keine Apple Watch | Keine Apple-KI auf dem Gerät, kein Action Button. Dynamic Island, Widgets, Live Activities und StandBy gibt es. Ohne Watch kein Puls. |
 | Rechner | Kein Mac | Die App wird in der Cloud gebaut (GitHub Actions mit macOS-Runner). Die Logik wird so getrennt, dass sie auch unter Linux testbar ist. |
-| Installation | Erst kostenlos, später Developer-Account | Phase A: unsignierte IPA → **SideStore** mit kostenloser Apple-ID. Phase B: **TestFlight** mit Apple Developer Program (99 €/Jahr). Die App erkennt selbst, was in der jeweiligen Phase verfügbar ist. |
+| Installation | Dauerhaft kostenlos (Entscheidung Oktober 2026: kein Developer-Account) | Unsignierte IPA → **iloader/SideStore** mit kostenloser Apple-ID. Die App erkennt selbst, was verfügbar ist. Apple Health, iCloud-Sync und TestFlight entfallen; Ersatz siehe Phase 8 und 9. |
 | KI | Claude, aber ohne API-Key und ohne Zusatzkosten | 1) Claude erstellt bei der Entwicklung alle Inhalte (Lebensmittel-Datenbank, Übungen, Rezepte, Startplan). 2) In der App gibt es feste Regeln, die ohne KI laufen. 3) Die **„Claude-Brücke“** nutzt die Kurzbefehl-Aktion „Ask Claude“ der Claude-App, also dein normales Claude-Konto. |
 | Unverträglichkeit | Nur Histamin | Das Datenmodell bleibt offen für weitere Unverträglichkeiten (generische „Unverträglichkeits-Profile“). |
 | Training | Muskelaufbau, ca. 1 Jahr Erfahrung, 4×/Woche Oberkörper. Bisheriger Split: Push / Pull / Arme / Brust+Rücken | Der Startplan baut genau auf diesem Split auf (siehe Abschnitt 9). |
@@ -462,7 +462,7 @@ Vorschlag: **Mo A · Di B · Do C · Sa D**. Mi, Fr und So frei. Die Rotation pa
 3. **Alle 7 Tage** neu signieren. SideStore kann das per Kurzbefehl-Automation im Hintergrund. Tagwerk zeigt vorher an, wann die Signatur abläuft.
 4. **Grenzen mit kostenloser Apple-ID:** max. 3 aktive Apps (inkl. SideStore; Erweiterungen zählen nach aktuellem Stand mit). Deshalb hat Tagwerk genau **eine** Widget-Extension: SideStore + App + Widget = 3. Außerdem gibt es kein iCloud/CloudKit, und HealthKit ist **unsicher** (wird in Phase 0 getestet). Fehlt HealthKit, laufen alle Funktionen mit lokalen Daten weiter.
 
-### 10.3 Phase B – Apple Developer Program (99 €/Jahr)
+### 10.3 Phase B – Apple Developer Program (99 €/Jahr) — entfällt, kein Developer-Account
 
 - TestFlight-Installation direkt aus dem CI. Builds halten 90 Tage, das CI erneuert sie regelmäßig.
 - Alle Funktionen voll verfügbar: HealthKit, App Groups, **iCloud-Sync** (SwiftData + CloudKit, private Datenbank), zeitkritische Mitteilungen, Siri.
@@ -513,9 +513,26 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 - Alle übrigen Widgets und Controls, Spotlight, Fokus-Filter, Gym-Ankunft, App-Sperre, TipKit.
 - Durchgang für Bedienungshilfen und Performance (große Datenmengen, schnelles Scrollen), App-Icon und Feinschliff der Animationen.
 
-**Phase 7 – Upgrade auf Developer-Account** (sobald du so weit bist)
-- TestFlight-Pipeline (fastlane + API-Key als GitHub-Secrets), iCloud-Sync einschalten, zeitkritische Mitteilungen, Probelauf für den Daten-Umzug.
-- Optional später: Watch-App, englische Sprache.
+> **Oktober 2026:** Es gibt keinen Developer-Account (keine laufenden Kosten). Der frühere Plan
+> „Phase 7 – Upgrade auf Developer-Account“ (TestFlight, iCloud-Sync, Apple Health direkt) entfällt.
+> Abschnitt 10.3 gilt nicht mehr.
+
+**Phase 7 – Arzt-Tagebuch**
+- Schmerzen: Körperkarte (vorne/hinten), Stärke 0–10 (NRS), Art, Dauer, möglicher Auslöser, was geholfen hat. Schnellerfassung („Rücken 6“) und Siri.
+- Bewegung und Sport außerhalb des Gyms: Art, Dauer, Intensität. Gym-Einheiten zählen automatisch, Wochenminuten.
+- „Heute keine Beschwerden“, damit beschwerdefreie Tage im Bericht zählen.
+- Tagebuch-Check auf „Heute“: was heute noch fehlt (Mahlzeiten, Beschwerden, Bewegung, Medikamente), optionale Abend-Erinnerung.
+- Arztbericht 2.0: Schmerzen, Bewegung, Bedarfsmedikamente, Schlaf, Tag-für-Tag-Tabelle, Vollständigkeit, „Fragen an den Arzt“, Abschnitte wählbar.
+- Muster: Bewegung und Anstrengung als möglicher Auslöser.
+
+**Phase 8 – Apple Health über Kurzbefehle**
+- Die Kurzbefehle-App darf Health lesen und schreiben, auch wenn Orbit es nicht darf. Eine tägliche Automation übergibt Schritte, Schlaf, Gewicht und Ruhepuls an Orbit; Gewicht und Wasser gehen zurück nach Health.
+- Zuerst Machbarkeitstest im Systemcheck (wie Phase 0).
+
+**Phase 9 – Sicherheit und Feinschliff**
+- Automatische Sicherung zusätzlich in einen Ordner deiner Wahl (z. B. iCloud Drive), damit die Daten auch bei Verlust des iPhones da sind.
+- Import aus Apple Erinnerungen, Muskel-Karte im Training.
+- Tempo-Durchgang mit großen Datenmengen, Bedienungshilfen (VoiceOver), Animationen.
 
 ---
 
@@ -523,7 +540,7 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 
 | Risiko | Gegenmaßnahme |
 |---|---|
-| HealthKit geht mit kostenloser Apple-ID nicht | Capabilities-Registry: lokale Daten als Ersatz, Health-Funktionen werden mit Phase B aktiv |
+| HealthKit geht mit kostenloser Apple-ID nicht | Bestätigt (Phase 0). Lokale Daten als Ersatz, Health-Werte über Kurzbefehle (Phase 8) |
 | App läuft nach 7 Tagen ab | SideStore-Automation, Ablauf-Hinweis in Tagwerk. Daten bleiben beim Neu-Signieren erhalten |
 | Datenverlust (Bundle-ID-Wechsel, Löschen) | Tägliche Backups in der Dateien-App, Umzugs-Export/-Import, Backup vor jeder Migration |
 | „Ask Claude“ gibt keine Antwort an den Kurzbefehl zurück | Ausweichweg über die Zwischenablage ist von Anfang an eingebaut |
@@ -548,7 +565,8 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 - Phase 3: Ein komplettes Training im Gym. Pausen-Timer in der Dynamic Island und auf dem Sperrbildschirm. Gewichtsvorschlag in der Folgewoche stimmt. Das Workout erscheint in Health (falls verfügbar).
 - Phase 4: Barcode eines echten Produkts scannen, Zutatenliste fotografieren, kritische Zutaten werden markiert. Nach einigen Tagen Daten erscheint die Auslöser-Analyse plausibel.
 - Phase 5: Claude-Brücke einmal komplett: Plan anpassen → Vorschau → übernehmen. Arztbericht-PDF öffnen und teilen.
-- Phase 6/7: Alle Widgets und Controls, Siri-Sätze, Fokus-Filter, App-Sperre. Daten-Umzug auf die TestFlight-Version.
+- Phase 6: Alle Widgets und Controls, Siri-Sätze, Fokus-Filter, App-Sperre.
+- Phase 7: Zwei Wochen Arzt-Tagebuch führen, Bericht als PDF erzeugen und auf Vollständigkeit prüfen.
 
 ---
 

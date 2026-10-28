@@ -4,7 +4,7 @@ Phase 5 bringt vier Dinge zusammen: tägliche Check-ins, einen Wochenrückblick,
 als PDF und die Claude-Brücke für alle Anwendungsfälle. Alles liegt unter **Gesundheit → Einblicke**.
 
 > **Apple Health** ist noch nicht dabei: Mit der kostenlosen Apple-ID gibt iOS keine Health-Rechte
-> (Ergebnis aus Phase 0). Die Anbindung kommt mit dem Developer-Account (Phase 7). Bis dahin
+> (Ergebnis aus Phase 0). Ohne Developer-Account kommen Health-Werte über Kurzbefehle (Phase 8). Bis dahin
 > erfasst Orbit alles selbst.
 
 ## Check-in

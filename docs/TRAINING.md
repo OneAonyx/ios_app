@@ -207,7 +207,7 @@ und legt sie beim Übernehmen als eigene Übungen an.
 
 ## Noch nicht dabei
 
-- **Apple Health** (Workouts, Gewicht): kommt mit dem Developer-Account, siehe
+- **Apple Health** (Gewicht): über Kurzbefehle in Phase 8, siehe
   [`PHASE0-ERGEBNIS.md`](PHASE0-ERGEBNIS.md). Bis dahin speichert Orbit alles selbst.
 - **Muskel-Karte** (Körper-Silhouette): später.
 

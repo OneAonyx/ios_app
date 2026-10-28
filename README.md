@@ -12,7 +12,7 @@ Gym-Ankunft. Aus Phase 5: Check-ins, Wochenrückblick, Arztbericht als PDF und d
 (über die Claude-App, ohne API-Key). Dazu aus Phase 4: Ernährung mit Histamin-Lexikon, Scanner, Tagebuch, Mustern,
 Einkauf und Rezepten; aus Phase 3: Training mit Progression und Pausen-Timer in der Dynamic Island;
 aus Phase 2: Medikamente mit Erinnerungen und Wecker; aus Phase 1: Aufgaben, Schnellerfassung,
-Agenda, tägliche Datensicherung. Apple Health folgt mit dem Developer-Account.
+Agenda, tägliche Datensicherung. Orbit läuft dauerhaft mit kostenloser Apple-ID (kein Developer-Account).
 Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Schnellstart
