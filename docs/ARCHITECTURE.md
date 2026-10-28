@@ -224,6 +224,24 @@ und die zwei neuen Controls stehen deshalb in `DailyWidgets`.
 **Selbsttest:** zusätzlich Migration V5 → V6 (Startgewicht leer, Steigerung bleibt), eigener Plan
 mit Startgewichten, Leben-Ablauf, Sicherung mit Leben.
 
+## Phase 7: Arzt-Tagebuch
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Schmerzen | `TagwerkCore/Diary/Pain.swift` | Körperregionen mit Lage auf der Karte (vorne/hinten), NRS 0–10, Art, Auslöser, Linderung, Auswertung je Ort und Woche |
+| Bewegung | `…/Diary/Activity.swift` | Sportarten, Anstrengung, WHO-Minuten (intensiv doppelt), Wochen, Sport als `DayFactor` für die Muster |
+| Tages-Check | `…/Diary/DiaryCheck.swift` | Checkliste je Tag, Abend-Erinnerung, Vollständigkeit im Zeitraum |
+| Bericht | `…/Diary/DiaryReport.swift` | `DoctorReport.withDiary`, Tag-für-Tag-Zeilen, Seitenaufteilung nach geschätzter Zeilenzahl, wählbare Teile |
+| `TagwerkSchemaV7` | `TagwerkKit/…/Models/SchemaV7.swift` | `PainEntry`, `ActivityEntry`, `DiaryDay`; V6 → V7 leicht |
+| `DiaryActions` | `…/Models/DiaryActions.swift` | Erfassen, Gym-Einheiten als Bewegung, Tagesstand, Daten für den Bericht, Erinnerung |
+| Sicherung | `…/Services/DiaryBackupMapper.swift` | Schmerzen, Bewegung, Tages-Vermerke |
+| Oberfläche | `App/Features/Diary/` | Körperkarte (Figur als vereinigter `Path`), Erfassung, Verlauf, Karten für Heute und Gesundheit |
+| PDF | `App/Features/Insights/DoctorReportView.swift` | neue Seiten: Beschwerden und Bewegung, Schmerzen mit Karte, Tabelle, Schmerz-Protokoll |
+| Kurzbefehle | `App/Intents/DiaryIntents.swift` | Bewegung eintragen, Schmerz eintragen, Heute keine Beschwerden (ohne Siri-Sätze, die zehn Plätze sind belegt) |
+
+**Selbsttest:** zusätzlich Migration V6 → V7, Tagebuch-Ablauf (Schmerz nach Sport, Tabelle, PDF,
+nur Medikamente = eine Seite), Sicherung mit Tagebuch.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
@@ -248,6 +266,8 @@ mit Startgewichten, Leben-Ablauf, Sicherung mit Leben.
 | `tagwerk://rueckblick` | öffnet den Wochenrückblick |
 | `tagwerk://claude` | öffnet die Claude-Zentrale |
 | `tagwerk://leben` | öffnet Planer → Leben |
+| `tagwerk://schmerz`, `tagwerk://bewegung` | öffnet die Erfassung von Schmerz bzw. Bewegung |
+| `tagwerk://tagebuch` | öffnet den Tab „Gesundheit“ mit dem Arzt-Tagebuch |
 | `tagwerk://heute`, `tagwerk://aufgaben` | öffnet „Heute“ bzw. Planer → Aufgaben (Widgets) |
 | `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ (Anfrage oder Systemcheck) |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
