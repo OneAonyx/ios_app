@@ -87,6 +87,16 @@ public struct DoctorReport: Sendable {
     public var elevatedLoadDays: Int
     public var weights: [WeightPoint]
     public var checkIns: CheckInAverages
+    // Arzt-Tagebuch (ab 0.8), gesetzt über `withDiary`.
+    public var pains: [PainFact] = []
+    public var painSummary: PainSummary = .empty
+    public var activities: [ActivityFact] = []
+    public var activityWeeks: [ActivityWeek] = []
+    public var activityKinds: [ActivityKindLine] = []
+    public var completeness: DiaryCompleteness = .empty
+    public var diary: [DiaryRow] = []
+    public var questions: String = ""
+    public var averageSleepHours: Double?
 
     public static func make(
         from: Date,

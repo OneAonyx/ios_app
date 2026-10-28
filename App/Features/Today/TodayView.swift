@@ -76,6 +76,7 @@ struct TodayView: View {
                 if showCheckIns {
                     CheckInTodayCard(now: now)
                 }
+                DiaryTodayCard(now: now)
                 HabitsTodayCard(now: now)
                 LifeTodayCard(now: now)
                 ReviewTodayCard(now: now)

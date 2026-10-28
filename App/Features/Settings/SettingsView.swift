@@ -64,6 +64,7 @@ struct SettingsView: View {
                     Toggle("Check-in auf „Heute“", isOn: $showCheckIns)
                     Toggle("Sonntags an Rückblick erinnern", isOn: $weeklyReviewReminder)
                         .onChange(of: weeklyReviewReminder) { _, _ in app.tasksChanged() }
+                    DiaryReminderSettings()
                     NavigationLink {
                         ClaudeShortcutGuideView()
                     } label: {
@@ -72,7 +73,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Einblicke")
                 } footer: {
-                    Text("Morgens fragt der Check-in nach Schlaf und Energie, abends nach Stimmung und Stress. Der Wochenrückblick kommt sonntags um 18 Uhr.")
+                    Text("Morgens fragt der Check-in nach Schlaf und Energie, abends nach Stimmung und Stress. Der Wochenrückblick kommt sonntags um 18 Uhr. Die Tagebuch-Erinnerung kommt nur, wenn Essen, Beschwerden oder Bewegung noch fehlen.")
                 }
 
                 PrivacyGymSection()
@@ -117,6 +118,7 @@ struct SettingsView: View {
             .task {
                 notificationsAllowed = await NotificationSetup.isAuthorized()
             }
+
         }
     }
 }
@@ -301,5 +303,32 @@ struct RoadmapView: View {
             .padding(.vertical, 2)
         }
         .navigationTitle("Fahrplan")
+    }
+}
+
+/// Abendliche Erinnerung ans Tagebuch: an/aus und Uhrzeit.
+private struct DiaryReminderSettings: View {
+    @Environment(AppModel.self) private var app
+    @AppStorage(SettingsKeys.diaryReminderMinute) private var minute = 20 * 60 + 30
+
+    var body: some View {
+        Toggle("Abends an Tagebuch erinnern", isOn: Binding(
+            get: { minute >= 0 },
+            set: { minute = $0 ? 20 * 60 + 30 : -1 }
+        ))
+        .accessibilityIdentifier("settings.diaryReminder")
+        .onChange(of: minute) { _, _ in app.tasksChanged() }
+        if minute >= 0 {
+            DatePicker("Uhrzeit", selection: Binding(get: time, set: setTime), displayedComponents: .hourAndMinute)
+        }
+    }
+
+    private func time() -> Date {
+        AppModel.calendar.date(bySettingHour: minute / 60, minute: minute % 60, second: 0, of: .now) ?? .now
+    }
+
+    private func setTime(_ date: Date) {
+        let parts = AppModel.calendar.dateComponents([.hour, .minute], from: date)
+        minute = (parts.hour ?? 20) * 60 + (parts.minute ?? 30)
     }
 }

@@ -19,6 +19,8 @@ public struct ReminderCandidate: Sendable, Equatable, Hashable {
         /// Kündigungsfrist oder Ablauf eines Dokuments.
         case lifeDeadline
         case birthday
+        /// Abendlicher Tagebuch-Check (Arzt-Tagebuch).
+        case diary
 
         /// Höherer Wert = wichtiger.
         public var rank: Int {
@@ -30,6 +32,7 @@ public struct ReminderCandidate: Sendable, Equatable, Hashable {
             case .training: 3
             case .birthday: 3
             case .review: 2
+            case .diary: 2
             case .habit: 1
             case .task: 0
             }

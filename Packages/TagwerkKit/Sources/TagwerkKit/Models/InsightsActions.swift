@@ -51,8 +51,10 @@ public enum InsightsActions {
     }
 
     /// Wenig Schlaf und viel Stress als Umstände für die Muster-Auswertung.
+    /// Umstände für die Muster: schlecht geschlafen, viel Stress (Check-in) und Sport oder Training.
     public static func dayFactors(from start: Date, to end: Date, calendar: Calendar, in context: ModelContext) -> [DayFactor] {
         checkIns(from: calendar.startOfDay(for: start), to: end, in: context).flatMap { $0.fact.factors(calendar: calendar) }
+            + ActivityStats.dayFactors(DiaryActions.activityFacts(from: calendar.startOfDay(for: start), to: end, in: context))
     }
 
     // MARK: Erinnerung
@@ -169,7 +171,7 @@ public enum InsightsActions {
 
     // MARK: Arztbericht
 
-    public static func doctorReport(from: Date, to: Date, name: String, now: Date = .now, calendar: Calendar, in context: ModelContext) -> DoctorReport {
+    public static func doctorReport(from: Date, to: Date, name: String, questions: String = "", now: Date = .now, calendar: Calendar, in context: ModelContext) -> DoctorReport {
         let start = calendar.startOfDay(for: from)
         let end = min(to, now)
 
@@ -228,6 +230,7 @@ public enum InsightsActions {
             checkIns: checkIns(from: start, to: end, in: context).map(\.fact),
             calendar: calendar
         )
+        .withDiary(DiaryActions.reportInput(from: start, to: end, questions: questions, now: now, calendar: calendar, in: context), calendar: calendar)
     }
 
     /// „Kopfschmerz 4×, Hautrötung 2×“ für Claude.

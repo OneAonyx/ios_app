@@ -61,6 +61,12 @@ struct RootView: View {
         .sheet(isPresented: $app.isAddingSymptom) {
             SymptomEditorView()
         }
+        .sheet(isPresented: $app.isAddingPain) {
+            PainEditorView()
+        }
+        .sheet(isPresented: $app.isAddingActivity) {
+            ActivityEditorView()
+        }
         .sheet(isPresented: $app.isShowingCheckIn) {
             CheckInSheet()
         }

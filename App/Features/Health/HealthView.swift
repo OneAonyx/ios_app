@@ -90,8 +90,9 @@ struct HealthView: View {
                         MedicationListCard(title: "Pausiert", medications: paused, now: now)
                     }
                 }
-                InsightsHealthCard(now: now)
+                DiaryHealthCard(now: now)
                 SymptomsHealthCard(now: now)
+                InsightsHealthCard(now: now)
                 Text("Orbit hilft beim Erinnern und Protokollieren und ersetzt keine ärztliche Beratung.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -446,13 +447,6 @@ private struct InsightsHealthCard: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("health.review")
                 NavigationLink {
-                    DoctorReportView()
-                } label: {
-                    InsightRow(title: "Arztbericht", detail: "PDF mit Medikamenten, Beschwerden und Mustern", systemImage: "doc.richtext", tint: .blue)
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("health.report")
-                NavigationLink {
                     ClaudeHubView()
                 } label: {
                     InsightRow(
@@ -464,9 +458,6 @@ private struct InsightsHealthCard: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("health.claude")
-                Text("Apple Health wird mit dem Developer-Account angebunden.")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
         }
     }

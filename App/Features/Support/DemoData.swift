@@ -64,7 +64,47 @@ enum DemoData {
         seedNutrition(into: context, now: now, calendar: calendar)
         seedInsights(into: context, now: now, calendar: calendar)
         seedLife(into: context, now: now, calendar: calendar)
+        seedDiary(into: context, now: now, calendar: calendar)
         try? context.save()
+    }
+
+    /// Arzt-Tagebuch: Schmerzen, Bewegung, beschwerdefreie Tage der letzten Wochen.
+    private static func seedDiary(into context: ModelContext, now: Date, calendar: Calendar) {
+        let today = calendar.startOfDay(for: now)
+        func at(_ offset: Int, _ hour: Int, _ minute: Int = 0) -> Date {
+            let day = calendar.date(byAdding: .day, value: offset, to: today) ?? today
+            return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day) ?? day
+        }
+        let pains: [PainFact] = [
+            PainFact(date: at(-20, 8), regions: [.lowerBack], intensity: 5, qualities: [.dull, .pulling], durationMinutes: 240, triggers: [.sitting], reliefs: [.heat, .movement]),
+            PainFact(date: at(-16, 19), regions: [.shoulderRight], intensity: 6, qualities: [.stabbing], durationMinutes: 60, triggers: [.training], reliefs: [.rest]),
+            PainFact(date: at(-12, 7, 30), regions: [.lowerBack], intensity: 4, qualities: [.dull], durationMinutes: 120, triggers: [.sleep], reliefs: [.movement]),
+            PainFact(date: at(-9, 20), regions: [.shoulderRight, .elbowRight], intensity: 7, qualities: [.stabbing, .radiating], durationMinutes: 180, triggers: [.training], reliefs: [.medication], note: "Ibuprofen 400"),
+            PainFact(date: at(-5, 14), regions: [.wristLeft], intensity: 3, qualities: [.pulling], durationMinutes: 30, triggers: [.strain]),
+            PainFact(date: at(-2, 9), regions: [.neck, .upperBack], intensity: 5, qualities: [.pressing], durationMinutes: 480, triggers: [.sitting, .stress], reliefs: [.heat]),
+        ]
+        for pain in pains {
+            DiaryActions.addPain(pain, in: context)
+        }
+        let activities: [ActivityFact] = [
+            ActivityFact(date: at(-19, 7), kind: .walking, minutes: 40, intensity: .light),
+            ActivityFact(date: at(-14, 10), kind: .cycling, minutes: 60, intensity: .moderate),
+            ActivityFact(date: at(-11, 18), kind: .running, minutes: 30, intensity: .vigorous),
+            ActivityFact(date: at(-7, 11), kind: .hiking, minutes: 150, intensity: .moderate),
+            ActivityFact(date: at(-4, 19), kind: .ballSports, minutes: 90, intensity: .vigorous, note: "Fußball"),
+            ActivityFact(date: at(-1, 7, 30), kind: .walking, minutes: 35, intensity: .moderate),
+            ActivityFact(date: at(-1, 21), kind: .stretching, minutes: 15, intensity: .light),
+        ]
+        for activity in activities {
+            DiaryActions.addActivity(activity, in: context)
+        }
+        for offset in [-18, -15, -13, -10, -8, -6, -3, -1] {
+            DiaryActions.setSymptomFree(true, on: at(offset, 21), calendar: calendar, in: context)
+        }
+        for offset in [-17, -6] {
+            DiaryActions.setRestDay(true, on: at(offset, 21), calendar: calendar, in: context)
+        }
+        UserDefaults.standard.set("Kann die Schulter vom Training kommen? Sind die Kopfschmerzen nach Tomate Histamin?", forKey: SettingsKeys.doctorQuestions)
     }
 
     /// Routinen mit Verlauf, Verträge mit Fristen, Geburtstage, Tagebuch.

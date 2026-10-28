@@ -54,6 +54,9 @@ final class AppModel {
     var editingMeal: MealEntry?
     /// Beschwerden eintragen.
     var isAddingSymptom = false
+    /// Arzt-Tagebuch: Schmerz oder Bewegung eintragen.
+    var isAddingPain = false
+    var isAddingActivity = false
     /// Einblicke: Check-in, Wochenrückblick, Claude-Zentrale und eine Claude-Anfrage im eigenen Blatt.
     var isShowingCheckIn = false
     var presentedReview: ReviewLink?
@@ -197,6 +200,12 @@ final class AppModel {
             openClaudeHub()
         case "leben", "life":
             openLife()
+        case "schmerz", "pain":
+            openPainEntry()
+        case "bewegung", "activity":
+            openActivityEntry()
+        case "tagebuch", "diary":
+            openDiary()
         case "heute", "today":
             dismissPanels()
             selectedTab = .today
@@ -240,6 +249,8 @@ final class AppModel {
     /// Nach Änderungen an Mahlzeiten, Wasser oder Beschwerden: Widget-Daten.
     func nutritionChanged() {
         writeNutritionSnapshot()
+        // Der Tagebuch-Check am Abend hängt an Mahlzeiten und Beschwerden.
+        scheduleRefresh()
     }
 
     func writeNutritionSnapshot(now: Date = .now) {
@@ -358,6 +369,31 @@ final class AppModel {
     func focusFilterChanged() {
         let state = FocusFilterStore.read()
         if state != focusFilter { focusFilter = state }
+        scheduleRefresh()
+    }
+
+    // MARK: Arzt-Tagebuch
+
+    func openPainEntry() {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        isAddingPain = true
+    }
+
+    func openActivityEntry() {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        isAddingActivity = true
+    }
+
+    /// Tagebuch im Tab „Gesundheit“.
+    func openDiary() {
+        dismissPanels()
+        selectedTab = .health
+    }
+
+    /// Nach Schmerzen, Bewegung oder Tages-Vermerken: Erinnerung und Widgets neu.
+    func diaryChanged() {
         scheduleRefresh()
     }
 

@@ -148,7 +148,8 @@ final class ScreenshotTests: XCTestCase {
         let report = app.buttons["health.report"]
         if scrollTo(report, in: app), tapIfPresent(report) {
             snap(app, "45-arztbericht")
-            if tapIfPresent(app.buttons["report.build"]) {
+            let build = app.buttons["report.build"]
+            if scrollTo(build, in: app), tapIfPresent(build) {
                 Thread.sleep(forTimeInterval: 1.5)
                 snap(app, "46-arztbericht-pdf")
                 tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
@@ -249,6 +250,60 @@ final class ScreenshotTests: XCTestCase {
         }
         tapTab("Heute", in: app)
         snap(app, "25-heute-nach-training")
+    }
+
+    /// Arzt-Tagebuch: Heute-Karte, Schmerz mit Körperkarte, Verlauf, Bewegung, Bericht mit Tabelle.
+    @MainActor
+    func testDiary() {
+        let app = launch(extraArguments: ["-forceLight"])
+        let card = app.descendants(matching: .any)["today.diary"]
+        if scrollTo(card, in: app, attempts: 4) {
+            snap(app, "70-heute-tagebuch")
+        }
+        tapTab("Gesundheit", in: app)
+        let pains = app.buttons["health.pains"]
+        guard scrollTo(pains, in: app, attempts: 6) else { return }
+        snap(app, "71-gesundheit-tagebuch")
+
+        if tapIfPresent(app.buttons["diary.pain"]) {
+            tapIfPresent(app.buttons["body.shoulderRight"], timeout: 2)
+            tapIfPresent(app.buttons["body.elbowRight"], timeout: 2)
+            snap(app, "72-schmerz-eintragen")
+            app.swipeUp()
+            snap(app, "73-schmerz-details")
+            dismissSheet(in: app, doneIdentifier: "pain.cancel")
+        }
+        if scrollTo(pains, in: app), tapIfPresent(pains) {
+            snap(app, "74-schmerzen")
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        let activities = app.buttons["health.activities"]
+        if scrollTo(activities, in: app), tapIfPresent(activities) {
+            snap(app, "75-bewegung")
+            if tapIfPresent(app.buttons["activities.add"]) {
+                tapIfPresent(app.buttons["activity.cycling"], timeout: 2)
+                snap(app, "76-bewegung-eintragen")
+                dismissSheet(in: app, doneIdentifier: "activity.cancel")
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        let report = app.buttons["health.report"]
+        if scrollTo(report, in: app), tapIfPresent(report) {
+            snap(app, "77-arztbericht")
+            app.swipeUp()
+            snap(app, "78-arztbericht-inhalt")
+            let build = app.buttons["report.build"]
+            if scrollTo(build, in: app), tapIfPresent(build) {
+                Thread.sleep(forTimeInterval: 2)
+                snap(app, "79-bericht-seite-1")
+                for page in 2...5 {
+                    app.swipeUp()
+                    app.swipeUp()
+                    Thread.sleep(forTimeInterval: 0.5)
+                    snap(app, "79-bericht-seite-\(page)")
+                }
+            }
+        }
     }
 
     /// Leben: Übersicht, Routine, Gewohnheiten, Verträge, Geburtstage, Tagebuch.

@@ -81,7 +81,8 @@ public enum BackupService {
             training: try TrainingBackupMapper.makeBackup(context: context),
             nutrition: try NutritionBackupMapper.makeBackup(context: context),
             insights: try InsightsBackupMapper.makeBackup(context: context),
-            life: try LifeBackupMapper.makeBackup(context: context)
+            life: try LifeBackupMapper.makeBackup(context: context),
+            diary: try DiaryBackupMapper.makeBackup(context: context)
         )
     }
 
@@ -127,6 +128,8 @@ public enum BackupService {
         public let checkIns: Int
         /// Routinen, Gewohnheiten, Verträge und Geburtstage.
         public let lifeEntries: Int
+        /// Schmerzen und Bewegung.
+        public let diaryEntries: Int
     }
 
     /// Ersetzt alle Aufgaben, Listen, Medikamente, Trainings-, Ernährungs- und Einblicke-Daten durch den Inhalt der Sicherung.
@@ -243,13 +246,17 @@ public enum BackupService {
         if let life = document.life {
             try LifeBackupMapper.restore(life, context: context)
         }
+        // Ebenso ohne Arzt-Tagebuch (Sicherungen vor Version 0.8).
+        if let diary = document.diary {
+            try DiaryBackupMapper.restore(diary, context: context)
+        }
 
         let defaults = UserDefaults.standard
         for (key, value) in document.settings where SettingsKeys.backedUp.contains(key) {
             switch key {
             case SettingsKeys.showCalendarEvents:
                 defaults.set(value == "1" || value.lowercased() == "true", forKey: key)
-            case SettingsKeys.defaultReminderOffset:
+            case SettingsKeys.defaultReminderOffset, SettingsKeys.diaryReminderMinute:
                 defaults.set(Int(value) ?? -1, forKey: key)
             case SettingsKeys.proteinPerKg:
                 if let number = Double(value) { defaults.set(number, forKey: key) }
@@ -270,7 +277,8 @@ public enum BackupService {
             workouts: document.training?.sessions.count ?? 0,
             meals: document.nutrition?.meals.count ?? 0,
             checkIns: document.insights?.checkIns.count ?? 0,
-            lifeEntries: document.life.map { $0.habits.count + $0.contracts.count + $0.birthdays.count } ?? 0
+            lifeEntries: document.life.map { $0.habits.count + $0.contracts.count + $0.birthdays.count } ?? 0,
+            diaryEntries: document.diary.map { $0.pains.count + $0.activities.count } ?? 0
         )
     }
 }

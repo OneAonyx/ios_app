@@ -67,6 +67,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             return
         }
 
+        if content.userInfo[NotificationIDs.diaryKey] != nil {
+            await MainActor.run {
+                AppModel.shared.openDiary()
+            }
+            return
+        }
+
         if let reference = content.userInfo[NotificationIDs.reviewKey] as? String {
             // Wochenrückblick: referenceID ist der Wochenbeginn in Sekunden seit 1970.
             let weekStart = Double(reference).map { Date(timeIntervalSince1970: $0) }

@@ -41,11 +41,16 @@ public enum SettingsKeys {
     public static let gymLatitude = "tagwerk.settings.gymLatitude"
     public static let gymLongitude = "tagwerk.settings.gymLongitude"
     public static let gymLastNotified = "tagwerk.settings.gymLastNotified"
+    /// Abends an fehlende Tagebuch-Einträge erinnern (Minute des Tages, −1 = aus).
+    public static let diaryReminderMinute = "tagwerk.settings.diaryReminderMinute"
+    /// „Fragen an den Arzt“ für den nächsten Bericht.
+    public static let doctorQuestions = "tagwerk.settings.doctorQuestions"
 
     /// Diese Einstellungen wandern mit in die Datensicherung.
     public static let backedUp = [
         userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget,
         askBeforeMealMedication, showCheckIns, weeklyReviewReminder, trainingGoal, trainingExperience,
+        diaryReminderMinute, doctorQuestions,
     ]
 }
 
@@ -119,6 +124,8 @@ public enum NotificationIDs {
     public static let habitKey = "habit"
     /// Vertrag, Frist oder Geburtstag (Bereich „Leben“).
     public static let lifeKey = "life"
+    /// Schlüssel in `userInfo` des Tagebuch-Checks.
+    public static let diaryKey = "diary"
 
     /// Präfixe der Mitteilungs-IDs. Beim Neuplanen werden nur diese ersetzt.
     public enum Prefix {
@@ -135,11 +142,13 @@ public enum NotificationIDs {
         /// Kündigungsfristen und Ablaufdaten.
         public static let life = "life."
         public static let birthday = "bday."
+        /// Abendlicher Tagebuch-Check.
+        public static let diary = "diary."
         /// Pause vorbei (wird nicht beim Neuplanen ersetzt).
         public static let restTimer = "rest."
 
         /// Werden bei jedem Neuplanen komplett ersetzt (Schlummern bleibt bestehen).
-        public static let managed = [task, medication, medicationFollowUp, refill, training, review, habit, life, birthday]
+        public static let managed = [task, medication, medicationFollowUp, refill, training, review, habit, life, birthday, diary]
     }
 
     public static let systemCheckRequest = "tagwerk.systemcheck.notification"
