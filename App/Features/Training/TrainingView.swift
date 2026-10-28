@@ -9,7 +9,20 @@ struct TrainingView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
     @Query(sort: \WorkoutPlan.createdAt) private var plans: [WorkoutPlan]
-    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var sessions: [WorkoutSession]
+    // Die letzten Einheiten reichen für Woche und Verlauf; ältere öffnet die Detailansicht einzeln.
+    @Query private var sessions: [WorkoutSession]
+
+    init() {
+        var recent = FetchDescriptor<WorkoutSession>(sortBy: [SortDescriptor(\.startedAt, order: .reverse)])
+        recent.fetchLimit = 40
+        _sessions = Query(recent)
+    }
+
+    private func fetchSession(_ id: String) -> WorkoutSession? {
+        var descriptor = FetchDescriptor<WorkoutSession>(predicate: #Predicate { $0.stableID == id })
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
+    }
 
     var body: some View {
         NavigationStack {
@@ -75,7 +88,7 @@ struct TrainingView: View {
         case .history:
             SessionHistoryView()
         case .session(let id):
-            if let session = sessions.first(where: { $0.stableID == id }) { SessionDetailView(session: session) }
+            if let session = sessions.first(where: { $0.stableID == id }) ?? fetchSession(id) { SessionDetailView(session: session) }
         case .exercise(let id):
             ExerciseDetailView(exerciseID: id)
         case .day(let id):

@@ -85,7 +85,7 @@ public enum ReminderScheduler {
         }
     }
 
-    static func taskCandidates(context: ModelContext, calendar: Calendar) -> [ReminderCandidate] {
+    public static func taskCandidates(context: ModelContext, calendar: Calendar) -> [ReminderCandidate] {
         let descriptor = FetchDescriptor<TaskItem>(predicate: #Predicate { !$0.isDone })
         let openTasks = (try? context.fetch(descriptor)) ?? []
         return openTasks.flatMap { task -> [ReminderCandidate] in
@@ -101,7 +101,7 @@ public enum ReminderScheduler {
         }
     }
 
-    static func medicationCandidates(context: ModelContext, now: Date, calendar: Calendar, alarmsActive: Bool) -> [ReminderCandidate] {
+    public static func medicationCandidates(context: ModelContext, now: Date, calendar: Calendar, alarmsActive: Bool) -> [ReminderCandidate] {
         var result: [ReminderCandidate] = []
         for medication in MedicationActions.fetchAll(in: context) where medication.isActive {
             if medication.reminderStyle != .none, medication.schedule.isScheduled {

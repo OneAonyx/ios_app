@@ -28,7 +28,7 @@ for log in build/xcodebuild.log build/archive.log; do
   if [[ -f "$log" ]]; then
     name="$(basename "$log")"
     gzip -c "$log" > "$WORK/results/${name}.gz"
-    grep -nE "error:|warning: .*(/App/|/Widgets/|/UITests/|/Packages/)|\*\* (BUILD|TEST|ARCHIVE) (SUCCEEDED|FAILED) \*\*|Test Case .*(passed|failed)|Testing failed|Fatal error" "$log" \
+    grep -nE "error:|warning: .*(/App/|/Widgets/|/UITests/|/Packages/)|\*\* (BUILD|TEST|ARCHIVE) (SUCCEEDED|FAILED) \*\*|Test Case .*(passed|failed)|Testing failed|Fatal error|TEMPO:" "$log" \
       | head -400 > "$WORK/results/${name%.log}-auszug.txt" || true
   fi
 done

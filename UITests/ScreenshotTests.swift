@@ -381,6 +381,22 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(summary.label.hasPrefix("Alle"), summary.label)
     }
 
+    /// Zwei Jahre Beispieldaten: misst Tagebuch, Bericht, Analyse, Sicherung. Die Zeiten landen im CI-Log.
+    @MainActor
+    func testPerformance() {
+        let app = launch(extraArguments: ["-forceLight", "-perfTest"])
+        let summary = app.staticTexts["perftest.summary"]
+        XCTAssertTrue(summary.waitForExistence(timeout: 30))
+        let finished = NSPredicate(format: "label BEGINSWITH 'Alle' OR label BEGINSWITH 'Fehlgeschlagen'")
+        expectation(for: finished, evaluatedWith: summary)
+        waitForExpectations(timeout: 300)
+        for result in app.descendants(matching: .any).matching(identifier: "perftest.result").allElementsBoundByIndex {
+            print(result.label)
+        }
+        snap(app, "16-tempo")
+        XCTAssertTrue(summary.label.hasPrefix("Alle"), summary.label)
+    }
+
     @MainActor
     func testOnboarding() {
         let app = launch(extraArguments: ["-forceLight", "-showOnboarding"])

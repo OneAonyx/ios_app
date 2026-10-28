@@ -9,7 +9,8 @@ struct DiaryChecklist: View {
 
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
-    // Abfragen, damit die Liste nach jeder Änderung neu rechnet.
+    // Abfragen nur für heute, damit die Liste nach jeder Änderung neu rechnet,
+    // ohne bei Jahren an Daten alles zu laden.
     @Query private var meals: [MealEntry]
     @Query private var symptoms: [SymptomEntry]
     @Query private var pains: [PainEntry]
@@ -18,6 +19,20 @@ struct DiaryChecklist: View {
     @Query private var sessions: [WorkoutSession]
     @Query private var checkIns: [DailyCheckIn]
     @Query private var doses: [DoseLog]
+
+    init(now: Date) {
+        self.now = now
+        let start = AppModel.calendar.startOfDay(for: now)
+        let end = AppModel.calendar.date(byAdding: .day, value: 1, to: start) ?? now
+        _meals = Query(filter: #Predicate<MealEntry> { $0.date >= start && $0.date < end })
+        _symptoms = Query(filter: #Predicate<SymptomEntry> { $0.date >= start && $0.date < end })
+        _pains = Query(filter: #Predicate<PainEntry> { $0.date >= start && $0.date < end })
+        _activities = Query(filter: #Predicate<ActivityEntry> { $0.date >= start && $0.date < end })
+        _days = Query(filter: #Predicate<DiaryDay> { $0.day >= start && $0.day < end })
+        _sessions = Query(filter: #Predicate<WorkoutSession> { $0.startedAt >= start && $0.startedAt < end })
+        _checkIns = Query(filter: #Predicate<DailyCheckIn> { $0.day >= start && $0.day < end })
+        _doses = Query(filter: #Predicate<DoseLog> { $0.createdAt >= start })
+    }
 
     var body: some View {
         let calendar = AppModel.calendar
@@ -117,9 +132,19 @@ struct DiaryHealthCard: View {
     let now: Date
 
     @Environment(\.modelContext) private var context
-    @Query(sort: \PainEntry.date, order: .reverse) private var pains: [PainEntry]
+    // Nur die letzten 7 Tage bzw. die laufende Woche laden.
+    @Query private var pains: [PainEntry]
     @Query private var activities: [ActivityEntry]
     @Query private var sessions: [WorkoutSession]
+
+    init(now: Date) {
+        self.now = now
+        let weekStart = AgendaBuilder.startOfWeek(containing: now, calendar: AppModel.calendar)
+        let since = min(weekStart, now.addingTimeInterval(-7 * 86_400))
+        _pains = Query(filter: #Predicate<PainEntry> { $0.date >= since }, sort: \PainEntry.date, order: .reverse)
+        _activities = Query(filter: #Predicate<ActivityEntry> { $0.date >= since })
+        _sessions = Query(filter: #Predicate<WorkoutSession> { $0.startedAt >= since })
+    }
 
     var body: some View {
         let calendar = AppModel.calendar

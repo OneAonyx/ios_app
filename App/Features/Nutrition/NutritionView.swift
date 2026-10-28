@@ -6,15 +6,6 @@ import TagwerkKit
 /// Tab „Ernährung“: Tagebuch mit Histamin-Tageslast, Eiweiß, Wasser und Mahlzeiten.
 struct NutritionView: View {
     @Environment(AppModel.self) private var app
-    @Environment(\.modelContext) private var context
-    @Query(sort: \MealEntry.date) private var meals: [MealEntry]
-    @Query(sort: \WaterLog.date) private var water: [WaterLog]
-    @Query(sort: \SymptomEntry.date, order: .reverse) private var symptoms: [SymptomEntry]
-    @Query private var preferences: [FoodPreference]
-    @Query private var customFoods: [CustomFood]
-    @Query(sort: \BodyMetric.date, order: .reverse) private var metrics: [BodyMetric]
-    @AppStorage(SettingsKeys.proteinPerKg) private var proteinPerKg = NutritionTargets.defaultProteinPerKg
-    @AppStorage(SettingsKeys.waterTarget) private var waterTarget = NutritionTargets.defaultWaterML
     @State private var dayOffset = 0
 
     var body: some View {
@@ -50,28 +41,62 @@ struct NutritionView: View {
     }
 
     private func content(now: Date) -> some View {
-        let calendar = AppModel.calendar
         let date = selectedDate(now: now)
+        // Eigene Ansicht je Tag: lädt nur die Einträge dieses Tages.
+        return NutritionDayContent(date: date, now: now, dayOffset: $dayOffset)
+            .id(AppModel.calendar.startOfDay(for: date))
+    }
+}
+
+/// Inhalt eines Tages im Tab „Ernährung“.
+private struct NutritionDayContent: View {
+    let date: Date
+    let now: Date
+    @Binding var dayOffset: Int
+
+    @Query private var meals: [MealEntry]
+    @Query private var water: [WaterLog]
+    @Query private var symptoms: [SymptomEntry]
+    @Query private var preferences: [FoodPreference]
+    @Query private var customFoods: [CustomFood]
+    @Query private var metrics: [BodyMetric]
+    @AppStorage(SettingsKeys.proteinPerKg) private var proteinPerKg = NutritionTargets.defaultProteinPerKg
+    @AppStorage(SettingsKeys.waterTarget) private var waterTarget = NutritionTargets.defaultWaterML
+
+    init(date: Date, now: Date, dayOffset: Binding<Int>) {
+        self.date = date
+        self.now = now
+        _dayOffset = dayOffset
+        let start = AppModel.calendar.startOfDay(for: date)
+        let end = AppModel.calendar.date(byAdding: .day, value: 1, to: start) ?? date
+        _meals = Query(filter: #Predicate<MealEntry> { $0.date >= start && $0.date < end }, sort: \MealEntry.date)
+        _water = Query(filter: #Predicate<WaterLog> { $0.date >= start && $0.date < end })
+        _symptoms = Query(filter: #Predicate<SymptomEntry> { $0.date >= start && $0.date < end }, sort: \SymptomEntry.date, order: .reverse)
+        let weight = BodyMetricType.weight.rawValue
+        var latest = FetchDescriptor<BodyMetric>(predicate: #Predicate { $0.typeRaw == weight }, sortBy: [SortDescriptor(\.date, order: .reverse)])
+        latest.fetchLimit = 1
+        _metrics = Query(latest)
+    }
+
+    var body: some View {
+        let calendar = AppModel.calendar
         let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
-        let dayMeals = meals.filter { calendar.isDate($0.date, inSameDayAs: date) }
-        let facts = dayMeals.map { $0.fact(catalog: catalog) { tolerances[$0] ?? .unknown } }
-        let bodyweight = metrics.first { $0.type == .weight }?.value
+        let facts = meals.map { $0.fact(catalog: catalog) { tolerances[$0] ?? .unknown } }
         let day = NutritionDay(
             day: calendar.startOfDay(for: date),
             meals: facts,
-            waterML: water.filter { calendar.isDate($0.date, inSameDayAs: date) }.reduce(0) { $0 + $1.milliliters },
-            proteinTarget: NutritionTargets.proteinTarget(bodyweight: bodyweight, perKg: proteinPerKg),
+            waterML: water.reduce(0) { $0 + $1.milliliters },
+            proteinTarget: NutritionTargets.proteinTarget(bodyweight: metrics.first?.value, perKg: proteinPerKg),
             waterTarget: waterTarget
         )
-        let daySymptoms = symptoms.filter { calendar.isDate($0.date, inSameDayAs: date) }
 
-        return ScrollView {
+        ScrollView {
             VStack(alignment: .leading, spacing: Spacing.m) {
                 DaySwitcher(date: date, offset: $dayOffset, now: now)
                 DayOverviewCard(day: day, isToday: dayOffset == 0, date: date)
-                MealsCard(meals: dayMeals, facts: facts, date: date)
-                SymptomsDayCard(symptoms: daySymptoms, isToday: dayOffset == 0)
+                MealsCard(meals: meals, facts: facts, date: date)
+                SymptomsDayCard(symptoms: symptoms, isToday: dayOffset == 0)
                 NutritionLinksCard()
                 NutritionDisclaimer()
                     .padding(.horizontal, Spacing.xs)

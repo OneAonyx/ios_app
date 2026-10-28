@@ -53,14 +53,24 @@ struct AgendaSource {
 struct AgendaView: View {
     @Environment(AppModel.self) private var app
     @Environment(CalendarService.self) private var calendarService
-    @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
+    // Die Agenda schaut nach vorn: offene und heute erledigte Aufgaben, die letzten Einheiten.
+    @Query private var tasks: [TaskItem]
     @Query(sort: \Medication.sortIndex) private var medications: [Medication]
     @Query(sort: \WorkoutPlan.createdAt) private var plans: [WorkoutPlan]
-    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workouts: [WorkoutSession]
+    @Query private var workouts: [WorkoutSession]
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
 
     private let dayCount = 14
+
+    init() {
+        let start = AppModel.calendar.startOfDay(for: .now)
+        let past = Date.distantPast
+        _tasks = Query(filter: #Predicate<TaskItem> { !$0.isDone || ($0.completedAt ?? past) >= start }, sort: \TaskItem.createdAt)
+        var recent = FetchDescriptor<WorkoutSession>(sortBy: [SortDescriptor(\.startedAt, order: .reverse)])
+        recent.fetchLimit = 30
+        _workouts = Query(recent)
+    }
 
     var body: some View {
         let now = Date.now

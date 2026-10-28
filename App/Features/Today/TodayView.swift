@@ -8,10 +8,11 @@ import TipKit
 struct TodayView: View {
     @Environment(AppModel.self) private var app
     @Environment(CalendarService.self) private var calendarService
-    @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
+    // Offene Aufgaben und heute erledigte, dazu die letzten Einheiten: Alte Einträge braucht „Heute“ nicht.
+    @Query private var tasks: [TaskItem]
     @Query(sort: \Medication.sortIndex) private var medications: [Medication]
     @Query(sort: \WorkoutPlan.createdAt) private var plans: [WorkoutPlan]
-    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workouts: [WorkoutSession]
+    @Query private var workouts: [WorkoutSession]
     @AppStorage(SettingsKeys.userName) private var userName = ""
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
@@ -19,6 +20,15 @@ struct TodayView: View {
     @State private var isPickingFocus = false
     private let quickAddTip = QuickAddTip()
     private let widgetTip = WidgetTip()
+
+    init() {
+        let start = AppModel.calendar.startOfDay(for: .now)
+        let past = Date.distantPast
+        _tasks = Query(filter: #Predicate<TaskItem> { !$0.isDone || ($0.completedAt ?? past) >= start }, sort: \TaskItem.createdAt)
+        var recent = FetchDescriptor<WorkoutSession>(sortBy: [SortDescriptor(\.startedAt, order: .reverse)])
+        recent.fetchLimit = 30
+        _workouts = Query(recent)
+    }
 
     var body: some View {
         NavigationStack {
@@ -495,12 +505,25 @@ private struct NutritionTodayCard: View {
 
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
-    @Query(sort: \MealEntry.date, order: .reverse) private var meals: [MealEntry]
-    @Query(sort: \WaterLog.date, order: .reverse) private var water: [WaterLog]
+    // Nur heute und das letzte Gewicht laden, nicht die ganze Geschichte.
+    @Query private var meals: [MealEntry]
+    @Query private var water: [WaterLog]
     @Query private var preferences: [FoodPreference]
-    @Query(sort: \BodyMetric.date, order: .reverse) private var metrics: [BodyMetric]
+    @Query private var metrics: [BodyMetric]
     @AppStorage(SettingsKeys.proteinPerKg) private var proteinPerKg = NutritionTargets.defaultProteinPerKg
     @AppStorage(SettingsKeys.waterTarget) private var waterTarget = NutritionTargets.defaultWaterML
+
+    init(now: Date) {
+        self.now = now
+        let start = AppModel.calendar.startOfDay(for: now)
+        let end = AppModel.calendar.date(byAdding: .day, value: 1, to: start) ?? now
+        _meals = Query(filter: #Predicate<MealEntry> { $0.date >= start && $0.date < end }, sort: \MealEntry.date, order: .reverse)
+        _water = Query(filter: #Predicate<WaterLog> { $0.date >= start && $0.date < end })
+        let weight = BodyMetricType.weight.rawValue
+        var latest = FetchDescriptor<BodyMetric>(predicate: #Predicate { $0.typeRaw == weight }, sortBy: [SortDescriptor(\.date, order: .reverse)])
+        latest.fetchLimit = 1
+        _metrics = Query(latest)
+    }
 
     var body: some View {
         let calendar = AppModel.calendar

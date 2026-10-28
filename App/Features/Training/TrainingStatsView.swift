@@ -7,10 +7,16 @@ import TagwerkKit
 /// Statistik: Wochenvolumen je Muskel, Einheiten pro Woche, Kraftverlauf der Grundübungen.
 struct TrainingStatsView: View {
     @Environment(\.modelContext) private var context
-    @Query(filter: #Predicate<WorkoutSession> { $0.endedAt != nil }, sort: \WorkoutSession.startedAt, order: .reverse)
-    private var sessions: [WorkoutSession]
+    // Für Häufigkeit (8 Wochen) und die häufigsten Grundübungen reichen die letzten 80 Einheiten.
+    @Query private var sessions: [WorkoutSession]
     @State private var weekOffset = 0
     @State private var selectedLift = "bench-press-barbell"
+
+    init() {
+        var recent = FetchDescriptor<WorkoutSession>(predicate: #Predicate { $0.endedAt != nil }, sortBy: [SortDescriptor(\.startedAt, order: .reverse)])
+        recent.fetchLimit = 80
+        _sessions = Query(recent)
+    }
 
     var body: some View {
         let calendar = AppModel.calendar
@@ -45,6 +51,7 @@ struct TrainingStatsView: View {
                     Text("In dieser Woche wurde nicht trainiert.")
                         .foregroundStyle(.secondary)
                 } else {
+                    MuscleMapView(volume: volume)
                     ForEach(volume) { item in
                         VolumeBar(volume: item)
                             .padding(.vertical, 2)
@@ -53,7 +60,7 @@ struct TrainingStatsView: View {
             } header: {
                 Text("Sätze je Muskel")
             } footer: {
-                Text("Hauptmuskeln zählen ganz, mitbeteiligte halb. Grün hinterlegt ist der Zielbereich für Muskelaufbau.")
+                Text("Hauptmuskeln zählen ganz, mitbeteiligte halb. Grün hinterlegt ist der Zielbereich für Muskelaufbau. Auf der Karte: je kräftiger die Farbe, desto näher an der Obergrenze.")
             }
 
             Section("Einheiten pro Woche") {

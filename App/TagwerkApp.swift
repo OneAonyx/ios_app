@@ -17,6 +17,8 @@ struct TagwerkApp: App {
             Group {
                 if LaunchOptions.selfTest {
                     SelfTestView()
+                } else if LaunchOptions.performanceTest {
+                    PerformanceTestView()
                 } else {
                     RootView()
                 }
@@ -65,5 +67,10 @@ enum LaunchOptions {
     /// Selbsttest statt der normalen Oberfläche (nur UI-Tests im CI).
     static var selfTest: Bool {
         ProcessInfo.processInfo.arguments.contains("-selfTest")
+    }
+
+    /// Tempo-Test mit zwei Jahren Beispieldaten (nur CI).
+    static var performanceTest: Bool {
+        ProcessInfo.processInfo.arguments.contains("-perfTest")
     }
 }

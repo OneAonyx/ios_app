@@ -13,6 +13,12 @@ struct HabitTodayRow: View {
     @Query private var logs: [HabitLog]
     @State private var showsRoutine = false
 
+    init(habit: Habit, now: Date) {
+        self.habit = habit
+        self.now = now
+        _logs = Query(filter: HabitLogFilter.day(habitID: habit.stableID, day: now))
+    }
+
     var body: some View {
         let calendar = AppModel.calendar
         let today = calendar.startOfDay(for: now)
@@ -107,6 +113,12 @@ struct RoutineSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(AppModel.self) private var app
     @Query private var logs: [HabitLog]
+
+    init(habit: Habit, day: Date) {
+        self.habit = habit
+        self.day = day
+        _logs = Query(filter: HabitLogFilter.day(habitID: habit.stableID, day: day))
+    }
 
     var body: some View {
         let calendar = AppModel.calendar
@@ -244,6 +256,12 @@ struct HabitDetailView: View {
     @Query private var logs: [HabitLog]
     @State private var editing = false
     @State private var confirmDelete = false
+
+    init(habit: Habit) {
+        self.habit = habit
+        let id = habit.stableID
+        _logs = Query(filter: #Predicate<HabitLog> { $0.habitID == id })
+    }
 
     /// „1 Tag“, „3 Tage“, „1 Woche“
     static func unit(_ count: Int, weeks: Bool) -> String {
@@ -657,5 +675,14 @@ struct HabitEditorView: View {
         }
         app.lifeChanged()
         if let onDone { onDone() } else { dismiss() }
+    }
+}
+
+/// Abfragen für Routine-Einträge: nur eine Routine an einem Tag statt aller Einträge.
+enum HabitLogFilter {
+    static func day(habitID: String, day: Date) -> Predicate<HabitLog> {
+        let start = AppModel.calendar.startOfDay(for: day)
+        let end = AppModel.calendar.date(byAdding: .day, value: 1, to: start) ?? day
+        return #Predicate<HabitLog> { $0.habitID == habitID && $0.day >= start && $0.day < end }
     }
 }

@@ -177,9 +177,17 @@ struct ActivityRow: View {
 struct ActivityHistoryView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
-    @Query(sort: \ActivityEntry.date, order: .reverse) private var entries: [ActivityEntry]
-    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var sessions: [WorkoutSession]
+    // Nur die angezeigten 8 Wochen laden.
+    @Query private var entries: [ActivityEntry]
+    @Query private var sessions: [WorkoutSession]
     @State private var editing: ActivityEntry?
+
+    init() {
+        let calendar = AppModel.calendar
+        let since = calendar.date(byAdding: .day, value: -8 * 7, to: calendar.startOfDay(for: .now)) ?? .now
+        _entries = Query(filter: #Predicate<ActivityEntry> { $0.date >= since }, sort: \ActivityEntry.date, order: .reverse)
+        _sessions = Query(filter: #Predicate<WorkoutSession> { $0.startedAt >= since })
+    }
 
     var body: some View {
         let calendar = AppModel.calendar

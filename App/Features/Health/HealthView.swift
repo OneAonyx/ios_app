@@ -403,8 +403,15 @@ private struct InsightsHealthCard: View {
     let now: Date
 
     @Environment(AppModel.self) private var app
-    @Query(sort: \DailyCheckIn.day, order: .reverse) private var checkIns: [DailyCheckIn]
+    // Nur die letzten 7 Tage Check-ins laden.
+    @Query private var checkIns: [DailyCheckIn]
     @Query(sort: \ClaudeExchange.createdAt, order: .reverse) private var exchanges: [ClaudeExchange]
+
+    init(now: Date) {
+        self.now = now
+        let since = AppModel.calendar.date(byAdding: .day, value: -7, to: AppModel.calendar.startOfDay(for: now)) ?? now
+        _checkIns = Query(filter: #Predicate<DailyCheckIn> { $0.day >= since }, sort: \DailyCheckIn.day, order: .reverse)
+    }
 
     var body: some View {
         let calendar = AppModel.calendar
@@ -504,7 +511,14 @@ private struct SymptomsHealthCard: View {
     let now: Date
 
     @Environment(AppModel.self) private var app
-    @Query(sort: \SymptomEntry.date, order: .reverse) private var symptoms: [SymptomEntry]
+    // Nur die letzten 7 Tage laden.
+    @Query private var symptoms: [SymptomEntry]
+
+    init(now: Date) {
+        self.now = now
+        let since = now.addingTimeInterval(-7 * 86_400)
+        _symptoms = Query(filter: #Predicate<SymptomEntry> { $0.date >= since }, sort: \SymptomEntry.date, order: .reverse)
+    }
 
     var body: some View {
         let weekAgo = now.addingTimeInterval(-7 * 86_400)

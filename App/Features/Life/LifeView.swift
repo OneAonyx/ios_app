@@ -225,7 +225,15 @@ struct HabitsTodayCard: View {
     @Environment(\.modelContext) private var context
     @Environment(AppModel.self) private var app
     @Query(sort: [SortDescriptor(\Habit.sortIndex), SortDescriptor(\Habit.createdAt)]) private var habits: [Habit]
+    // Nur die Einträge von heute.
     @Query private var logs: [HabitLog]
+
+    init(now: Date) {
+        self.now = now
+        let start = AppModel.calendar.startOfDay(for: now)
+        let end = AppModel.calendar.date(byAdding: .day, value: 1, to: start) ?? now
+        _logs = Query(filter: #Predicate<HabitLog> { $0.day >= start && $0.day < end })
+    }
 
     var body: some View {
         let calendar = AppModel.calendar

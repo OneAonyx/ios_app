@@ -70,7 +70,7 @@ jobs:
             > build/xcodebuild.log 2>&1
           status=$?
           set -e
-          grep -E "error:|\*\* (BUILD|TEST) (SUCCEEDED|FAILED) \*\*|Test Case .*(passed|failed)|Executed [0-9]+ test" build/xcodebuild.log | head -300 || true
+          grep -E "error:|\*\* (BUILD|TEST) (SUCCEEDED|FAILED) \*\*|Test Case .*(passed|failed)|Executed [0-9]+ test|TEMPO:" build/xcodebuild.log | head -300 || true
           exit $status
 
       - name: Screenshots exportieren
