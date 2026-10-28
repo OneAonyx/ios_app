@@ -52,6 +52,12 @@ struct HealthBridgeTests {
         #expect(HealthExport.weight(weights, lastExported: nil)?.value == 82.4)
         #expect(HealthExport.weight(weights, lastExported: date(2026, 10, 27)) == nil)
         #expect(HealthExport.weight([], lastExported: nil) == nil)
+
+        // Marke aus den Einstellungen (Sekunden seit 1970): beim Umrechnen leicht kleiner, trotzdem kein zweiter Export.
+        let odd = Date(timeIntervalSinceReferenceDate: 783_302_461.123_456_7)
+        let restored = Date(timeIntervalSince1970: odd.timeIntervalSince1970 - 0.000_01)
+        #expect(HealthExport.weight([(date: odd, value: 82.1)], lastExported: restored) == nil)
+        #expect(HealthExport.weight([(date: odd.addingTimeInterval(1), value: 82.3)], lastExported: restored)?.value == 82.3)
     }
 
     @Test func shortcutURLAndTexts() {

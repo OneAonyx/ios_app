@@ -152,7 +152,10 @@ public enum HealthExport {
     /// Neuester Gewichtswert, der noch nicht nach Health ging (nur aus Orbit, nicht aus Health).
     public static func weight(_ weights: [(date: Date, value: Double)], lastExported: Date?) -> (date: Date, value: Double)? {
         guard let newest = weights.max(by: { $0.date < $1.date }) else { return nil }
-        if let lastExported, newest.date <= lastExported { return nil }
+        // Toleranz: Die Marke liegt als Sekunden seit 1970 in den Einstellungen, `Date` rechnet ab 2001.
+        // Beim Umrechnen kann sie um Bruchteile einer Millisekunde kleiner werden; ohne Toleranz ginge
+        // dasselbe Gewicht dann ein zweites Mal an Health.
+        if let lastExported, newest.date.timeIntervalSince(lastExported) <= 0.001 { return nil }
         return newest
     }
 }
