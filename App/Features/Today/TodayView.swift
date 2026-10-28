@@ -17,7 +17,9 @@ struct TodayView: View {
     @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
     @AppStorage(SettingsKeys.hiddenCalendarIDs) private var hiddenCalendarIDs = ""
     @AppStorage(SettingsKeys.showCheckIns) private var showCheckIns = true
+    @AppStorage(SettingsKeys.todayLayout) private var layoutText = ""
     @State private var isPickingFocus = false
+    @State private var isCustomizing = false
     private let quickAddTip = QuickAddTip()
     private let widgetTip = WidgetTip()
 
@@ -41,6 +43,9 @@ struct TodayView: View {
             .toolbar { toolbar }
             .sheet(isPresented: $isPickingFocus) {
                 FocusPickerView(allTasks: tasks)
+            }
+            .sheet(isPresented: $isCustomizing) {
+                TodayLayoutEditor(layoutText: $layoutText, initial: layout)
             }
         }
     }
@@ -68,6 +73,11 @@ struct TodayView: View {
         let otherTasks = todayTasks.filter { !$0.facts.isFocus(on: now, calendar: calendar) }
         let nextUp = AgendaBuilder.nextUp(in: todayItems, now: now, calendar: calendar)
 
+        let data = TodayData(
+            now: now, filter: filter, plan: plan, source: source, doses: doses, events: events,
+            focusTasks: focusTasks, otherTasks: otherTasks, nextUp: nextUp
+        )
+
         return ScrollView {
             VStack(alignment: .leading, spacing: Spacing.m) {
                 TodayHeader(now: now, userName: userName)
@@ -80,34 +90,73 @@ struct TodayView: View {
                 }
                 TipView(widgetTip)
                 OverviewCard(progress: progress, doses: doses, eventCount: events.count, showsEvents: showEvents && calendarService.canRead)
-                if let nextUp {
-                    NextUpCard(item: nextUp, now: now, task: source.task(for: nextUp))
+                ForEach(layout.visibleCards) { card in
+                    cardView(card, data: data)
                 }
-                if showCheckIns {
-                    CheckInTodayCard(now: now)
+                Button {
+                    isCustomizing = true
+                } label: {
+                    Label("Startseite anpassen", systemImage: "rectangle.3.group")
+                        .font(.footnote.weight(.semibold))
+                        .frame(maxWidth: .infinity)
                 }
-                DiaryTodayCard(now: now)
-                HabitsTodayCard(now: now)
-                LifeTodayCard(now: now)
-                ReviewTodayCard(now: now)
-                if doses.total > 0 {
-                    TodayDosesCard(today: doses, now: now, title: "Medikamente", collapsesResolved: true)
-                }
-                if let plan {
-                    TrainingTodayCard(plan: plan, workouts: workouts, now: now)
-                }
-                if !filter.hideNutrition {
-                    NutritionTodayCard(now: now)
-                }
-                FocusCard(tasks: focusTasks, allTasks: tasks, onPick: { isPickingFocus = true })
-                DueTodayCard(tasks: otherTasks, allTasks: tasks, hasFocus: !focusTasks.isEmpty)
-                if showEvents {
-                    EventsCard(events: events)
-                }
-                JournalTodayCard(now: now)
+                .buttonStyle(.borderless)
+                .tint(.secondary)
+                .padding(.top, Spacing.xs)
+                .accessibilityIdentifier("today.customize")
             }
             .padding(.horizontal, Spacing.m)
             .padding(.bottom, Spacing.xl)
+        }
+    }
+
+    /// Gespeicherte Anordnung; wer vor 1.1 den Check-in ausgeschaltet hatte, behält das.
+    private var layout: TodayLayout {
+        var layout = TodayLayout.decode(layoutText)
+        if layoutText.isEmpty, !showCheckIns { layout.setVisible(.checkIn, false) }
+        return layout
+    }
+
+    /// Eine Karte, nur wenn es dafür heute etwas gibt.
+    @ViewBuilder
+    private func cardView(_ card: TodayCard, data: TodayData) -> some View {
+        switch card {
+        case .quickCapture:
+            QuickCaptureBar(showsNutrition: !data.filter.hideNutrition)
+        case .nextUp:
+            if let nextUp = data.nextUp {
+                NextUpCard(item: nextUp, now: data.now, task: data.source.task(for: nextUp))
+            }
+        case .tasks:
+            TodayTasksCard(focus: data.focusTasks, others: data.otherTasks, onPick: { isPickingFocus = true })
+        case .medications:
+            if data.doses.total > data.doses.done {
+                TodayDosesCard(today: data.doses, now: data.now, title: "Medikamente", collapsesResolved: true)
+            }
+        case .training:
+            if let plan = data.plan {
+                TrainingTodayCard(plan: plan, workouts: workouts, now: data.now)
+            }
+        case .checkIn:
+            CheckInTodayCard(now: data.now, hidesWhenDone: true)
+        case .diary:
+            DiaryTodayCard(now: data.now)
+        case .events:
+            if showEvents, calendarService.canRead, !data.events.isEmpty {
+                EventsCard(events: data.events)
+            }
+        case .habits:
+            HabitsTodayCard(now: data.now)
+        case .nutrition:
+            if !data.filter.hideNutrition {
+                NutritionTodayCard(now: data.now)
+            }
+        case .upcoming:
+            LifeTodayCard(now: data.now)
+        case .review:
+            ReviewTodayCard(now: data.now)
+        case .journal:
+            JournalTodayCard(now: data.now)
         }
     }
 
@@ -123,7 +172,7 @@ struct TodayView: View {
             .accessibilityIdentifier("today.search")
 
             Button {
-                app.isShowingSettings = true
+                app.openSettings()
             } label: {
                 Image(systemName: "person.crop.circle")
             }
@@ -342,67 +391,126 @@ private struct NextUpCard: View {
     }
 }
 
-private struct FocusCard: View {
-    let tasks: [TaskItem]
-    let allTasks: [TaskItem]
+/// Was „Heute“ einmal berechnet und an die Karten weitergibt.
+private struct TodayData {
+    let now: Date
+    let filter: FocusFilterState
+    let plan: WorkoutPlan?
+    let source: AgendaSource
+    let doses: DayDoses
+    let events: [AgendaItem]
+    let focusTasks: [TaskItem]
+    let otherTasks: [TaskItem]
+    let nextUp: AgendaItem?
+}
+
+/// Fokus und fällige Aufgaben in einer Karte: erst bis zu drei Fokus-Aufgaben, dann der Rest.
+private struct TodayTasksCard: View {
+    let focus: [TaskItem]
+    let others: [TaskItem]
     let onPick: () -> Void
 
     @Environment(AppModel.self) private var app
+    private let limit = 5
 
     var body: some View {
         Card {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack {
-                    SectionHeader("Fokus heute", systemImage: "scope", tint: ModuleAccent.today)
-                    Button(tasks.isEmpty ? "Wählen" : "Ändern", action: onPick)
-                        .font(.subheadline.weight(.semibold))
-                        .accessibilityIdentifier("today.focus.pick")
+                    SectionHeader("Aufgaben heute", systemImage: "checklist", tint: ModuleAccent.tasks)
+                    if !focus.isEmpty || !others.isEmpty {
+                        Button(focus.isEmpty ? "Fokus wählen" : "Fokus ändern", action: onPick)
+                            .font(.subheadline.weight(.semibold))
+                            .accessibilityIdentifier("today.focus.pick")
+                    }
                 }
-                if tasks.isEmpty {
-                    Text("Wähle bis zu drei Aufgaben, die heute wirklich zählen.")
+                if focus.isEmpty && others.isEmpty {
+                    Text("Für heute ist nichts offen.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(tasks) { task in
+                }
+                if !focus.isEmpty {
+                    Label("Fokus", systemImage: "scope")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(ModuleAccent.today)
+                        .padding(.top, 2)
+                    ForEach(focus) { task in
                         TaskRow(task: task, onOpen: { app.editingTask = $0 })
                     }
+                    if !others.isEmpty {
+                        Text("Außerdem")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, Spacing.xxs)
+                    }
+                }
+                ForEach(others.prefix(limit)) { task in
+                    TaskRow(task: task, onOpen: { app.editingTask = $0 })
+                }
+                if others.count > limit {
+                    NavigationLink {
+                        TaskListScreen(scope: .smart(.today))
+                    } label: {
+                        Text("Alle \(focus.count + others.count) anzeigen")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .padding(.top, Spacing.xxs)
                 }
             }
         }
+        .accessibilityIdentifier("today.tasks")
     }
 }
 
-private struct DueTodayCard: View {
-    let tasks: [TaskItem]
-    let allTasks: [TaskItem]
-    let hasFocus: Bool
+/// Eine Zeile zum schnellen Eintragen, statt Knöpfen in vielen Karten.
+private struct QuickCaptureBar: View {
+    let showsNutrition: Bool
 
     @Environment(AppModel.self) private var app
-    private let limit = 6
+    @State private var waterAdded = 0
+    @State private var showsWaterDone = false
 
     var body: some View {
-        Card {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                SectionHeader(hasFocus ? "Außerdem heute" : "Heute fällig", systemImage: "checklist", tint: ModuleAccent.tasks)
-                if tasks.isEmpty {
-                    Text(hasFocus ? "Sonst steht heute nichts an." : "Für heute ist nichts offen.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(tasks.prefix(limit)) { task in
-                        TaskRow(task: task, onOpen: { app.editingTask = $0 })
-                    }
-                    if tasks.count > limit {
-                        NavigationLink {
-                            TaskListScreen(scope: .smart(.today))
-                        } label: {
-                            Text("Alle \(tasks.count) anzeigen")
-                                .font(.subheadline.weight(.semibold))
-                        }
-                        .padding(.top, Spacing.xxs)
-                    }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.xs) {
+                chip("Aufgabe", "checklist", ModuleAccent.tasks, id: "quick.task") { app.openQuickAdd() }
+                if showsNutrition {
+                    chip("Mahlzeit", "fork.knife", ModuleAccent.nutrition, id: "quick.meal") { app.logMeal() }
+                    chip(showsWaterDone ? "+250 ml" : "Wasser", showsWaterDone ? "checkmark" : "drop.fill", .cyan, id: "quick.water") { addWater() }
                 }
+                chip("Beschwerde", "bandage", ModuleAccent.health, id: "quick.symptom") { app.openSymptomEntry() }
+                chip("Schmerz", "figure.stand", .red, id: "quick.pain") { app.openPainEntry() }
+                chip("Bewegung", "figure.walk", .green, id: "quick.activity") { app.openActivityEntry() }
             }
+            .padding(.vertical, 2)
+        }
+        .scrollClipDisabled()
+        .sensoryFeedback(.success, trigger: waterAdded)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Schnell erfassen")
+    }
+
+    private func chip(_ title: String, _ symbol: String, _ tint: Color, id: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol)
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, Spacing.s)
+                .padding(.vertical, Spacing.xs)
+                .background(tint.opacity(0.14), in: Capsule())
+                .foregroundStyle(tint)
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(id)
+    }
+
+    private func addWater() {
+        app.addWater(NutritionTargets.glassML)
+        waterAdded += 1
+        withAnimation(.snappy) { showsWaterDone = true }
+        Task {
+            try? await Task.sleep(for: .seconds(1.5))
+            withAnimation(.snappy) { showsWaterDone = false }
         }
     }
 }
@@ -539,40 +647,47 @@ private struct NutritionTodayCard: View {
         )
         let load = day.load
         Card {
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                HStack {
-                    SectionHeader("Ernährung", systemImage: "fork.knife", tint: ModuleAccent.nutrition)
-                    Label("Histamin \(load.level.title)", systemImage: load.level.symbol)
+            Button {
+                app.openNutrition()
+            } label: {
+                HStack(spacing: Spacing.s) {
+                    IconBadge(systemImage: "fork.knife", tint: ModuleAccent.nutrition)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: Spacing.xs) {
+                            Text("Ernährung")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(Color.primary)
+                            Label(load.level.title, systemImage: load.level.symbol)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(load.level.color)
+                        }
+                        Text(summary(day))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(load.level.color)
-                        .fixedSize()
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
                 }
-                if !todayMeals.isEmpty {
-                    LoadBar(load: load)
-                }
-                NutritionRings(day: day)
-                HStack(spacing: Spacing.xs) {
-                    Button {
-                        app.logMeal()
-                    } label: {
-                        Label("Mahlzeit", systemImage: "plus")
-                            .frame(maxWidth: .infinity, minHeight: 34)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(ModuleAccent.nutrition)
-                    .accessibilityIdentifier("today.meal")
-                    Button {
-                        app.addWater(NutritionTargets.glassML)
-                    } label: {
-                        Label("Wasser", systemImage: "drop.fill")
-                            .frame(maxWidth: .infinity, minHeight: 34)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.cyan)
-                    .accessibilityIdentifier("today.water")
-                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Ernährung: Histamin \(load.level.title), \(summary(day))")
         }
+        .accessibilityIdentifier("today.nutrition")
+    }
+
+    /// „2 Mahlzeiten · Eiweiß 74/148 g · Wasser 1/2,5 l“
+    private func summary(_ day: NutritionDay) -> String {
+        let meals = day.meals.count
+        let mealText = meals == 0 ? "Noch keine Mahlzeit" : (meals == 1 ? "1 Mahlzeit" : "\(meals) Mahlzeiten")
+        let protein = "Eiweiß \(Int(day.protein.rounded()))/\(Int(day.proteinTarget.rounded())) g"
+        let water = "Wasser \(WeightFormat.number((Double(day.waterML) / 100).rounded() / 10))/\(WeightFormat.number(Double(day.waterTarget) / 1_000)) l"
+        return [mealText, protein, water].joined(separator: " · ")
     }
 }
 

@@ -25,7 +25,8 @@ struct TrainingView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        @Bindable var app = app
+        NavigationStack(path: $app.trainingPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     if let active = sessions.first(where: \.isActive) {

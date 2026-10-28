@@ -50,6 +50,8 @@ enum SelfTest {
             run("Widget-Daten", snapshotContainsTodayAndTomorrow),
             run("Import aus Apple Erinnerungen", reminderImportFlow),
             run("Sicherung in zweitem Ordner", externalBackupFlow),
+            run("Jede Funktion im Verzeichnis führt irgendwohin", featureDirectoryRoutes),
+            run("Startseite: Anordnung speichern und laden", todayLayoutStorage),
         ]
     }
 
@@ -866,6 +868,26 @@ enum SelfTest {
         let decoded = MedicationWidgetSnapshot.decode(try snapshot.encoded())
         try check(decoded?.doses == snapshot.doses, "Kodierung: Einnahmen weichen ab")
         return "4 Einnahmen (heute und morgen)"
+    }
+
+    /// Kein Eintrag im Verzeichnis ohne Ziel (sonst täte das Antippen nichts).
+    private static func featureDirectoryRoutes() throws -> String {
+        let missing = FeatureIndex.all.filter { FeatureDestination.of($0.id) == nil }.map(\.id)
+        try check(missing.isEmpty, "Ohne Ziel: \(missing.joined(separator: ", "))")
+        return "\(FeatureIndex.all.count) Funktionen in \(FeatureIndex.grouped.count) Bereichen"
+    }
+
+    /// Die Anordnung auf „Heute“ übersteht Speichern und Laden (wie über @AppStorage).
+    private static func todayLayoutStorage() throws -> String {
+        let defaults = UserDefaults(suiteName: "tagwerk.selftest.\(UUID().uuidString)")!
+        var layout = TodayLayout.standard
+        layout.setVisible(.nutrition, false)
+        layout.move(fromOffsets: IndexSet(integer: 0), toOffset: 3)
+        defaults.set(layout.encoded, forKey: SettingsKeys.todayLayout)
+        let loaded = TodayLayout.decode(defaults.string(forKey: SettingsKeys.todayLayout) ?? "")
+        try check(loaded == layout, "Anordnung nach dem Laden anders")
+        try check(SettingsKeys.backedUp.contains(SettingsKeys.todayLayout), "Anordnung nicht in der Sicherung")
+        return "\(loaded.visibleCards.count) von \(TodayCard.allCases.count) Karten sichtbar"
     }
 
     /// Erinnerungen werden zu Aufgaben in gleichnamigen Listen, ein zweiter Import legt nichts doppelt an.

@@ -62,6 +62,8 @@ struct CheckInScaleRow: View {
 /// Check-in auf „Heute“: morgens Schlaf und Energie, abends Stimmung und Stress.
 struct CheckInTodayCard: View {
     let now: Date
+    /// Auf „Heute“: nach dem Ausfüllen verschwinden statt „Erledigt“ zu zeigen.
+    var hidesWhenDone = false
 
     @Environment(\.modelContext) private var context
     @Environment(AppModel.self) private var app
@@ -75,6 +77,7 @@ struct CheckInTodayCard: View {
         if let kind = CheckInKind.current(now: now, calendar: calendar) {
             let scales = CheckInScale.scales(for: kind)
             let complete = fact.isComplete(kind)
+            if !(hidesWhenDone && complete && !isEditing) {
             Card {
                 VStack(alignment: .leading, spacing: Spacing.s) {
                     HStack {
@@ -125,6 +128,8 @@ struct CheckInTodayCard: View {
                 }
             }
             .accessibilityIdentifier("today.checkin")
+            .transition(.opacity)
+            }
         }
     }
 }

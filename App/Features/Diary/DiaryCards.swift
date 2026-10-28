@@ -6,6 +6,11 @@ import TagwerkKit
 /// Tages-Checkliste fürs Arzt-Tagebuch mit Schnellknöpfen.
 struct DiaryChecklist: View {
     let now: Date
+    /// Knöpfe „+ Schmerz“, „+ Beschwerde“, „+ Bewegung“ (auf „Heute“ übernimmt das „Schnell erfassen“).
+    var showsAddButtons = true
+    /// Auf „Heute“: mit Überschrift, und ist alles eingetragen, nur eine Zeile.
+    var compactWhenComplete = false
+    @State private var expanded = false
 
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
@@ -20,8 +25,10 @@ struct DiaryChecklist: View {
     @Query private var checkIns: [DailyCheckIn]
     @Query private var doses: [DoseLog]
 
-    init(now: Date) {
+    init(now: Date, showsAddButtons: Bool = true, compactWhenComplete: Bool = false) {
         self.now = now
+        self.showsAddButtons = showsAddButtons
+        self.compactWhenComplete = compactWhenComplete
         let start = AppModel.calendar.startOfDay(for: now)
         let end = AppModel.calendar.date(byAdding: .day, value: 1, to: start) ?? now
         _meals = Query(filter: #Predicate<MealEntry> { $0.date >= start && $0.date < end })
@@ -39,7 +46,28 @@ struct DiaryChecklist: View {
         let _ = meals.count + symptoms.count + pains.count + activities.count + days.count + sessions.count + checkIns.count + doses.count
         let facts = DiaryActions.today(now: now, calendar: calendar, in: context)
         let items = DiaryCheck.items(facts)
+        if compactWhenComplete, items.allSatisfy(\.isDone), !expanded {
+            Button {
+                withAnimation(.snappy) { expanded = true }
+            } label: {
+                HStack(spacing: Spacing.s) {
+                    Label("Tagebuch heute vollständig", systemImage: "checkmark.seal.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.green)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else {
         VStack(alignment: .leading, spacing: Spacing.s) {
+            if compactWhenComplete {
+                SectionHeader("Tagebuch heute", systemImage: "stethoscope", tint: ModuleAccent.health)
+            }
             FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs) {
                 ForEach(items) { item in
                     Button {
@@ -74,9 +102,11 @@ struct DiaryChecklist: View {
                     }
                     .accessibilityIdentifier("diary.symptomFree")
                 }
-                action("Schmerz", "plus", id: "diary.pain") { app.openPainEntry() }
-                action("Beschwerde", "plus", id: "diary.symptom") { app.openSymptomEntry() }
-                action("Bewegung", "plus", id: "diary.activity") { app.openActivityEntry() }
+                if showsAddButtons {
+                    action("Schmerz", "plus", id: "diary.pain") { app.openPainEntry() }
+                    action("Beschwerde", "plus", id: "diary.symptom") { app.openSymptomEntry() }
+                    action("Bewegung", "plus", id: "diary.activity") { app.openActivityEntry() }
+                }
                 if facts.activities + facts.gymSessions == 0 {
                     ToggleChip(title: "Ruhetag", isOn: facts.restDay, tint: .green) {
                         DiaryActions.setRestDay(!facts.restDay, on: now, calendar: calendar, in: context)
@@ -85,6 +115,7 @@ struct DiaryChecklist: View {
                     .accessibilityIdentifier("diary.restDay")
                 }
             }
+        }
         }
     }
 
@@ -112,16 +143,13 @@ struct DiaryChecklist: View {
     }
 }
 
-/// Karte auf „Heute“: was fürs Tagebuch heute noch fehlt.
+/// Karte auf „Heute“: was fürs Tagebuch heute noch fehlt. Ist alles da, nur eine Zeile.
 struct DiaryTodayCard: View {
     let now: Date
 
     var body: some View {
         Card {
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                SectionHeader("Tagebuch heute", systemImage: "stethoscope", tint: ModuleAccent.health)
-                DiaryChecklist(now: now)
-            }
+            DiaryChecklist(now: now, showsAddButtons: false, compactWhenComplete: true)
         }
         .accessibilityIdentifier("today.diary")
     }

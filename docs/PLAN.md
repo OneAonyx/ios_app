@@ -534,6 +534,27 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 - Einmaliger Import aus Apple Erinnerungen (Listen, Fälligkeit, Priorität, Notizen, Wiederholung; kein Abgleich in beide Richtungen). Muskel-Karte im Training (vorne/hinten, gefärbt nach Wochensätzen gegen den Zielbereich).
 - Tempo-Durchgang: Tempo-Test im CI mit zwei Jahren Beispieldaten (~30.000 Einträge); Ansichten laden nur noch den angezeigten Zeitraum. VoiceOver-Beschriftungen für Diagramme, Karte und reine Symbol-Knöpfe.
 
+**Phase 10 – Klarheit** (Version 1.1)
+- Startseite aufgeräumt: oben der Überblick, darunter eine Leiste „Schnell erfassen“ (Aufgabe, Mahlzeit, Wasser, Beschwerde, Schmerz, Bewegung) statt Knöpfen in vielen Karten. Fokus und fällige Aufgaben in einer Karte. Karten erscheinen nur, wenn es etwas zu tun gibt (Medikamente offen, Termine heute, Check-in fehlt …).
+- „Startseite anpassen“: Karten ein- und ausblenden und sortieren.
+- Verzeichnis aller Funktionen: Die Suche findet auch Funktionen („Arztbericht“, „Muskel-Karte“, „iCloud“), ohne Suchbegriff zeigt sie alles nach Bereichen mit dem Ort in der App.
+- Einstellungen in klare Unterseiten gegliedert.
+
+**Phase 11 – Training-Coach** (Version 1.2)
+- Plan-Check alle paar Wochen: je Übung ein Vorschlag aus dem Fortschritt (Satz dazu, Gewicht anpassen, Wiederholungsbereich ändern, Übung tauschen), mit einem Tipp übernommen.
+- Wochenziel je Muskel: Hinweis vor der nächsten Einheit, wo noch Sätze fehlen.
+- Fortschrittsfotos mit Claude einschätzen lassen (erst Machbarkeitstest, ob Kurzbefehle Bilder an Claude geben; sonst über die Claude-App mit vorbereitetem Text).
+
+**Phase 12 – Rückblicke und Teilen** (Version 1.3)
+- Monatsrückblick und Jahresblick mit Trends (Gewicht, Kraft, Beschwerden, Einnahmetreue, Bewegung, Schlaf).
+- Arzt-Paket: Bericht als PDF plus Tabellen (CSV) für Mahlzeiten, Beschwerden, Schmerzen, Einnahmen und Bewegung, in einem Schritt teilen.
+- Alle Daten als Tabellen exportieren.
+
+**Phase 13 – Tag planen** (Version 1.4)
+- Morgen-Briefing als Mitteilung: Termine, Fokus, Medikamente, Training des Tages.
+- Abendabschluss: offene Aufgaben verschieben, Top 3 für morgen werden Fokus.
+- Sonntags-Planung in einem Ablauf: Trainingstage, Essensplan, Fokus der Woche.
+
 ---
 
 ## 12. Risiken & Gegenmaßnahmen

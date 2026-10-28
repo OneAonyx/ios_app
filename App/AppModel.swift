@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SwiftData
+import SwiftUI
 import TagwerkCore
 import TagwerkKit
 import UIKit
@@ -35,6 +36,8 @@ final class AppModel {
 
     var selectedTab: TagwerkModule = .today
     var isShowingSettings = false
+    /// Unterseiten der Einstellungen (für Sprünge aus der Funktions-Suche).
+    var settingsPath: [SettingsPage] = []
     var isShowingSearch = false
     var isShowingSystemCheck = false
     var isShowingQuickAdd = false
@@ -45,8 +48,12 @@ final class AppModel {
     /// Medikament, dessen Editor gerade offen ist (`isAddingMedication` für ein neues).
     var editingMedication: Medication?
     var isAddingMedication = false
-    /// Navigation im Tab „Gesundheit“ (Medikament-IDs).
-    var healthPath: [String] = []
+    /// Navigation in den Tabs (Medikament-IDs und `HealthRoute` bzw. `TrainingRoute`, `NutritionRoute`).
+    var healthPath = NavigationPath()
+    var trainingPath = NavigationPath()
+    var nutritionPath = NavigationPath()
+    /// Abend-Tagebuch im eigenen Blatt (aus der Funktions-Suche).
+    var isShowingJournal = false
     /// Trainingseinheit im Vollbild.
     var isShowingWorkout = false
     /// Neue Mahlzeit (vorbelegt) bzw. Mahlzeit im Editor.
@@ -134,6 +141,15 @@ final class AppModel {
     var context: ModelContext { container.mainContext }
 
     // MARK: Navigation
+
+    /// Einstellungen öffnen, optional direkt auf einer Unterseite.
+    func openSettings(_ page: SettingsPage? = nil) {
+        isShowingSearch = false
+        isShowingQuickAdd = false
+        editingTask = nil
+        settingsPath = page.map { [$0] } ?? []
+        isShowingSettings = true
+    }
 
     func openSystemCheck() {
         isShowingSearch = false

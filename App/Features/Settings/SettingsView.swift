@@ -4,20 +4,69 @@ import TagwerkCore
 import TagwerkKit
 import UniformTypeIdentifiers
 
+/// Unterseiten der Einstellungen (auch für Sprünge aus der Funktions-Suche).
+enum SettingsPage: String, Hashable, CaseIterable, Identifiable {
+    case todayLayout, reminders, calendar, privacy, data, shortcuts, about
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .todayLayout: "Startseite"
+        case .reminders: "Erinnerungen"
+        case .calendar: "Kalender"
+        case .privacy: "Datenschutz und Gym"
+        case .data: "Daten und Sicherung"
+        case .shortcuts: "Kurzbefehle"
+        case .about: "Über Orbit"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .todayLayout: "Karten auf „Heute“ wählen und sortieren"
+        case .reminders: "Aufgaben, Rückblick, Tagebuch"
+        case .calendar: "Termine anzeigen, Kalender wählen"
+        case .privacy: "App-Sperre, Gym-Ankunft"
+        case .data: "Sicherung, iCloud Drive, Import"
+        case .shortcuts: "Claude und Apple Health"
+        case .about: "Fahrplan, Systemcheck, Version"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .todayLayout: "rectangle.3.group"
+        case .reminders: "bell.badge"
+        case .calendar: "calendar"
+        case .privacy: "lock.shield"
+        case .data: "externaldrive.badge.icloud"
+        case .shortcuts: "square.stack.3d.up"
+        case .about: "info.circle"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .todayLayout: ModuleAccent.today
+        case .reminders: .red
+        case .calendar: ModuleAccent.calendar
+        case .privacy: .gray
+        case .data: .blue
+        case .shortcuts: .purple
+        case .about: .teal
+        }
+    }
+}
+
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppModel.self) private var app
-    @Environment(CalendarService.self) private var calendarService
     @AppStorage(SettingsKeys.userName) private var userName = ""
-    @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
-    @AppStorage(SettingsKeys.defaultReminderOffset) private var defaultReminderOffset = 0
-    @AppStorage(SettingsKeys.showCheckIns) private var showCheckIns = true
-    @AppStorage(SettingsKeys.weeklyReviewReminder) private var weeklyReviewReminder = true
-    @State private var notificationsAllowed: Bool?
 
     var body: some View {
         @Bindable var app = app
-        NavigationStack {
+        NavigationStack(path: $app.settingsPath) {
             List {
                 Section("Profil") {
                     TextField("Dein Name", text: $userName)
@@ -25,93 +74,37 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Toggle("Termine anzeigen", isOn: $showEvents)
-                    if calendarService.canRead {
-                        NavigationLink("Kalender auswählen") {
-                            CalendarSelectionView()
-                        }
-                    } else {
-                        CalendarAccessRow()
-                    }
-                } header: {
-                    Text("Kalender")
-                } footer: {
-                    Text("Termine erscheinen auf „Heute“, in der Agenda und in der Woche. Neue Termine legst du über die Schnellerfassung an.")
-                }
-
-                Section {
-                    Picker("Standard-Erinnerung", selection: $defaultReminderOffset) {
-                        Text("Keine").tag(-1)
-                        ForEach(TaskReminders.presets.map { $0.minutes }, id: \.self) { minutes in
-                            Text(TaskReminders.label(forOffset: minutes)).tag(minutes)
-                        }
-                    }
-                    NavigationLink {
-                        ReminderImportView()
-                    } label: {
-                        Label("Aus Apple Erinnerungen übernehmen", systemImage: "square.and.arrow.down.on.square")
-                    }
-                    .accessibilityIdentifier("settings.importReminders")
-                    if notificationsAllowed == false {
-                        Button("Mitteilungen erlauben") {
-                            Task {
-                                notificationsAllowed = (try? await NotificationSetup.requestAuthorization()) ?? false
-                                app.tasksChanged()
+                    ForEach(SettingsPage.allCases) { page in
+                        NavigationLink(value: page) {
+                            HStack(spacing: Spacing.s) {
+                                IconBadge(systemImage: page.symbol, tint: page.tint, size: 30)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(page.title)
+                                    Text(page.detail)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
+                        .accessibilityIdentifier("settings.page.\(page.rawValue)")
                     }
-                } header: {
-                    Text("Erinnerungen")
-                } footer: {
-                    Text("Gilt für neue Aufgaben mit Uhrzeit. Ganztägige Aufgaben erinnern um 9 Uhr.")
                 }
 
                 Section {
-                    Toggle("Check-in auf „Heute“", isOn: $showCheckIns)
-                    Toggle("Sonntags an Rückblick erinnern", isOn: $weeklyReviewReminder)
-                        .onChange(of: weeklyReviewReminder) { _, _ in app.tasksChanged() }
-                    DiaryReminderSettings()
                     NavigationLink {
-                        ClaudeShortcutGuideView()
+                        FeatureDirectoryView()
                     } label: {
-                        Label("Claude-Kurzbefehl einrichten", systemImage: "sparkles")
+                        Label("Alle Funktionen", systemImage: "square.grid.2x2")
                     }
-                } header: {
-                    Text("Einblicke")
+                    .accessibilityIdentifier("settings.features")
                 } footer: {
-                    Text("Morgens fragt der Check-in nach Schlaf und Energie, abends nach Stimmung und Stress. Der Wochenrückblick kommt sonntags um 18 Uhr. Die Tagebuch-Erinnerung kommt nur, wenn Essen, Beschwerden oder Bewegung noch fehlen.")
-                }
-
-                PrivacyGymSection()
-
-                BackupSection()
-
-                Section("Orbit") {
-                    NavigationLink {
-                        RoadmapView()
-                    } label: {
-                        Label("Fahrplan", systemImage: "map")
-                    }
-                    NavigationLink {
-                        SystemCheckView()
-                    } label: {
-                        Label("Systemcheck", systemImage: "checkmark.seal")
-                    }
-                    LabeledContent("Version", value: "\(AppInfo.version) (\(AppInfo.build))")
-                    LabeledContent("Signatur", value: SigningInfo.describe())
-                    LabeledContent("Widget-Daten", value: AppGroup.isAvailable ? "verfügbar" : "nicht verfügbar")
-                    LabeledContent("Installiert über", value: AppGroup.isSideloaded ? "kostenlose Apple-ID" : "Xcode, TestFlight oder Simulator")
-                }
-
-                Section {
-                    Text("Orbit ist kein Medizinprodukt. Histamin-Bewertungen sind eine Orientierung, und Erinnerungen ersetzen keine ärztliche Beratung. Alle Daten bleiben auf deinem iPhone.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } header: {
-                    Text("Hinweis")
+                    Text("Alles, was Orbit kann, mit dem Ort in der App. Die Suche auf „Heute“ findet Funktionen auch per Stichwort.")
                 }
             }
             .navigationTitle("Einstellungen")
+            .navigationDestination(for: SettingsPage.self) { page in
+                SettingsPageView(page: page)
+            }
             .navigationDestination(isPresented: $app.isShowingSystemCheck) {
                 SystemCheckView()
             }
@@ -121,10 +114,166 @@ struct SettingsView: View {
                         .accessibilityIdentifier("settings.done")
                 }
             }
-            .task {
-                notificationsAllowed = await NotificationSetup.isAuthorized()
+        }
+    }
+}
+
+/// Inhalt einer Unterseite.
+struct SettingsPageView: View {
+    let page: SettingsPage
+
+    @Environment(AppModel.self) private var app
+    @Environment(CalendarService.self) private var calendarService
+    @AppStorage(SettingsKeys.showCalendarEvents) private var showEvents = true
+    @AppStorage(SettingsKeys.defaultReminderOffset) private var defaultReminderOffset = 0
+    @AppStorage(SettingsKeys.weeklyReviewReminder) private var weeklyReviewReminder = true
+    @AppStorage(SettingsKeys.todayLayout) private var layoutText = ""
+    @AppStorage(SettingsKeys.showCheckIns) private var showCheckIns = true
+    @State private var notificationsAllowed: Bool?
+
+    var body: some View {
+        content
+            .navigationTitle(page.title)
+            .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch page {
+        case .todayLayout:
+            TodayLayoutList(layoutText: $layoutText, initial: legacyLayout)
+        case .reminders:
+            remindersPage
+        case .calendar:
+            calendarPage
+        case .privacy:
+            List { PrivacyGymSection() }
+        case .data:
+            List {
+                BackupSection()
+                Section {
+                    NavigationLink {
+                        ReminderImportView()
+                    } label: {
+                        Label("Aus Apple Erinnerungen übernehmen", systemImage: "square.and.arrow.down.on.square")
+                    }
+                    .accessibilityIdentifier("settings.importReminders")
+                } header: {
+                    Text("Übernehmen")
+                }
+            }
+        case .shortcuts:
+            List {
+                Section {
+                    NavigationLink {
+                        ClaudeShortcutGuideView()
+                    } label: {
+                        Label("Claude-Kurzbefehl", systemImage: "sparkles")
+                    }
+                    NavigationLink {
+                        HealthShortcutGuideView()
+                    } label: {
+                        Label("Health-Kurzbefehl", systemImage: "heart.text.square")
+                    }
+                } footer: {
+                    Text("Ohne Developer-Account übernehmen Kurzbefehle zwei Dinge: Anfragen an Claude über die Claude-App und Werte aus Apple Health. Siri-Sätze und Automationen findest du in der Kurzbefehle-App unter „Orbit“.")
+                }
+            }
+        case .about:
+            aboutPage
+        }
+    }
+
+    private var legacyLayout: TodayLayout {
+        var layout = TodayLayout.decode(layoutText)
+        if layoutText.isEmpty, !showCheckIns { layout.setVisible(.checkIn, false) }
+        return layout
+    }
+
+    private var remindersPage: some View {
+        List {
+            Section {
+                Picker("Standard-Erinnerung", selection: $defaultReminderOffset) {
+                    Text("Keine").tag(-1)
+                    ForEach(TaskReminders.presets.map { $0.minutes }, id: \.self) { minutes in
+                        Text(TaskReminders.label(forOffset: minutes)).tag(minutes)
+                    }
+                }
+                if notificationsAllowed == false {
+                    Button("Mitteilungen erlauben") {
+                        Task {
+                            notificationsAllowed = (try? await NotificationSetup.requestAuthorization()) ?? false
+                            app.tasksChanged()
+                        }
+                    }
+                }
+            } header: {
+                Text("Aufgaben")
+            } footer: {
+                Text("Gilt für neue Aufgaben mit Uhrzeit. Ganztägige Aufgaben erinnern um 9 Uhr.")
             }
 
+            Section {
+                Toggle("Sonntags an Rückblick erinnern", isOn: $weeklyReviewReminder)
+                    .onChange(of: weeklyReviewReminder) { _, _ in app.tasksChanged() }
+                DiaryReminderSettings()
+            } header: {
+                Text("Rückblick und Tagebuch")
+            } footer: {
+                Text("Der Wochenrückblick kommt sonntags um 18 Uhr. Die Tagebuch-Erinnerung kommt nur, wenn Essen, Beschwerden oder Bewegung noch fehlen. Medikamente erinnern nach ihren eigenen Einstellungen.")
+            }
+        }
+        .task {
+            notificationsAllowed = await NotificationSetup.isAuthorized()
+        }
+    }
+
+    private var calendarPage: some View {
+        List {
+            Section {
+                Toggle("Termine anzeigen", isOn: $showEvents)
+                if calendarService.canRead {
+                    NavigationLink("Kalender auswählen") {
+                        CalendarSelectionView()
+                    }
+                } else {
+                    CalendarAccessRow()
+                }
+            } footer: {
+                Text("Termine erscheinen auf „Heute“, in der Agenda und in der Woche. Neue Termine legst du über die Schnellerfassung an.")
+            }
+        }
+    }
+
+    private var aboutPage: some View {
+        List {
+            Section {
+                NavigationLink {
+                    RoadmapView()
+                } label: {
+                    Label("Fahrplan", systemImage: "map")
+                }
+                .accessibilityIdentifier("settings.roadmap")
+                NavigationLink {
+                    SystemCheckView()
+                } label: {
+                    Label("Systemcheck", systemImage: "checkmark.seal")
+                }
+                .accessibilityIdentifier("settings.systemcheck")
+            }
+            Section("Orbit") {
+                LabeledContent("Version", value: "\(AppInfo.version) (\(AppInfo.build))")
+                LabeledContent("Signatur", value: SigningInfo.describe())
+                LabeledContent("Widget-Daten", value: AppGroup.isAvailable ? "verfügbar" : "nicht verfügbar")
+                LabeledContent("Installiert über", value: AppGroup.isSideloaded ? "kostenlose Apple-ID" : "Xcode, TestFlight oder Simulator")
+            }
+            Section {
+                Text("Orbit ist kein Medizinprodukt. Histamin-Bewertungen sind eine Orientierung, und Erinnerungen ersetzen keine ärztliche Beratung. Alle Daten bleiben auf deinem iPhone.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Hinweis")
+            }
         }
     }
 }
@@ -324,7 +473,7 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 9
+    private let currentPhase = 10
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
@@ -336,7 +485,11 @@ struct RoadmapView: View {
         Phase(id: 6, title: "Leben & Feinschliff", detail: "Abgeschlossen: Routinen, Verträge, Geburtstage, Tagebuch, Fortschritt und Fotos, Widgets Heute und Aufgaben, Spotlight, Fokus-Filter, App-Sperre, Gym-Ankunft.", systemImage: "wand.and.stars"),
         Phase(id: 7, title: "Arzt-Tagebuch", detail: "Abgeschlossen: Schmerzen mit Körperkarte, Bewegung und Sport, beschwerdefreie Tage, Tagebuch-Check, Arztbericht mit Tag-für-Tag-Tabelle.", systemImage: "stethoscope"),
         Phase(id: 8, title: "Apple Health über Kurzbefehle", detail: "Abgeschlossen: Schritte, Strecke, Schlaf, Gewicht und Puls aus Health über einen Kurzbefehl, Wasser und Gewicht zurück nach Health.", systemImage: "heart.text.square"),
-        Phase(id: 9, title: "Sicherheit & Feinschliff", detail: "Sicherung zusätzlich in iCloud Drive, einmaliger Import aus Apple Erinnerungen, Muskel-Karte im Training, schnelle Ansichten auch nach Jahren an Daten, bessere VoiceOver-Beschriftungen.", systemImage: "lock.shield"),
+        Phase(id: 9, title: "Sicherheit & Feinschliff", detail: "Abgeschlossen: Sicherung zusätzlich in iCloud Drive, einmaliger Import aus Apple Erinnerungen, Muskel-Karte im Training, schnelle Ansichten auch nach Jahren an Daten, bessere VoiceOver-Beschriftungen.", systemImage: "lock.shield"),
+        Phase(id: 10, title: "Klarheit", detail: "Aufgeräumte Startseite mit „Schnell erfassen“, anpassbare Karten, alle Funktionen über die Suche auffindbar, gegliederte Einstellungen.", systemImage: "rectangle.3.group"),
+        Phase(id: 11, title: "Training-Coach", detail: "Vorschläge je Übung zum Übernehmen, Wochenziel je Muskel vor der nächsten Einheit, Fortschrittsfotos mit Claude einschätzen.", systemImage: "figure.strengthtraining.traditional"),
+        Phase(id: 12, title: "Rückblicke und Teilen", detail: "Monats- und Jahresblick mit Trends, Arzt-Paket aus PDF und Tabellen, Export aller Daten.", systemImage: "chart.xyaxis.line"),
+        Phase(id: 13, title: "Tag planen", detail: "Morgen-Briefing, Abendabschluss mit Top 3 als Fokus, Sonntags-Planung in einem Ablauf.", systemImage: "sun.horizon"),
     ]
 
     var body: some View {

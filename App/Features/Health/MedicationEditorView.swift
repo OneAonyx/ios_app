@@ -513,7 +513,7 @@ struct MedicationEditorView: View {
     private func deleteMedication() {
         guard let medication else { return }
         // Detailseite schließen, bevor das Medikament verschwindet.
-        app.healthPath.removeAll()
+        app.healthPath = NavigationPath()
         MedicationActions.delete(medication, in: context)
         app.medicationsChanged()
         dismiss()

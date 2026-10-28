@@ -264,6 +264,50 @@ final class ScreenshotTests: XCTestCase {
         }
     }
 
+    /// Phase 10: aufgeräumte Startseite, anpassen, Funktions-Verzeichnis, Sprung aus der Suche, Einstellungen.
+    @MainActor
+    func testClarity() {
+        let app = launch(extraArguments: ["-forceLight"])
+        XCTAssertTrue(app.buttons["quick.meal"].waitForExistence(timeout: 5), "Schnell erfassen fehlt")
+        snap(app, "80-heute-oben")
+        app.swipeUp()
+        snap(app, "81-heute-mitte")
+
+        let customize = app.buttons["today.customize"]
+        if scrollTo(customize, in: app, attempts: 8), tapIfPresent(customize) {
+            XCTAssertTrue(app.switches["layout.nutrition"].waitForExistence(timeout: 3))
+            snap(app, "82-startseite-anpassen")
+            dismissSheet(in: app, doneIdentifier: "layout.done")
+        }
+
+        // Suche ohne Begriff: Verzeichnis aller Funktionen.
+        for _ in 0..<6 where !app.buttons["today.search"].isHittable { app.swipeDown() }
+        if tapIfPresent(app.buttons["today.search"]) {
+            XCTAssertTrue(app.buttons["feature.doctorReport"].waitForExistence(timeout: 3) || app.buttons["feature.quickAdd"].exists)
+            snap(app, "83-alle-funktionen")
+            let field = app.searchFields.firstMatch
+            if field.waitForExistence(timeout: 3) {
+                field.tap()
+                field.typeText("arzt")
+            }
+            let report = app.buttons["feature.doctorReport"]
+            XCTAssertTrue(report.waitForExistence(timeout: 3), "Arztbericht nicht gefunden")
+            snap(app, "84-suche-funktion")
+            report.tap()
+            // Öffnet im Tab „Gesundheit“ direkt den Bericht.
+            XCTAssertTrue(app.navigationBars["Arztbericht"].waitForExistence(timeout: 5), "Bericht nicht geöffnet")
+            snap(app, "85-sprung-arztbericht")
+        }
+
+        // Einstellungen: Unterseiten.
+        tapTab("Heute", in: app)
+        if tapIfPresent(app.buttons["today.settings"]) {
+            XCTAssertTrue(app.buttons["settings.page.data"].waitForExistence(timeout: 3))
+            snap(app, "86-einstellungen")
+            tapIfPresent(app.buttons["settings.done"])
+        }
+    }
+
     /// Phase 9: Import aus Erinnerungen, Sicherung in einen zweiten Ordner, große Schrift.
     @MainActor
     func testImportAndBackup() {
@@ -282,6 +326,7 @@ final class ScreenshotTests: XCTestCase {
             }
             tapTab("Heute", in: app)
             if tapIfPresent(app.buttons["today.settings"]) {
+                tapIfPresent(app.buttons["settings.page.data"])
                 let external = app.buttons["backup.external"]
                 if scrollTo(external, in: app, attempts: 8) {
                     snap(app, "66-sicherung-ordner-\(suffix)")
@@ -396,6 +441,7 @@ final class ScreenshotTests: XCTestCase {
         // Einstellungen: App-Sperre und Gym-Ankunft.
         tapTab("Heute", in: app)
         if tapIfPresent(app.buttons["today.settings"]) {
+            tapIfPresent(app.buttons["settings.page.privacy"])
             let gym = app.buttons["settings.gym"]
             if scrollTo(gym, in: app, attempts: 4) {
                 snap(app, "59-einstellungen-privat")

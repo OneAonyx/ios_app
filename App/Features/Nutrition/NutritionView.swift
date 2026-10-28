@@ -9,7 +9,8 @@ struct NutritionView: View {
     @State private var dayOffset = 0
 
     var body: some View {
-        NavigationStack {
+        @Bindable var app = app
+        NavigationStack(path: $app.nutritionPath) {
             TimelineView(.everyMinute) { timeline in
                 content(now: timeline.date)
             }

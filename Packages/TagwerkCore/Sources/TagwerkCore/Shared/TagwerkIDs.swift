@@ -27,8 +27,10 @@ public enum SettingsKeys {
     public static let waterTarget = "tagwerk.settings.waterTarget"
     /// Nach Medikamenten „vor dem Essen“ fragen, wenn eine Mahlzeit eingetragen wird.
     public static let askBeforeMealMedication = "tagwerk.settings.askBeforeMealMedication"
-    /// Check-in-Karte auf „Heute“ zeigen.
+    /// Check-in-Karte auf „Heute“ zeigen (bis 1.0; seitdem Teil von `todayLayout`).
     public static let showCheckIns = "tagwerk.settings.showCheckIns"
+    /// Karten auf „Heute“: Reihenfolge und ausgeblendete (`TodayLayout.encoded`).
+    public static let todayLayout = "tagwerk.settings.todayLayout"
     /// Sonntags um 18 Uhr an den Wochenrückblick erinnern.
     public static let weeklyReviewReminder = "tagwerk.settings.weeklyReviewReminder"
     /// Trainingsziel und Erfahrung für Claude-Anfragen zum Trainingsplan.
@@ -54,7 +56,7 @@ public enum SettingsKeys {
     public static let backedUp = [
         userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget,
         askBeforeMealMedication, showCheckIns, weeklyReviewReminder, trainingGoal, trainingExperience,
-        diaryReminderMinute, doctorQuestions,
+        diaryReminderMinute, doctorQuestions, todayLayout,
     ]
 }
 

@@ -3,7 +3,8 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Suche über Aufgaben (Titel, Notizen, Liste), Medikamente, Lebensmittel, Rezepte und Übungen.
+/// Suche über Funktionen, Aufgaben (Titel, Notizen, Liste), Medikamente, Lebensmittel, Rezepte und Übungen.
+/// Ohne Suchbegriff zeigt sie das Verzeichnis aller Funktionen.
 struct SearchView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \TaskItem.createdAt, order: .reverse) private var tasks: [TaskItem]
@@ -31,17 +32,28 @@ struct SearchView: View {
         let foodMatches = trimmed.count < 2 ? [] : foodCatalog.search(trimmed, limit: 5)
         let recipeMatches = trimmed.count < 2 ? [] : Array(NutritionActions.recipes(in: context).search(trimmed, catalog: foodCatalog).prefix(4))
         let exerciseMatches = trimmed.count < 2 ? [] : Array(TrainingActions.catalog(in: context).search(trimmed).prefix(4))
-        let nothing = matches.isEmpty && medicationMatches.isEmpty && foodMatches.isEmpty && recipeMatches.isEmpty && exerciseMatches.isEmpty
+        let featureMatches = trimmed.isEmpty ? [] : FeatureIndex.search(trimmed, limit: 5)
+        let nothing = featureMatches.isEmpty && matches.isEmpty && medicationMatches.isEmpty && foodMatches.isEmpty && recipeMatches.isEmpty && exerciseMatches.isEmpty
 
         NavigationStack {
             List {
+                if trimmed.isEmpty {
+                    FeatureDirectorySections()
+                }
+                if !featureMatches.isEmpty {
+                    Section("Funktionen") {
+                        ForEach(featureMatches) { feature in
+                            FeatureRow(feature: feature)
+                        }
+                    }
+                }
                 if !medicationMatches.isEmpty {
                     Section("Medikamente") {
                         ForEach(medicationMatches) { medication in
                             Button {
                                 dismiss()
                                 app.openMedications()
-                                app.healthPath = [medication.stableID]
+                                app.healthPath = NavigationPath([medication.stableID])
                             } label: {
                                 MedicationSummaryRow(medication: medication, now: .now)
                             }
@@ -98,19 +110,13 @@ struct SearchView: View {
                 }
             }
             .overlay {
-                if trimmed.isEmpty {
-                    ContentUnavailableView(
-                        "Suche",
-                        systemImage: "magnifyingglass",
-                        description: Text("Durchsucht Aufgaben, Notizen, Listen, Medikamente, Lebensmittel, Rezepte und Übungen.")
-                    )
-                } else if nothing {
+                if !trimmed.isEmpty, nothing {
                     ContentUnavailableView.search(text: trimmed)
                 }
             }
             .navigationTitle("Suche")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Aufgaben, Lebensmittel, Übungen …")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Funktionen, Aufgaben, Lebensmittel …")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fertig") { dismiss() }

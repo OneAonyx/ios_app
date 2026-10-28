@@ -37,6 +37,15 @@ struct HealthView: View {
                     MedicationDetailView(medication: medication)
                 }
             }
+            .navigationDestination(for: HealthRoute.self) { route in
+                switch route {
+                case .painHistory: PainHistoryView()
+                case .activityHistory: ActivityHistoryView()
+                case .doctorReport: DoctorReportView()
+                case .healthBridge: HealthBridgeView()
+                case .symptomHistory: SymptomHistoryView()
+                }
+            }
             .sheet(item: $extraIntake) { medication in
                 ExtraIntakeSheet(medication: medication)
             }
@@ -566,4 +575,9 @@ private struct SymptomsHealthCard: View {
             }
         }
     }
+}
+
+/// Ansichten im Tab „Gesundheit“, die sich direkt öffnen lassen (z. B. aus der Funktions-Suche).
+enum HealthRoute: Hashable {
+    case painHistory, activityHistory, doctorReport, healthBridge, symptomHistory
 }
