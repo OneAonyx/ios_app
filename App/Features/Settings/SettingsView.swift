@@ -46,6 +46,12 @@ struct SettingsView: View {
                             Text(TaskReminders.label(forOffset: minutes)).tag(minutes)
                         }
                     }
+                    NavigationLink {
+                        ReminderImportView()
+                    } label: {
+                        Label("Aus Apple Erinnerungen übernehmen", systemImage: "square.and.arrow.down.on.square")
+                    }
+                    .accessibilityIdentifier("settings.importReminders")
                     if notificationsAllowed == false {
                         Button("Mitteilungen erlauben") {
                             Task {
@@ -130,8 +136,17 @@ private struct BackupSection: View {
     @State private var latestBackup: URL?
     @State private var lastBackupDate: Date?
     @State private var message: String?
+    @State private var importMode: ImportMode = .restore
     @State private var isImporting = false
     @State private var pendingRestoreURL: URL?
+    @State private var externalName: String?
+    @State private var externalLast: Date?
+    @State private var externalError: String?
+
+    /// Ein gemeinsamer Dateien-Dialog (zwei `.fileImporter` an einer Ansicht vertragen sich nicht).
+    private enum ImportMode {
+        case restore, folder
+    }
 
     var body: some View {
         Section {
@@ -146,9 +161,35 @@ private struct BackupSection: View {
                 }
             }
             Button {
+                importMode = .restore
                 isImporting = true
             } label: {
                 Label("Sicherung wiederherstellen …", systemImage: "arrow.counterclockwise")
+            }
+            if let externalName {
+                VStack(alignment: .leading, spacing: 2) {
+                    Label("Zweiter Ort: \(externalName)", systemImage: "icloud.and.arrow.up")
+                    Text(externalStatus)
+                        .font(.caption)
+                        .foregroundStyle(externalError == nil ? Color.secondary : Color.orange)
+                }
+                .accessibilityElement(children: .combine)
+                Button("Anderen Ordner wählen …") {
+                    importMode = .folder
+                    isImporting = true
+                }
+                Button("Zweiten Ort entfernen", role: .destructive) {
+                    ExternalBackup.remove()
+                    refresh()
+                }
+            } else {
+                Button {
+                    importMode = .folder
+                    isImporting = true
+                } label: {
+                    Label("Zusätzlich in iCloud Drive sichern …", systemImage: "icloud.and.arrow.up")
+                }
+                .accessibilityIdentifier("backup.external")
             }
             if let message {
                 Text(message)
@@ -161,8 +202,11 @@ private struct BackupSection: View {
             Text(footerText)
         }
         .onAppear(perform: refresh)
-        .fileImporter(isPresented: $isImporting, allowedContentTypes: [.json]) { result in
-            if case .success(let url) = result {
+        .fileImporter(isPresented: $isImporting, allowedContentTypes: importMode == .folder ? [.folder] : [.json]) { result in
+            guard case .success(let url) = result else { return }
+            if importMode == .folder {
+                chooseFolder(url)
+            } else {
                 pendingRestoreURL = url
             }
         }
@@ -178,7 +222,24 @@ private struct BackupSection: View {
         let last = lastBackupDate.map {
             "Letzte Sicherung: \(DueFormatter.label(due: $0, hasTime: true, now: .now, calendar: AppModel.calendar)). "
         } ?? ""
-        return last + "Orbit sichert einmal am Tag automatisch und behält die letzten \(BackupService.keepCount). Du findest sie in der Dateien-App unter „Auf meinem iPhone → Orbit → Backups“."
+        return last + "Orbit sichert einmal am Tag automatisch und behält die letzten \(BackupService.keepCount). Du findest sie in der Dateien-App unter „Auf meinem iPhone → Orbit → Backups“. Mit einem zweiten Ort in iCloud Drive sind sie auch sicher, wenn das iPhone verloren geht."
+    }
+
+    private var externalStatus: String {
+        if let externalError { return "Zuletzt fehlgeschlagen: \(externalError)" }
+        guard let externalLast else { return "Noch keine Kopie. „Jetzt sichern“ legt die erste an." }
+        return "Letzte Kopie: \(DueFormatter.label(due: externalLast, hasTime: true, now: .now, calendar: AppModel.calendar))"
+    }
+
+    private func chooseFolder(_ url: URL) {
+        do {
+            try ExternalBackup.setFolder(url)
+            try BackupService.writeBackup(context: context, calendar: AppModel.calendar)
+            message = ExternalBackup.lastError == nil ? "Ordner „\(url.lastPathComponent)“ gewählt und erste Kopie gesichert." : nil
+        } catch {
+            message = "Ordner ließ sich nicht verwenden: \(error.localizedDescription)"
+        }
+        refresh()
     }
 
     private var restoreAlertBinding: Binding<Bool> {
@@ -188,6 +249,9 @@ private struct BackupSection: View {
     private func refresh() {
         latestBackup = BackupService.existingBackups().first
         lastBackupDate = BackupService.lastBackupDate
+        externalName = ExternalBackup.isConfigured ? (ExternalBackup.folderName ?? "Ordner") : nil
+        externalLast = ExternalBackup.lastCopy
+        externalError = ExternalBackup.lastError
     }
 
     private func backUpNow() {
@@ -205,7 +269,7 @@ private struct BackupSection: View {
         pendingRestoreURL = nil
         do {
             let summary = try BackupService.restore(from: url, context: context, calendar: AppModel.calendar)
-            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente, \(summary.workouts) Trainingseinheiten, \(summary.meals) Mahlzeiten, \(summary.checkIns) Check-ins."
+            message = "Wiederhergestellt: \(summary.tasks) Aufgaben, \(summary.lists) Listen, \(summary.medications) Medikamente, \(summary.workouts) Trainingseinheiten, \(summary.meals) Mahlzeiten, \(summary.checkIns) Check-ins, \(summary.diaryEntries) Tagebuch-Einträge, \(summary.healthDays) Health-Tage."
             app.tasksChanged()
             app.nutritionChanged()
         } catch {

@@ -61,6 +61,12 @@ struct TaskListsOverview: View {
                 } label: {
                     Label("Neue Liste", systemImage: "plus.circle")
                 }
+                NavigationLink {
+                    ReminderImportView()
+                } label: {
+                    Label("Aus Erinnerungen übernehmen", systemImage: "square.and.arrow.down.on.square")
+                }
+                .accessibilityIdentifier("lists.importReminders")
             } header: {
                 Text("Listen")
             } footer: {

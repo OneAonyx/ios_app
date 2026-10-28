@@ -102,6 +102,8 @@ public enum BackupService {
         for name in BackupRetention.filesToDelete(names, keep: keepCount) {
             try? fileManager.removeItem(at: folderURL.appendingPathComponent(name))
         }
+        // Zusätzlich in den gewählten Ordner (z. B. iCloud Drive), falls eingerichtet.
+        ExternalBackup.copy(url, now: now)
         return url
     }
 

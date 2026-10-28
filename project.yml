@@ -83,6 +83,7 @@ targets:
         NSHealthUpdateUsageDescription: "Orbit speichert Workouts, Gewicht, Wasser, Symptome und Stimmung in Apple Health."
         NSAlarmKitUsageDescription: "Orbit stellt Wecker für wichtige Medikamente, damit du sie auch im Stummmodus nicht verpasst."
         NSCalendarsFullAccessUsageDescription: "Orbit zeigt deine Termine auf „Heute“, in der Agenda und in der Woche und legt auf Wunsch neue Termine an."
+        NSRemindersFullAccessUsageDescription: "Orbit übernimmt auf Wunsch einmalig deine Listen aus Apple Erinnerungen als Aufgaben. Die Erinnerungen selbst bleiben unverändert."
         NSCameraUsageDescription: "Orbit liest mit der Kamera Barcodes und Zutatenlisten und nimmt auf Wunsch Fortschrittsfotos auf. Fotos bleiben privat in Orbit."
         NSFaceIDUsageDescription: "Mit Face ID entsperrst du Orbit, wenn die App-Sperre an ist."
         NSLocationWhenInUseUsageDescription: "Orbit speichert den Ort deines Gyms, damit es dich bei der Ankunft an dein Training erinnern kann."
