@@ -368,6 +368,8 @@ struct MedicationEditorView: View {
                             )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(MedicationSymbols.title(symbol))
+                    .accessibilityAddTraits(draft.symbol == symbol ? .isSelected : [])
                 }
             }
             .padding(.vertical, Spacing.xxs)
@@ -556,4 +558,17 @@ enum MedicationSymbols {
         "moon.fill", "bolt.heart.fill", "allergens", "lungs.fill", "brain.head.profile", "eye.fill",
         "wind", "cup.and.saucer.fill", "bag.fill", "hand.raised.fill", "stethoscope", "medical.thermometer.fill",
     ]
+
+    /// Name für VoiceOver.
+    static func title(_ symbol: String) -> String {
+        let names: [String: String] = [
+            "pills.fill": "Tabletten", "pill.fill": "Tablette", "capsule.fill": "Kapsel", "capsule.portrait.fill": "Kapsel hochkant",
+            "drop.fill": "Tropfen", "syringe.fill": "Spritze", "bandage.fill": "Pflaster", "cross.vial.fill": "Fläschchen",
+            "cross.case.fill": "Notfalltasche", "heart.fill": "Herz", "leaf.fill": "Blatt", "sun.max.fill": "Sonne",
+            "moon.fill": "Mond", "bolt.heart.fill": "Herz mit Blitz", "allergens": "Allergie", "lungs.fill": "Lunge",
+            "brain.head.profile": "Kopf", "eye.fill": "Auge", "wind": "Wind", "cup.and.saucer.fill": "Tasse",
+            "bag.fill": "Beutel", "hand.raised.fill": "Hand", "stethoscope": "Stethoskop", "medical.thermometer.fill": "Thermometer",
+        ]
+        return "Symbol " + (names[symbol] ?? symbol)
+    }
 }

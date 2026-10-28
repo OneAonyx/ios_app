@@ -529,10 +529,10 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 - Die Kurzbefehle-App darf Health lesen und schreiben, auch wenn Orbit es nicht darf. Eine tägliche Automation übergibt Schritte, Schlaf, Gewicht und Ruhepuls an Orbit; Gewicht und Wasser gehen zurück nach Health.
 - Zuerst Machbarkeitstest im Systemcheck (wie Phase 0).
 
-**Phase 9 – Sicherheit und Feinschliff**
-- Automatische Sicherung zusätzlich in einen Ordner deiner Wahl (z. B. iCloud Drive), damit die Daten auch bei Verlust des iPhones da sind.
-- Import aus Apple Erinnerungen, Muskel-Karte im Training.
-- Tempo-Durchgang mit großen Datenmengen, Bedienungshilfen (VoiceOver), Animationen.
+**Phase 9 – Sicherheit und Feinschliff** (Version 1.0, umgesetzt)
+- Automatische Sicherung zusätzlich in einen Ordner deiner Wahl (z. B. iCloud Drive), damit die Daten auch bei Verlust des iPhones da sind. 14 Stände bleiben dort.
+- Einmaliger Import aus Apple Erinnerungen (Listen, Fälligkeit, Priorität, Notizen, Wiederholung; kein Abgleich in beide Richtungen). Muskel-Karte im Training (vorne/hinten, gefärbt nach Wochensätzen gegen den Zielbereich).
+- Tempo-Durchgang: Tempo-Test im CI mit zwei Jahren Beispieldaten (~30.000 Einträge); Ansichten laden nur noch den angezeigten Zeitraum. VoiceOver-Beschriftungen für Diagramme, Karte und reine Symbol-Knöpfe.
 
 ---
 

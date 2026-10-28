@@ -259,6 +259,22 @@ und schreiben; Orbit stellt dafür App-Intents bereit.
 Rücksprung: `tagwerk://healthbridge/success|cancel|error` (eigener Host, weil `tagwerk://health`
 schon „Gesundheit“ öffnet).
 
+## Phase 9: Sicherheit und Feinschliff (Version 1.0)
+
+Kein neues Schema (bleibt V8).
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Zweiter Sicherungsort | `TagwerkKit/…/Services/ExternalBackup.swift` | Ordner als Lesezeichen (Bookmark) merken, jede tägliche Sicherung koordiniert hineinkopieren (`NSFileCoordinator`), dort ebenfalls 14 Stände behalten |
+| Import-Regeln | `TagwerkCore/Tasks/ReminderImport.swift` | `ExternalReminder` → `ImportedTask`: Priorität 1–9 → 3/2/1, Fälligkeit mit/ohne Uhrzeit, Wiederholung, Überspringen per `stableID` „reminder-…“ |
+| Import | `…/Services/ReminderImporter.swift` | EventKit-Vollzugriff auf Erinnerungen, Listen und Erinnerungen lesen, Aufgaben in gleichnamigen Listen anlegen |
+| Muskel-Karte | `TagwerkCore/Training/MuscleMap.swift`, `App/Features/Training/MuscleMapView.swift` | Flächen je Muskel auf der Figur aus dem Arzt-Tagebuch, Farbe aus `MuscleVolume.status`, Stärke bis zur Obergrenze, VoiceOver-Text |
+| Tempo-Test | `App/Features/Support/PerformanceTest.swift` | Startoption `-perfTest`: zwei Jahre Beispieldaten (~30.000 Einträge) in einem Wegwerf-Speicher, misst Tagebuch, Arztbericht, PDF, Auslöser-Analyse, Erinnerungsplanung, Sicherung; Zeiten als `TEMPO:`-Zeilen im CI-Auszug |
+
+**Abfragen:** Ansichten, die nur einen Tag oder eine Woche zeigen, holen per `#Predicate` nur diesen
+Zeitraum (Heute, Ernährung je Tag, Tagebuch-Check, Routinen, Gesundheit-Karten, Bewegung). Listen der
+letzten Einheiten nutzen `fetchLimit`. Ältere Einheiten öffnet die Detailansicht einzeln.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
@@ -288,6 +304,7 @@ schon „Gesundheit“ öffnet).
 | `tagwerk://heute`, `tagwerk://aufgaben` | öffnet „Heute“ bzw. Planer → Aufgaben (Widgets) |
 | `tagwerk://claude/success/<id>?result=…` | Rücksprung aus dem Kurzbefehl „Orbit Claude“ (Anfrage oder Systemcheck) |
 | `tagwerk://claude/cancel/<id>`, `tagwerk://claude/error/<id>?errorMessage=…` | Abbruch oder Fehler im Kurzbefehl |
+| `tagwerk://healthbridge/success`, `…/cancel`, `…/error` | Rücksprung aus dem Kurzbefehl „Orbit Health“ |
 
 ## Screenshots im CI
 

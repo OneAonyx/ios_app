@@ -35,6 +35,7 @@ struct ShoppingListView: View {
                                 .font(.title3)
                         }
                         .tint(ModuleAccent.nutrition)
+                        .accessibilityLabel("Hinzufügen")
                     }
                     Button {
                         picking = true

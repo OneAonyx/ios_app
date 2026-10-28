@@ -48,6 +48,8 @@ enum SelfTest {
             run("Datensicherung mit Arzt-Tagebuch", diaryBackupRoundTrip),
             run("Datensicherung mit Health-Werten", healthBackupRoundTrip),
             run("Widget-Daten", snapshotContainsTodayAndTomorrow),
+            run("Import aus Apple Erinnerungen", reminderImportFlow),
+            run("Sicherung in zweitem Ordner", externalBackupFlow),
         ]
     }
 
@@ -864,6 +866,56 @@ enum SelfTest {
         let decoded = MedicationWidgetSnapshot.decode(try snapshot.encoded())
         try check(decoded?.doses == snapshot.doses, "Kodierung: Einnahmen weichen ab")
         return "4 Einnahmen (heute und morgen)"
+    }
+
+    /// Erinnerungen werden zu Aufgaben in gleichnamigen Listen, ein zweiter Import legt nichts doppelt an.
+    private static func reminderImportFlow() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let reminders = [
+            ExternalReminder(id: "a", title: "Zahnarzt anrufen", listName: "Privat", due: DateComponents(year: 2026, month: 11, day: 2, hour: 9), priority: 1),
+            ExternalReminder(id: "b", title: "Müll rausbringen", listName: "Haushalt", frequency: .weekly, weekdays: [2]),
+            ExternalReminder(id: "c", title: "Alt", listName: "Haushalt", isCompleted: true, completedAt: .now.addingTimeInterval(-86_400)),
+        ]
+        let importer = ReminderImporter()
+        let first = importer.importReminders(reminders, includeCompleted: false, calendar: calendar, in: context)
+        try check(first.imported == 2 && first.lists == 2 && first.skipped == 1, "Erster Import: \(first)")
+        let tasks = try context.fetch(FetchDescriptor<TaskItem>())
+        let dentist = tasks.first { $0.title == "Zahnarzt anrufen" }
+        try check(dentist?.list?.name == "Privat" && dentist?.priority == 3 && dentist?.hasDueTime == true, "Zahnarzt falsch übernommen")
+        try check(tasks.first { $0.title == "Müll rausbringen" }?.recurrence?.frequency == .weekly, "Wiederholung fehlt")
+        let second = importer.importReminders(reminders, includeCompleted: true, calendar: calendar, in: context)
+        try check(second.imported == 1 && second.skipped == 2, "Zweiter Import: \(second)")
+        try check(try context.fetchCount(FetchDescriptor<TaskItem>()) == 3, "Doppelte Aufgaben")
+        try check(try context.fetchCount(FetchDescriptor<TaskList>()) == 2, "Doppelte Listen")
+        return "2 Listen, 3 Aufgaben, nichts doppelt"
+    }
+
+    /// Ordner merken, Sicherung hineinkopieren, alte Stände aufräumen. Stellt die echten Einstellungen wieder her.
+    private static func externalBackupFlow() throws -> String {
+        let defaults = UserDefaults.standard
+        let keys = ["tagwerk.backup.externalBookmark", "tagwerk.backup.externalName", "tagwerk.backup.externalLastAt", "tagwerk.backup.externalError"]
+        let saved = keys.map { defaults.object(forKey: $0) }
+        defer {
+            for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) }
+        }
+
+        let source = try temporaryFolder()
+        let target = try temporaryFolder()
+        try ExternalBackup.setFolder(target)
+        try check(ExternalBackup.isConfigured && ExternalBackup.folderName == target.lastPathComponent, "Ordner nicht gemerkt")
+        let start = Date(timeIntervalSince1970: 1_790_000_000)
+        for index in 0..<16 {
+            let date = start.addingTimeInterval(Double(index) * 86_400)
+            let file = source.appendingPathComponent(BackupCodec.fileName(for: date, calendar: calendar))
+            try Data("{}".utf8).write(to: file)
+            try check(ExternalBackup.copy(file, now: date), "Kopie \(index + 1): \(ExternalBackup.lastError ?? "?")")
+        }
+        let names = try FileManager.default.contentsOfDirectory(atPath: target.path).filter(BackupCodec.isBackupFileName)
+        try check(names.count == BackupService.keepCount, "\(names.count) statt \(BackupService.keepCount) Sicherungen im Ordner")
+        try check(ExternalBackup.lastCopy != nil && ExternalBackup.lastError == nil, "Letzte Kopie nicht gemerkt")
+        ExternalBackup.remove()
+        try check(!ExternalBackup.isConfigured, "Ordner nicht entfernt")
+        return "16 Kopien, 14 behalten"
     }
 }
 

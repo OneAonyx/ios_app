@@ -66,11 +66,13 @@ solange du Orbit nicht löschst.
 |---|---|
 | höchstens 3 aktive Apps (inkl. SideStore, Erweiterungen zählen mit) | Orbit hat genau **eine** Erweiterung (Widgets). SideStore + Orbit + Widget = 3 |
 | höchstens 10 neue App-IDs pro 7 Tage | Nicht ständig neu installieren, lieber „Refresh“ nutzen |
-| kein iCloud/CloudKit | Datensicherung über Backups in der Dateien-App (ab Phase 1) |
+| kein iCloud/CloudKit | Tägliche Sicherung in der Dateien-App, auf Wunsch zusätzlich in einem iCloud-Drive-Ordner (Einstellungen → Datensicherung) |
 | Apple Health eventuell nicht erlaubt | Test 2 im Systemcheck zeigt es. Ohne Health laufen alle Funktionen mit lokalen Daten weiter |
 
 ## Kein Developer-Account
 
 Orbit bleibt bei der kostenlosen Apple-ID. Apple Health, iCloud-Sync und TestFlight gibt es
-deshalb nicht. Health-Werte kommen später über Kurzbefehle (Phase 8), die Datensicherung zusätzlich
-in einen Ordner deiner Wahl, z. B. iCloud Drive (Phase 9).
+deshalb nicht. Health-Werte kommen über Kurzbefehle (Phase 8), die Datensicherung zusätzlich
+in einen Ordner deiner Wahl, z. B. iCloud Drive (Phase 9). Geht das iPhone verloren: Orbit auf dem
+neuen iPhone installieren, Einstellungen → Datensicherung → „Sicherung wiederherstellen …“ und die
+neueste Datei aus dem iCloud-Ordner wählen.

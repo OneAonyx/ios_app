@@ -4,9 +4,12 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Phase 8 – Apple Health über Kurzbefehle.** Schritte, Strecke, Schlaf, Gewicht und Ruhepuls
-kommen über einen Kurzbefehl aus Apple Health, Wasser und Gewicht gehen zurück, ohne
-Developer-Account. Aus Phase 7: **Arzt-Tagebuch.** Schmerzen mit Körperkarte und Stärke 0–10, Bewegung und Sport
+**Stand: Version 1.0 – Phase 9 Sicherheit und Feinschliff.** Die tägliche Sicherung landet auf Wunsch
+zusätzlich in einem Ordner deiner Wahl (z. B. iCloud Drive), Listen aus Apple Erinnerungen lassen sich
+einmalig übernehmen, eine Muskel-Karte zeigt das Wochenvolumen im Training, und Orbit bleibt auch nach
+Jahren an Daten schnell (geprüft mit einem Tempo-Test über zwei Jahre Beispieldaten). Aus Phase 8:
+Schritte, Strecke, Schlaf, Gewicht und Ruhepuls kommen über einen Kurzbefehl aus Apple Health, Wasser
+und Gewicht gehen zurück, ohne Developer-Account. Aus Phase 7: **Arzt-Tagebuch.** Schmerzen mit Körperkarte und Stärke 0–10, Bewegung und Sport
 (Gym zählt automatisch), beschwerdefreie Tage, Tagebuch-Check auf „Heute“ mit Abend-Erinnerung und
 ein Arztbericht mit Tag-für-Tag-Tabelle, Fragen an den Arzt und wählbaren Teilen. Aus Phase 6: Routinen und Gewohnheiten mit Serien, Verträge und
 Fristen mit Kündigungs-Erinnerung, Geburtstage, Tagebuch mit Top 3 für morgen. Dein eigener
@@ -28,6 +31,7 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
 | Apple Health über Kurzbefehle einrichten | [`docs/HEALTH-KURZBEFEHL.md`](docs/HEALTH-KURZBEFEHL.md) |
+| Version 1.0 auf dem iPhone testen | [`docs/PHASE9-CHECKLIST.md`](docs/PHASE9-CHECKLIST.md) |
 | Phase 8 auf dem iPhone testen | [`docs/PHASE8-CHECKLIST.md`](docs/PHASE8-CHECKLIST.md) |
 | Arzt-Tagebuch: was erfassen, Schmerzen, Bewegung, Arztbericht | [`docs/ARZT-TAGEBUCH.md`](docs/ARZT-TAGEBUCH.md) |
 | Phase 7 auf dem iPhone testen | [`docs/PHASE7-CHECKLIST.md`](docs/PHASE7-CHECKLIST.md) |

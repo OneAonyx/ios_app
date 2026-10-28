@@ -94,6 +94,7 @@ struct WorkoutSessionView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                 }
+                .accessibilityLabel("Weitere Aktionen")
             }
         }
         .confirmationDialog("Einheit beenden?", isPresented: $confirmFinish, titleVisibility: .visible) {
@@ -612,17 +613,17 @@ struct SetEditorSheet: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             HStack(spacing: Spacing.m) {
-                roundButton("minus", action: minus)
+                roundButton("minus", label: "\(title) verringern", action: minus)
                 Text(value)
                     .font(.system(size: 44, weight: .bold, design: .rounded).monospacedDigit())
                     .frame(minWidth: 110)
                     .contentTransition(.numericText())
-                roundButton("plus", action: plus)
+                roundButton("plus", label: "\(title) erhöhen", action: plus)
             }
         }
     }
 
-    private func roundButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+    private func roundButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button {
             withAnimation(.snappy) { action() }
         } label: {
@@ -633,6 +634,7 @@ struct SetEditorSheet: View {
                 .foregroundStyle(ModuleAccent.training)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 }
 

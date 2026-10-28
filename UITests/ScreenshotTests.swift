@@ -250,6 +250,46 @@ final class ScreenshotTests: XCTestCase {
         }
         tapTab("Heute", in: app)
         snap(app, "25-heute-nach-training")
+
+        // Muskel-Karte: erst nach einer Einheit sichtbar.
+        tapTab("Training", in: app)
+        let stats = app.buttons["training.stats"]
+        if scrollTo(stats, in: app), tapIfPresent(stats) {
+            let map = app.descendants(matching: .any)["muscleMap.front"]
+            if map.waitForExistence(timeout: 3) {
+                XCTAssertTrue(map.label.contains("Brust") || map.label.contains("Bizeps"), map.label)
+                snap(app, "64-muskelkarte")
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+    }
+
+    /// Phase 9: Import aus Erinnerungen, Sicherung in einen zweiten Ordner, große Schrift.
+    @MainActor
+    func testImportAndBackup() {
+        for (suffix, arguments) in [
+            ("hell", ["-forceLight"]),
+            ("gross", ["-forceLight", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"]),
+        ] {
+            let app = launch(extraArguments: arguments)
+            tapTab("Planer", in: app)
+            let importLink = app.buttons["lists.importReminders"]
+            if scrollTo(importLink, in: app, attempts: 6), tapIfPresent(importLink) {
+                // Kein Tipp auf „Zugriff erlauben“: Die Systemabfrage würde den Test blockieren.
+                XCTAssertTrue(app.buttons["reminderImport.allow"].waitForExistence(timeout: 3) || app.staticTexts["Erinnerungen werden gelesen …"].exists)
+                snap(app, "65-erinnerungen-import-\(suffix)")
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+            tapTab("Heute", in: app)
+            if tapIfPresent(app.buttons["today.settings"]) {
+                let external = app.buttons["backup.external"]
+                if scrollTo(external, in: app, attempts: 8) {
+                    snap(app, "66-sicherung-ordner-\(suffix)")
+                }
+                tapIfPresent(app.buttons["settings.done"])
+            }
+            app.terminate()
+        }
     }
 
     /// Arzt-Tagebuch: Heute-Karte, Schmerz mit Körperkarte, Verlauf, Bewegung, Bericht mit Tabelle.

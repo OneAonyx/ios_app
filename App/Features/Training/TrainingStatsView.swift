@@ -35,6 +35,7 @@ struct TrainingStatsView: View {
                         Image(systemName: "chevron.left")
                     }
                     .buttonStyle(.borderless)
+                    .accessibilityLabel("Vorige Woche")
                     Spacer()
                     Text(weekTitle(monday: monday, calendar: calendar))
                         .font(.subheadline.weight(.semibold))
@@ -45,6 +46,7 @@ struct TrainingStatsView: View {
                         Image(systemName: "chevron.right")
                     }
                     .buttonStyle(.borderless)
+                    .accessibilityLabel("Nächste Woche")
                     .disabled(weekOffset >= 0)
                 }
                 if volume.isEmpty {
@@ -70,6 +72,8 @@ struct TrainingStatsView: View {
                 }
                 .chartYScale(domain: 0...max(5, (weeklyCounts(calendar: calendar).map(\.value).max() ?? 0) + 1))
                 .frame(height: 160)
+                .accessibilityLabel("Einheiten pro Woche, letzte 8 Wochen")
+                .accessibilityValue(countsSpoken(weeklyCounts(calendar: calendar)))
             }
 
             if !lifts.isEmpty {
@@ -92,6 +96,8 @@ struct TrainingStatsView: View {
                         }
                         .chartYScale(domain: .automatic(includesZero: false))
                         .frame(height: 180)
+                        .accessibilityLabel("Kraftverlauf")
+                        .accessibilityValue(liftSpoken(Array(history)))
                     } else {
                         Text("Nach zwei Einheiten mit dieser Übung erscheint hier der Verlauf.")
                             .font(.footnote)
@@ -112,6 +118,20 @@ struct TrainingStatsView: View {
                 selectedLift = first.id
             }
         }
+    }
+
+    /// „Diese Woche 3, Schnitt 4,1 pro Woche“ für VoiceOver.
+    private func countsSpoken(_ points: [ChartPoint]) -> String {
+        let values = points.map(\.value)
+        guard let last = values.last else { return "keine Daten" }
+        let average = values.reduce(0, +) / Double(max(values.count, 1))
+        return "Diese Woche \(Int(last)), Schnitt \(WeightFormat.number((average * 10).rounded() / 10)) pro Woche"
+    }
+
+    /// „Von 92 auf 98 kg in 12 Einheiten“ für VoiceOver.
+    private func liftSpoken(_ points: [ChartPoint]) -> String {
+        guard let first = points.first, let last = points.last else { return "keine Daten" }
+        return "Von \(WeightFormat.number(first.value.rounded())) auf \(WeightFormat.number(last.value.rounded())) Kilogramm in \(points.count) Einheiten"
     }
 
     /// Grundübungen aus dem Verlauf (häufigste zuerst).

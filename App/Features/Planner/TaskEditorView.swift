@@ -279,6 +279,7 @@ struct SubtaskRow: View {
                     .foregroundStyle(subtask.isDone ? Color.green : Color.secondary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(subtask.isDone ? "Unteraufgabe erledigt" : "Unteraufgabe abhaken")
             .sensoryFeedback(.selection, trigger: subtask.isDone)
             TextField("Unteraufgabe", text: $subtask.title)
                 .strikethrough(subtask.isDone)

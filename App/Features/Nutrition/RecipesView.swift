@@ -283,6 +283,7 @@ struct MealPlanView: View {
                         Image(systemName: "chevron.left")
                     }
                     .buttonStyle(.borderless)
+                    .accessibilityLabel("Vorige Woche")
                     Spacer()
                     Text(weekOffset == 0 ? "Diese Woche" : (weekOffset == 1 ? "Nächste Woche" : "KW \(calendar.component(.weekOfYear, from: monday))"))
                         .font(.headline)
@@ -293,6 +294,7 @@ struct MealPlanView: View {
                         Image(systemName: "chevron.right")
                     }
                     .buttonStyle(.borderless)
+                    .accessibilityLabel("Nächste Woche")
                 }
             }
             ForEach(days, id: \.self) { day in
