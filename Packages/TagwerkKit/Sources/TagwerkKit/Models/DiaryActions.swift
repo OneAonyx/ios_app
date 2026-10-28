@@ -129,12 +129,16 @@ public enum DiaryActions {
         let records = (try? context.fetch(FetchDescriptor<DiaryDay>(predicate: #Predicate { $0.day >= first && $0.day < end }))) ?? []
         let flags = Dictionary(records.map { (calendar.startOfDay(for: $0.day), $0) }, uniquingKeysWith: { lhs, _ in lhs })
         let medications = MedicationActions.fetchAll(in: context).filter { $0.schedule.isScheduled }
+        // Einmal für den ganzen Zeitraum statt je Tag.
+        let dosesByDay = Dictionary(grouping: medications.flatMap { $0.entries(from: first, to: end, now: now, calendar: calendar) }) {
+            calendar.startOfDay(for: $0.dose.date)
+        }
         let health = Dictionary(HealthActions.facts(from: first, to: end, in: context).map { (calendar.startOfDay(for: $0.day), $0) }, uniquingKeysWith: { lhs, _ in lhs })
 
         var result: [DiaryDayFacts] = []
         var day = first
         while day < end {
-            let doses = medications.flatMap { $0.entries(on: day, now: now, calendar: calendar) }
+            let doses = dosesByDay[day] ?? []
             result.append(DiaryDayFacts(
                 day: day,
                 meals: meals[day]?.count ?? 0,
@@ -172,7 +176,7 @@ public enum DiaryActions {
         }
         var medications: [DiaryEvent] = []
         for medication in MedicationActions.fetchAll(in: context) {
-            for log in medication.logs ?? [] {
+            for log in medication.logsInRange(from: start, to: end) {
                 guard let date = log.takenAt ?? log.scheduledAt, date >= start, date < end else { continue }
                 let text = log.status == .taken ? medication.displayName : "ausgelassen: \(medication.displayName)"
                 medications.append(DiaryEvent(date: date, text: text))

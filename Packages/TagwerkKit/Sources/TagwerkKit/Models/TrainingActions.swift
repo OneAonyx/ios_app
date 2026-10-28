@@ -546,6 +546,18 @@ public enum TrainingActions {
         return VolumeCalculator.volume(exerciseIDs: ids, catalog: catalog)
     }
 
+    /// Höchstes Gewicht eines erledigten Arbeitssatzes vor einem Zeitpunkt (eine Zeile aus der Datenbank).
+    public static func heaviestWorkingSet(for exerciseID: String, before date: Date, in context: ModelContext) -> Double? {
+        let working = SetKind.working.rawValue
+        let future = Date.distantFuture
+        var descriptor = FetchDescriptor<SetLog>(
+            predicate: #Predicate { $0.exerciseID == exerciseID && $0.isDone && $0.kindRaw == working && ($0.completedAt ?? future) < date },
+            sortBy: [SortDescriptor(\.weight, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first?.weight
+    }
+
     public static func sessions(from start: Date, to end: Date, in context: ModelContext) -> [WorkoutSession] {
         let descriptor = FetchDescriptor<WorkoutSession>(
             predicate: #Predicate { $0.startedAt >= start && $0.startedAt < end },

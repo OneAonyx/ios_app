@@ -430,9 +430,7 @@ final class ScreenshotTests: XCTestCase {
         let finished = NSPredicate(format: "label BEGINSWITH 'Alle' OR label BEGINSWITH 'Fehlgeschlagen'")
         expectation(for: finished, evaluatedWith: summary)
         waitForExpectations(timeout: 300)
-        for result in app.descendants(matching: .any).matching(identifier: "perftest.result").allElementsBoundByIndex {
-            print(result.label)
-        }
+        print((summary.value as? String) ?? "")
         snap(app, "16-tempo")
         XCTAssertTrue(summary.label.hasPrefix("Alle"), summary.label)
     }

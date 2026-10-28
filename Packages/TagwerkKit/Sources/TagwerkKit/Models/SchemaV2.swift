@@ -264,11 +264,25 @@ extension TagwerkSchemaV2.Medication {
         let doses = scheduledDoses(from: from, to: to, calendar: calendar)
         guard !doses.isEmpty else { return [] }
         let window = DosePlanner.matchWindow
-        let relevantLogs = logFacts.filter { fact in
-            guard let scheduledAt = fact.scheduledAt else { return false }
-            return scheduledAt >= from.addingTimeInterval(-window) && scheduledAt < to.addingTimeInterval(window)
-        }
+        let relevantLogs = scheduledLogFacts(from: from.addingTimeInterval(-window), to: to.addingTimeInterval(window))
         return DosePlanner.entries(doses: doses, logs: relevantLogs, now: now, calendar: calendar)
+    }
+
+    /// Protokoll-Einträge mit geplantem Zeitpunkt im Zeitraum. Holt nur diese aus der Datenbank,
+    /// statt das ganze Protokoll durchzugehen (nach Jahren sind das Tausende Einträge).
+    public func scheduledLogFacts(from lower: Date, to upper: Date) -> [DoseLogFact] {
+        guard let context = modelContext else {
+            return logFacts.filter { fact in
+                guard let scheduledAt = fact.scheduledAt else { return false }
+                return scheduledAt >= lower && scheduledAt < upper
+            }
+        }
+        let id = stableID
+        let past = Date.distantPast
+        let descriptor = FetchDescriptor<DoseLog>(predicate: #Predicate { log in
+            log.medication?.stableID == id && (log.scheduledAt ?? past) >= lower && (log.scheduledAt ?? past) < upper
+        })
+        return ((try? context.fetch(descriptor)) ?? []).map(\.fact)
     }
 
     /// Einnahmen eines Tages.
@@ -279,8 +293,30 @@ extension TagwerkSchemaV2.Medication {
 
     /// Bei-Bedarf- und Zusatz-Einnahmen im Zeitraum, neueste zuerst.
     public func extraIntakes(from: Date, to: Date) -> [DoseLog] {
-        let ids = Set(DosePlanner.unscheduledIntakes(logFacts, from: from, to: to).map(\.id))
-        return sortedLogs.filter { ids.contains($0.stableID) }
+        let candidates = logsInRange(from: from, to: to)
+        let ids = Set(DosePlanner.unscheduledIntakes(candidates.map(\.fact), from: from, to: to).map(\.id))
+        return candidates
+            .filter { ids.contains($0.stableID) }
+            .sorted { ($0.takenAt ?? $0.scheduledAt ?? $0.createdAt) > ($1.takenAt ?? $1.scheduledAt ?? $1.createdAt) }
+    }
+
+    /// Protokoll-Einträge, die im Zeitraum genommen oder geplant waren. Holt nur diese aus der Datenbank.
+    public func logsInRange(from lower: Date, to upper: Date) -> [DoseLog] {
+        guard let context = modelContext else {
+            return (logs ?? []).filter { log in
+                [log.takenAt, log.scheduledAt].contains { date in date.map { $0 >= lower && $0 < upper } ?? false }
+            }
+        }
+        let id = stableID
+        let past = Date.distantPast
+        let taken = FetchDescriptor<DoseLog>(predicate: #Predicate { log in
+            log.medication?.stableID == id && (log.takenAt ?? past) >= lower && (log.takenAt ?? past) < upper
+        })
+        let planned = FetchDescriptor<DoseLog>(predicate: #Predicate { log in
+            log.medication?.stableID == id && (log.scheduledAt ?? past) >= lower && (log.scheduledAt ?? past) < upper
+        })
+        var seen = Set<String>()
+        return (((try? context.fetch(taken)) ?? []) + ((try? context.fetch(planned)) ?? [])).filter { seen.insert($0.stableID).inserted }
     }
 
     /// Vorrat-Prognose, `nil` ohne Vorratszählung.

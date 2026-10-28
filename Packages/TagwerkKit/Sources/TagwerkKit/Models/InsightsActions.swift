@@ -79,16 +79,16 @@ public enum InsightsActions {
         let end = calendar.date(byAdding: .day, value: 7, to: start) ?? start.addingTimeInterval(7 * 86_400)
         let until = min(end, now)
 
-        // Aufgaben
-        let tasks = (try? context.fetch(FetchDescriptor<TaskItem>())) ?? []
-        let completed = tasks.filter { task in
-            guard task.isDone, let done = task.completedAt else { return false }
-            return done >= start && done < end
-        }.count
-        let overdue = tasks.filter { task in
-            guard !task.isDone, let due = task.dueDate else { return false }
-            return due < calendar.startOfDay(for: until)
-        }.count
+        // Aufgaben: nur zählen, nicht alle laden.
+        let past = Date.distantPast
+        let future = Date.distantFuture
+        let dayOfUntil = calendar.startOfDay(for: until)
+        let completed = (try? context.fetchCount(FetchDescriptor<TaskItem>(predicate: #Predicate { task in
+            task.isDone && (task.completedAt ?? past) >= start && (task.completedAt ?? past) < end
+        }))) ?? 0
+        let overdue = (try? context.fetchCount(FetchDescriptor<TaskItem>(predicate: #Predicate { task in
+            !task.isDone && (task.dueDate ?? future) < dayOfUntil
+        }))) ?? 0
 
         // Medikamente
         var adherence = AdherenceSummary()
@@ -147,17 +147,17 @@ public enum InsightsActions {
     /// Neue Höchstgewichte der Woche gegenüber allen Einheiten davor.
     static func weekRecords(start: Date, end: Date, sessions: [WorkoutSession], in context: ModelContext) -> [String] {
         let catalog = TrainingActions.catalog(in: context)
-        let earlier = TrainingActions.finishedSessions(in: context, limit: 300).filter { $0.startedAt < start }
-        var previousBest: [String: Double] = [:]
-        for session in earlier {
-            for set in session.doneSets where set.kind == .working && set.weight > 0 {
-                previousBest[set.exerciseID] = max(previousBest[set.exerciseID] ?? 0, set.weight)
-            }
-        }
         var weekBest: [String: Double] = [:]
         for session in sessions {
             for set in session.doneSets where set.kind == .working && set.weight > 0 {
                 weekBest[set.exerciseID] = max(weekBest[set.exerciseID] ?? 0, set.weight)
+            }
+        }
+        // Bisheriges Höchstgewicht nur für die Übungen dieser Woche, je eine kleine Abfrage.
+        var previousBest: [String: Double] = [:]
+        for id in weekBest.keys {
+            if let best = TrainingActions.heaviestWorkingSet(for: id, before: start, in: context), best > 0 {
+                previousBest[id] = best
             }
         }
         return weekBest

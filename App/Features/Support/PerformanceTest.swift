@@ -278,6 +278,8 @@ struct PerformanceTestView: View {
                     Text(summary)
                         .font(.headline)
                         .accessibilityIdentifier("perftest.summary")
+                        // Alle Zeilen fürs CI-Log, auch die außerhalb des Bildschirms.
+                        .accessibilityValue(results.map(\.line).joined(separator: "\n"))
                 }
                 ForEach(results) { result in
                     VStack(alignment: .leading, spacing: 2) {
