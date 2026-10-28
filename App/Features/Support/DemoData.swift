@@ -65,7 +65,26 @@ enum DemoData {
         seedInsights(into: context, now: now, calendar: calendar)
         seedLife(into: context, now: now, calendar: calendar)
         seedDiary(into: context, now: now, calendar: calendar)
+        seedHealth(into: context, now: now, calendar: calendar)
         try? context.save()
+    }
+
+    /// 30 Tage Schritte und Strecke, als kämen sie über den Kurzbefehl aus Apple Health.
+    private static func seedHealth(into context: ModelContext, now: Date, calendar: Calendar) {
+        let today = calendar.startOfDay(for: now)
+        let pattern = [7_820, 9_410, 5_230, 11_870, 8_050, 4_310, 12_640, 6_980, 10_220, 7_390]
+        for offset in 0..<30 {
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
+            let steps = offset == 0 ? 6_412 : pattern[offset % pattern.count]
+            let values = HealthValues(
+                steps: steps,
+                distanceKm: Double(steps) * 0.00072,
+                flights: 4 + offset % 9,
+                sleepHours: offset == 0 ? nil : 6.4 + Double(offset % 5) * 0.35
+            )
+            HealthActions.importValues(values, day: day, now: day.addingTimeInterval(21.5 * 3_600), calendar: calendar, in: context)
+        }
+        UserDefaults.standard.set(now.addingTimeInterval(-2 * 3_600).timeIntervalSince1970, forKey: SettingsKeys.healthLastImport)
     }
 
     /// Arzt-Tagebuch: Schmerzen, Bewegung, beschwerdefreie Tage der letzten Wochen.

@@ -42,10 +42,12 @@ public struct DiaryReportInput: Sendable {
     public var medications: [DiaryEvent]
     public var checkIns: [CheckInFact]
     public var questions: String
+    /// Tageswerte aus Apple Health (Schritte, Schlaf …).
+    public var health: [HealthDayFact]
 
     public init(
         pains: [PainFact] = [], activities: [ActivityFact] = [], days: [DiaryDayFacts] = [], meals: [DiaryEvent] = [],
-        medications: [DiaryEvent] = [], checkIns: [CheckInFact] = [], questions: String = ""
+        medications: [DiaryEvent] = [], checkIns: [CheckInFact] = [], questions: String = "", health: [HealthDayFact] = []
     ) {
         self.pains = pains
         self.activities = activities
@@ -54,6 +56,7 @@ public struct DiaryReportInput: Sendable {
         self.medications = medications
         self.checkIns = checkIns
         self.questions = questions
+        self.health = health
     }
 }
 
@@ -95,6 +98,7 @@ extension DoctorReport {
         report.questions = input.questions.trimmingCharacters(in: .whitespacesAndNewlines)
         let hours = input.checkIns.filter { $0.day >= start && $0.day < to }.compactMap(\.sleepHours)
         report.averageSleepHours = hours.isEmpty ? nil : hours.reduce(0, +) / Double(hours.count)
+        report.health = HealthSummary.compute(input.health, from: start, to: to)
         report.diary = Self.diaryRows(input: input, pains: pains, activities: activities, days: days, symptoms: symptomLog, from: start, to: to, calendar: calendar)
         return report
     }
@@ -114,6 +118,7 @@ extension DoctorReport {
         let activitiesByDay = grouped(activities) { $0.date }
         let checkIns = Dictionary(input.checkIns.map { (calendar.startOfDay(for: $0.day), $0) }, uniquingKeysWith: { first, _ in first })
         let flags = Dictionary(days.map { (calendar.startOfDay(for: $0.day), $0) }, uniquingKeysWith: { first, _ in first })
+        let health = Dictionary(input.health.map { (calendar.startOfDay(for: $0.day), $0) }, uniquingKeysWith: { first, _ in first })
 
         var rows: [DiaryRow] = []
         var day = calendar.startOfDay(for: from)
@@ -133,6 +138,9 @@ extension DoctorReport {
             var activityTexts = (activitiesByDay[day] ?? []).map { "\(time($0.date)) \($0.summary)" }
             if activityTexts.isEmpty, flags[day]?.restDay == true {
                 activityTexts = ["Ruhetag"]
+            }
+            if let steps = health[day]?.stepsText {
+                activityTexts.append(steps)
             }
             rows.append(DiaryRow(
                 day: day,

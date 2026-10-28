@@ -77,3 +77,34 @@ public struct DiaryBackup: Codable, Sendable, Equatable {
 
     public var isEmpty: Bool { pains.isEmpty && activities.isEmpty && days.isEmpty }
 }
+
+public struct HealthDayRecord: Codable, Sendable, Equatable {
+    public var stableID: String
+    public var day: Date
+    public var steps: Int?
+    public var distanceKm: Double?
+    public var flights: Int?
+    public var sleepHours: Double?
+    public var restingHeartRate: Int?
+    public var updatedAt: Date
+
+    public init(stableID: String, day: Date, steps: Int?, distanceKm: Double?, flights: Int?, sleepHours: Double?, restingHeartRate: Int?, updatedAt: Date) {
+        self.stableID = stableID
+        self.day = day
+        self.steps = steps
+        self.distanceKm = distanceKm
+        self.flights = flights
+        self.sleepHours = sleepHours
+        self.restingHeartRate = restingHeartRate
+        self.updatedAt = updatedAt
+    }
+}
+
+/// Health-Tageswerte in der Datensicherung (ab 0.9).
+public struct HealthBackup: Codable, Sendable, Equatable {
+    public var days: [HealthDayRecord]
+
+    public init(days: [HealthDayRecord] = []) {
+        self.days = days
+    }
+}

@@ -82,7 +82,8 @@ public enum BackupService {
             nutrition: try NutritionBackupMapper.makeBackup(context: context),
             insights: try InsightsBackupMapper.makeBackup(context: context),
             life: try LifeBackupMapper.makeBackup(context: context),
-            diary: try DiaryBackupMapper.makeBackup(context: context)
+            diary: try DiaryBackupMapper.makeBackup(context: context),
+            health: try HealthBackupMapper.makeBackup(context: context)
         )
     }
 
@@ -130,6 +131,8 @@ public enum BackupService {
         public let lifeEntries: Int
         /// Schmerzen und Bewegung.
         public let diaryEntries: Int
+        /// Tage mit Werten aus Apple Health.
+        public let healthDays: Int
     }
 
     /// Ersetzt alle Aufgaben, Listen, Medikamente, Trainings-, Ernährungs- und Einblicke-Daten durch den Inhalt der Sicherung.
@@ -250,6 +253,10 @@ public enum BackupService {
         if let diary = document.diary {
             try DiaryBackupMapper.restore(diary, context: context)
         }
+        // Ebenso ohne Health-Tageswerte (Sicherungen vor Version 0.9).
+        if let health = document.health {
+            try HealthBackupMapper.restore(health, context: context)
+        }
 
         let defaults = UserDefaults.standard
         for (key, value) in document.settings where SettingsKeys.backedUp.contains(key) {
@@ -278,7 +285,8 @@ public enum BackupService {
             meals: document.nutrition?.meals.count ?? 0,
             checkIns: document.insights?.checkIns.count ?? 0,
             lifeEntries: document.life.map { $0.habits.count + $0.contracts.count + $0.birthdays.count } ?? 0,
-            diaryEntries: document.diary.map { $0.pains.count + $0.activities.count } ?? 0
+            diaryEntries: document.diary.map { $0.pains.count + $0.activities.count } ?? 0,
+            healthDays: document.health?.days.count ?? 0
         )
     }
 }

@@ -260,7 +260,7 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 7
+    private let currentPhase = 8
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
@@ -270,8 +270,8 @@ struct RoadmapView: View {
         Phase(id: 4, title: "Ernährung & Histamin", detail: "Abgeschlossen: Lexikon, Barcode- und Zutaten-Scan, Tagebuch mit Tageslast, Beschwerden und Muster, Einkauf, Rezepte, Wochenplan.", systemImage: "fork.knife"),
         Phase(id: 5, title: "Einblicke & Claude-Brücke", detail: "Abgeschlossen: Check-ins, Wochenrückblick, Arztbericht als PDF, Claude für Trainingsplan, Lebensmittel, Rezepte, Muster und Rückblick.", systemImage: "sparkles"),
         Phase(id: 6, title: "Leben & Feinschliff", detail: "Abgeschlossen: Routinen, Verträge, Geburtstage, Tagebuch, Fortschritt und Fotos, Widgets Heute und Aufgaben, Spotlight, Fokus-Filter, App-Sperre, Gym-Ankunft.", systemImage: "wand.and.stars"),
-        Phase(id: 7, title: "Arzt-Tagebuch", detail: "Schmerzen mit Körperkarte, Bewegung und Sport, beschwerdefreie Tage, Tagebuch-Check, Arztbericht mit Tag-für-Tag-Tabelle.", systemImage: "stethoscope"),
-        Phase(id: 8, title: "Apple Health über Kurzbefehle", detail: "Schritte, Schlaf, Gewicht und Puls aus Health, ohne Developer-Account.", systemImage: "heart.text.square"),
+        Phase(id: 7, title: "Arzt-Tagebuch", detail: "Abgeschlossen: Schmerzen mit Körperkarte, Bewegung und Sport, beschwerdefreie Tage, Tagebuch-Check, Arztbericht mit Tag-für-Tag-Tabelle.", systemImage: "stethoscope"),
+        Phase(id: 8, title: "Apple Health über Kurzbefehle", detail: "Schritte, Strecke, Schlaf, Gewicht und Puls aus Health über einen Kurzbefehl, Wasser und Gewicht zurück nach Health.", systemImage: "heart.text.square"),
         Phase(id: 9, title: "Sicherheit & Feinschliff", detail: "Sicherung in iCloud Drive, Import aus Erinnerungen, Muskel-Karte, Tempo und Bedienungshilfen.", systemImage: "lock.shield"),
     ]
 

@@ -473,10 +473,16 @@ private struct ReportSymptomsActivityPage: View {
             if sections.contains(.activity) {
                 ReportHeading("Bewegung und Sport")
                 if report.activities.isEmpty {
-                    Text("Im Zeitraum keine Bewegung und kein Training eingetragen.").font(ReportStyle.body)
+                    Text(report.noActivityText)
+                        .font(ReportStyle.body)
                 } else {
                     Text("\(report.activities.count) Einheiten, davon \(report.activities.filter { $0.kind == .gym }.count) im Gym. Balken: Minuten je Woche, Linie: 150 Minuten (WHO-Empfehlung für mittlere Bewegung).")
                         .font(ReportStyle.body)
+                    if let steps = report.health.stepsText {
+                        Text(steps + " laut Apple Health.")
+                            .font(ReportStyle.body)
+                            .padding(.top, 2)
+                    }
                     Chart {
                         ForEach(report.activityWeeks) { week in
                             BarMark(x: .value("Woche", week.weekStart, unit: .weekOfYear), y: .value("Minuten", week.minutes))
@@ -510,6 +516,15 @@ private struct ReportSymptomsActivityPage: View {
                 }
             }
         }
+    }
+}
+
+extension DoctorReport {
+    /// Ohne Bewegungseinträge, mit Schritten aus Health, falls vorhanden.
+    var noActivityText: String {
+        var text = "Im Zeitraum keine Bewegung und kein Training eingetragen."
+        if let steps = health.stepsText { text += " \(steps) laut Apple Health." }
+        return text
     }
 }
 
@@ -646,7 +661,7 @@ private struct ReportSecondPage: View {
     private var wellbeing: some View {
             if report.checkIns.days > 0 {
                 ReportHeading("Befinden und Schlaf (tägliche Check-ins)")
-                Text("\(report.checkIns.days) Tage mit Check-in. Skala 1–5, bei Stress ist niedrig gut." + (report.averageSleepHours.map { " Schlafdauer Ø \(WeightFormat.number(($0 * 10).rounded() / 10)) Std." } ?? ""))
+                Text(wellbeingIntro)
                     .font(ReportStyle.body)
                 HStack(spacing: 18) {
                     ForEach(CheckInScale.allCases) { scale in
@@ -689,6 +704,17 @@ private struct ReportSecondPage: View {
                     .padding(.top, 8)
                 }
             }
+    }
+
+    private var wellbeingIntro: String {
+        var text = "\(report.checkIns.days) Tage mit Check-in. Skala 1–5, bei Stress ist niedrig gut."
+        if let sleep = report.averageSleepHours {
+            text += " Schlafdauer Ø \(WeightFormat.number((sleep * 10).rounded() / 10)) Std."
+        }
+        if let pulse = report.health.averageRestingHeartRate {
+            text += " Ruhepuls Ø \(pulse) /min (Apple Health)."
+        }
+        return text
     }
 
     private var nutritionSummary: String {

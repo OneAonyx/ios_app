@@ -287,6 +287,16 @@ final class ScreenshotTests: XCTestCase {
             }
             tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
         }
+        let bridge = app.buttons["health.bridge"]
+        if scrollTo(bridge, in: app), tapIfPresent(bridge) {
+            snap(app, "80-apple-health")
+            let guide = app.buttons["healthBridge.guide"]
+            if scrollTo(guide, in: app), tapIfPresent(guide) {
+                snap(app, "81-health-anleitung")
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
         let report = app.buttons["health.report"]
         if scrollTo(report, in: app), tapIfPresent(report) {
             snap(app, "77-arztbericht")

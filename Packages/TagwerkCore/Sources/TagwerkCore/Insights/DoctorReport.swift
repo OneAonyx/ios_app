@@ -97,6 +97,8 @@ public struct DoctorReport: Sendable {
     public var diary: [DiaryRow] = []
     public var questions: String = ""
     public var averageSleepHours: Double?
+    /// Schritte, Schlaf und Ruhepuls aus Apple Health (über den Kurzbefehl).
+    public var health: HealthSummary = .empty
 
     public static func make(
         from: Date,

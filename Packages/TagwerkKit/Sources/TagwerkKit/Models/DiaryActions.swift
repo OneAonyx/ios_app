@@ -129,6 +129,7 @@ public enum DiaryActions {
         let records = (try? context.fetch(FetchDescriptor<DiaryDay>(predicate: #Predicate { $0.day >= first && $0.day < end }))) ?? []
         let flags = Dictionary(records.map { (calendar.startOfDay(for: $0.day), $0) }, uniquingKeysWith: { lhs, _ in lhs })
         let medications = MedicationActions.fetchAll(in: context).filter { $0.schedule.isScheduled }
+        let health = Dictionary(HealthActions.facts(from: first, to: end, in: context).map { (calendar.startOfDay(for: $0.day), $0) }, uniquingKeysWith: { lhs, _ in lhs })
 
         var result: [DiaryDayFacts] = []
         var day = first
@@ -145,7 +146,8 @@ public enum DiaryActions {
                 restDay: flags[day]?.restDay ?? false,
                 dosesDue: doses.count,
                 dosesResolved: doses.filter(\.isResolved).count,
-                checkIn: checkIns.contains(day)
+                checkIn: checkIns.contains(day),
+                steps: health[day]?.steps ?? 0
             ))
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
             day = next
@@ -183,7 +185,8 @@ public enum DiaryActions {
             meals: meals,
             medications: medications,
             checkIns: InsightsActions.checkIns(from: start, to: end, in: context).map(\.fact),
-            questions: questions
+            questions: questions,
+            health: HealthActions.facts(from: start, to: end, in: context)
         )
     }
 

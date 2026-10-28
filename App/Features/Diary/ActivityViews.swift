@@ -232,6 +232,7 @@ struct ActivityHistoryView: View {
                 }
                 .frame(height: 140)
                 .accessibilityLabel("Bewegungsminuten der letzten 8 Wochen")
+                StepsLine(now: now)
             } header: {
                 Text("Bewegung")
             }
@@ -292,5 +293,35 @@ struct ActivityHistoryView: View {
         let days = week?.activeDays ?? 0
         let sessions = week?.sessions ?? 0
         return "\(minutes) Min. an \(days) \(days == 1 ? "Tag" : "Tagen"), \(sessions) \(sessions == 1 ? "Einheit" : "Einheiten")"
+    }
+}
+
+/// Schritte aus Apple Health (über den Kurzbefehl), falls vorhanden.
+private struct StepsLine: View {
+    let now: Date
+
+    @Query(sort: \HealthDay.day, order: .reverse) private var days: [HealthDay]
+
+    var body: some View {
+        let calendar = AppModel.calendar
+        let weekAgo = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: now)) ?? now
+        let week = HealthSummary.compute(days.map(\.fact), from: weekAgo, to: now.addingTimeInterval(1))
+        let today = days.first { calendar.isDate($0.day, inSameDayAs: now) }?.steps
+        if today != nil || week.averageSteps != nil {
+            Label {
+                Text(text(today: today, average: week.averageSteps))
+                    .font(.subheadline)
+            } icon: {
+                Image(systemName: "shoeprints.fill")
+                    .foregroundStyle(.pink)
+            }
+        }
+    }
+
+    private func text(today: Int?, average: Int?) -> String {
+        var parts: [String] = []
+        if let today { parts.append("Heute \(GermanNumber.grouped(today)) Schritte") }
+        if let average { parts.append("Ø \(GermanNumber.grouped(average)) in 7 Tagen") }
+        return parts.joined(separator: " · ")
     }
 }

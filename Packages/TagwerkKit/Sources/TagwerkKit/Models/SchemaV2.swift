@@ -114,12 +114,18 @@ public typealias DoseLog = TagwerkSchemaV2.DoseLog
 
 public enum TagwerkMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [TagwerkSchemaV1.self, TagwerkSchemaV2.self, TagwerkSchemaV3.self, TagwerkSchemaV4.self, TagwerkSchemaV5.self, TagwerkSchemaV6.self, TagwerkSchemaV7.self]
+        [TagwerkSchemaV1.self, TagwerkSchemaV2.self, TagwerkSchemaV3.self, TagwerkSchemaV4.self, TagwerkSchemaV5.self, TagwerkSchemaV6.self, TagwerkSchemaV7.self, TagwerkSchemaV8.self]
     }
 
     public static var stages: [MigrationStage] {
-        [migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7]
+        [migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8]
     }
+
+    /// Nur eine neue Tabelle (Health-Tageswerte): SwiftData migriert selbst.
+    static let migrateV7toV8 = MigrationStage.lightweight(
+        fromVersion: TagwerkSchemaV7.self,
+        toVersion: TagwerkSchemaV8.self
+    )
 
     /// Nur neue Tabellen (Arzt-Tagebuch): SwiftData migriert selbst.
     static let migrateV6toV7 = MigrationStage.lightweight(

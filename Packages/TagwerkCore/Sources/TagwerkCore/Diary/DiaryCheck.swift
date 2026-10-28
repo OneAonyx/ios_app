@@ -17,10 +17,12 @@ public struct DiaryDayFacts: Sendable, Hashable {
     public var dosesDue: Int
     public var dosesResolved: Int
     public var checkIn: Bool
+    /// Schritte aus Apple Health (über den Kurzbefehl), 0 = keine.
+    public var steps: Int
 
     public init(
         day: Date, meals: Int = 0, symptoms: Int = 0, pains: Int = 0, symptomFree: Bool = false, activities: Int = 0,
-        gymSessions: Int = 0, restDay: Bool = false, dosesDue: Int = 0, dosesResolved: Int = 0, checkIn: Bool = false
+        gymSessions: Int = 0, restDay: Bool = false, dosesDue: Int = 0, dosesResolved: Int = 0, checkIn: Bool = false, steps: Int = 0
     ) {
         self.day = day
         self.meals = meals
@@ -33,12 +35,13 @@ public struct DiaryDayFacts: Sendable, Hashable {
         self.dosesDue = dosesDue
         self.dosesResolved = dosesResolved
         self.checkIn = checkIn
+        self.steps = steps
     }
 
     public var hasMeals: Bool { meals > 0 }
     /// Beschwerden oder Schmerzen eingetragen, oder ausdrücklich „keine“.
     public var hasSymptomInfo: Bool { symptoms + pains > 0 || symptomFree }
-    public var hasActivityInfo: Bool { activities + gymSessions > 0 || restDay }
+    public var hasActivityInfo: Bool { activities + gymSessions > 0 || restDay || steps > 0 }
     public var medicationsDone: Bool { dosesResolved >= dosesDue }
     /// Für den Bericht reicht: Essen und Beschwerden.
     public var isComplete: Bool { hasMeals && hasSymptomInfo }
@@ -101,7 +104,8 @@ public enum DiaryCheck {
     static func activityDetail(_ facts: DiaryDayFacts) -> String {
         let count = facts.activities + facts.gymSessions
         if count > 0 { return facts.gymSessions > 0 && facts.activities == 0 ? "Gym" : (count == 1 ? "1 Eintrag" : "\(count) Einträge") }
-        return facts.restDay ? "Ruhetag" : "noch offen"
+        if facts.restDay { return "Ruhetag" }
+        return facts.steps > 0 ? "\(GermanNumber.grouped(facts.steps)) Schritte" : "noch offen"
     }
 
     /// Erinnerung am Abend, nur wenn Essen oder Beschwerden noch fehlen.

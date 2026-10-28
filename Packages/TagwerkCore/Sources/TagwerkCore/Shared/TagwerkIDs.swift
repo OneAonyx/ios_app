@@ -45,6 +45,10 @@ public enum SettingsKeys {
     public static let diaryReminderMinute = "tagwerk.settings.diaryReminderMinute"
     /// „Fragen an den Arzt“ für den nächsten Bericht.
     public static let doctorQuestions = "tagwerk.settings.doctorQuestions"
+    /// Health-Brücke: letzte Übergabe, was schon nach Health ging (nicht in der Sicherung).
+    public static let healthLastImport = "tagwerk.health.lastImport"
+    public static let healthWaterMarker = "tagwerk.health.waterMarker"
+    public static let healthWeightExportedAt = "tagwerk.health.weightExportedAt"
 
     /// Diese Einstellungen wandern mit in die Datensicherung.
     public static let backedUp = [

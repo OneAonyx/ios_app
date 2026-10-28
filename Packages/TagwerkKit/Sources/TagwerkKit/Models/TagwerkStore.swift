@@ -8,7 +8,7 @@ import SwiftData
 public enum TagwerkStore {
     public static let fileName = "Tagwerk.store"
     /// Aktuelle Schema-Version. Ändert sie sich, wird der Speicher vorher kopiert.
-    public static let schemaVersion = 7
+    public static let schemaVersion = 8
     static let schemaVersionKey = "tagwerk.store.schemaVersion"
 
     public static var storeURL: URL? {
@@ -24,7 +24,7 @@ public enum TagwerkStore {
     /// `url == nil` erstellt einen Speicher nur im Arbeitsspeicher (UI-Tests, Vorschauen).
     @MainActor
     public static func makeContainer(at url: URL?, defaults: UserDefaults = .standard) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: TagwerkSchemaV7.self)
+        let schema = Schema(versionedSchema: TagwerkSchemaV8.self)
         let configuration: ModelConfiguration
         if let url {
             copyBeforeMigrationIfNeeded(storeURL: url, defaults: defaults)

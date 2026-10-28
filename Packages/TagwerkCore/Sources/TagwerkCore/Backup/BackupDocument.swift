@@ -26,6 +26,8 @@ public struct BackupDocument: Codable, Sendable, Equatable {
     public var life: LifeBackup?
     /// Ab Version 0.8 (Arzt-Tagebuch). Fehlt in älteren Sicherungen.
     public var diary: DiaryBackup?
+    /// Ab Version 0.9 (Apple Health über Kurzbefehle). Fehlt in älteren Sicherungen.
+    public var health: HealthBackup?
 
     public init(
         format: String = BackupDocument.currentFormat,
@@ -40,7 +42,8 @@ public struct BackupDocument: Codable, Sendable, Equatable {
         nutrition: NutritionBackup? = nil,
         insights: InsightsBackup? = nil,
         life: LifeBackup? = nil,
-        diary: DiaryBackup? = nil
+        diary: DiaryBackup? = nil,
+        health: HealthBackup? = nil
     ) {
         self.format = format
         self.createdAt = createdAt
@@ -55,6 +58,7 @@ public struct BackupDocument: Codable, Sendable, Equatable {
         self.insights = insights
         self.life = life
         self.diary = diary
+        self.health = health
     }
 }
 

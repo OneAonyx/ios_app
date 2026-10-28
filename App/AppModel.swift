@@ -57,6 +57,8 @@ final class AppModel {
     /// Arzt-Tagebuch: Schmerz oder Bewegung eintragen.
     var isAddingPain = false
     var isAddingActivity = false
+    /// Rückmeldung des Kurzbefehls „Orbit Health“.
+    var healthMessage: String?
     /// Einblicke: Check-in, Wochenrückblick, Claude-Zentrale und eine Claude-Anfrage im eigenen Blatt.
     var isShowingCheckIn = false
     var presentedReview: ReviewLink?
@@ -206,6 +208,8 @@ final class AppModel {
             openActivityEntry()
         case "tagebuch", "diary":
             openDiary()
+        case "healthbridge":
+            handleHealthCallback(url)
         case "heute", "today":
             dismissPanels()
             selectedTab = .today
@@ -395,6 +399,30 @@ final class AppModel {
     /// Nach Schmerzen, Bewegung oder Tages-Vermerken: Erinnerung und Widgets neu.
     func diaryChanged() {
         scheduleRefresh()
+    }
+
+    // MARK: Apple Health über Kurzbefehle
+
+    /// Neue Health-Werte: Tagebuch-Check, Widgets, Erinnerungen.
+    func healthChanged() {
+        scheduleRefresh()
+    }
+
+    /// `tagwerk://healthbridge/success|cancel|error` nach dem Kurzbefehl „Orbit Health“.
+    private func handleHealthCallback(_ url: URL) {
+        let outcome = url.pathComponents.filter { $0 != "/" }.first ?? ""
+        switch outcome {
+        case "success":
+            healthMessage = "Werte aus Health übernommen."
+        case "cancel":
+            healthMessage = nil
+        case "error":
+            let message = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "errorMessage" }?.value
+            healthMessage = "Fehler im Kurzbefehl: " + (message ?? "unbekannt. Heißt er genau „\(HealthShortcut.name)“?")
+        default:
+            break
+        }
+        openDiary()
     }
 
     // MARK: Spotlight

@@ -91,6 +91,7 @@ struct HealthView: View {
                     }
                 }
                 DiaryHealthCard(now: now)
+                HealthBridgeCard(now: now)
                 SymptomsHealthCard(now: now)
                 InsightsHealthCard(now: now)
                 Text("Orbit hilft beim Erinnern und Protokollieren und ersetzt keine ärztliche Beratung.")
