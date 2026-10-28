@@ -49,7 +49,7 @@ struct PainEditorView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @State private var side: BodyView = .front
+    @State private var side: BodyMapSide = .front
     @State private var regions: [BodyRegion] = []
     @State private var intensity = 5
     @State private var qualities: Set<PainQuality> = []
@@ -71,7 +71,7 @@ struct PainEditorView: View {
             Form {
                 Section {
                     Picker("Ansicht", selection: $side) {
-                        ForEach(BodyView.allCases) { view in
+                        ForEach(BodyMapSide.allCases) { view in
                             Text(view.title).tag(view)
                         }
                     }

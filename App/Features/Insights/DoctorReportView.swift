@@ -812,13 +812,20 @@ private struct ReportPainLogPage: View {
                         Text(fact.date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).hour().minute()))
                         Text(fact.regionText)
                         Text("\(fact.intensity)/10")
-                        Text(([fact.qualities.map(\.title).joined(separator: ", ")] + [fact.durationMinutes.map(DurationText.short) ?? ""]).filter { !$0.isEmpty }.joined(separator: " · "))
+                        Text(kind(fact))
                         Text(details(fact))
                             .lineLimit(3)
                     }
                 }
             }
         }
+    }
+
+    private func kind(_ fact: PainFact) -> String {
+        var parts: [String] = []
+        if !fact.qualities.isEmpty { parts.append(fact.qualities.map(\.title).joined(separator: ", ")) }
+        if let minutes = fact.durationMinutes { parts.append(DurationText.short(minutes)) }
+        return parts.joined(separator: " · ")
     }
 
     private func details(_ fact: PainFact) -> String {

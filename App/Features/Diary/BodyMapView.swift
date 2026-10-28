@@ -4,7 +4,7 @@ import TagwerkKit
 
 /// Körperkarte zum Antippen. Vorne liegt die linke Körperseite rechts im Bild (wie beim Gegenüber).
 struct BodyMapView: View {
-    let view: BodyView
+    let view: BodyMapSide
     var selected: Set<BodyRegion> = []
     /// Anzahl je Region für die Übersicht (größere, kräftigere Punkte).
     var counts: [BodyRegion: Int] = [:]
@@ -130,7 +130,7 @@ struct BodyHeatMap: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.m) {
-            ForEach(BodyView.allCases) { side in
+            ForEach(BodyMapSide.allCases) { side in
                 VStack(spacing: Spacing.xxs) {
                     BodyMapView(view: side, counts: counts)
                     Text(side.title)

@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Körperkarte
 
 /// Ansicht der Körperkarte.
-public enum BodyView: String, Codable, Sendable, CaseIterable, Identifiable {
+public enum BodyMapSide: String, Codable, Sendable, CaseIterable, Identifiable {
     case front, back
 
     public var id: String { rawValue }
@@ -83,7 +83,7 @@ public enum BodyRegion: String, Codable, Sendable, CaseIterable, Identifiable {
     }
 
     /// Wo die Region auf der Karte liegt. In der Vorderansicht ist links die rechte Körperseite.
-    public var positions: [BodyView: BodyPoint] {
+    public var positions: [BodyMapSide: BodyPoint] {
         func pair(_ offset: Double) -> (front: Double, back: Double) {
             // Vorne: linke Körperseite rechts im Bild. Hinten: linke Seite links im Bild.
             let left = isLeft == true
@@ -122,7 +122,7 @@ public enum BodyRegion: String, Codable, Sendable, CaseIterable, Identifiable {
         }
     }
 
-    public static func regions(on view: BodyView) -> [BodyRegion] {
+    public static func regions(on view: BodyMapSide) -> [BodyRegion] {
         allCases.filter { $0.positions[view] != nil }
     }
 }
