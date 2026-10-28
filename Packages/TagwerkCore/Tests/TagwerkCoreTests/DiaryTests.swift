@@ -127,7 +127,11 @@ struct DiaryCheckTests {
                 DiaryDayFacts(day: date(2026, 10, 22)),
             ],
             meals: [DiaryEvent(date: date(2026, 10, 20, 12, 30), text: "Reis, Hähnchen"), DiaryEvent(date: date(2026, 10, 20, 8), text: "Haferflocken")],
-            medications: [DiaryEvent(date: date(2026, 10, 20, 11, 45), text: "DAO-Enzym")],
+            medications: [
+                DiaryEvent(date: date(2026, 10, 20, 18, 45), text: "DAO-Enzym"),
+                DiaryEvent(date: date(2026, 10, 20, 11, 45), text: "DAO-Enzym"),
+                DiaryEvent(date: date(2026, 10, 20, 8), text: "ausgelassen: Vitamin D"),
+            ],
             checkIns: [CheckInFact(day: date(2026, 10, 21), sleepHours: 7.5, mood: 4, stress: 2)],
             questions: "  Ist das Histamin?  "
         )
@@ -136,11 +140,12 @@ struct DiaryCheckTests {
         let first = report.diary[0]
         #expect(first.meals == ["08:00 Haferflocken", "12:30 Reis, Hähnchen"])
         #expect(first.complaints == ["09:00 Schmerz: Unterer Rücken 6/10, stechend", "14:00 Kopfschmerz 3/5, 2 Std."])
-        #expect(first.medications == ["11:45 DAO-Enzym"])
+        #expect(first.medications == ["ausgelassen: Vitamin D: 08:00", "DAO-Enzym: 11:45, 18:45"])
         #expect(first.activities == ["Ruhetag"])
         #expect(report.diary[1].complaints == ["keine"])
         #expect(report.diary[1].activities == ["18:00 Gym 1 Std., intensiv"])
         #expect(report.diary[1].wellbeing == "Schlaf 7,5 Std. · Stimmung 4/5 · Stress 2/5")
+        #expect(report.diary[1].wellbeingLines.count == 3)
         #expect(report.diary[2].isEmpty)
         #expect(report.painSummary.count == 1 && report.activityWeeks.count == 1)
         #expect(report.completeness.complete == 2)
@@ -149,7 +154,7 @@ struct DiaryCheckTests {
     }
 
     @Test func paginationKeepsRowsTogether() {
-        let long = String(repeating: "x", count: 90)
+        let long = String(repeating: "x", count: 80)
         let rows = (0..<10).map { index in
             DiaryRow(day: date(2026, 10, 1 + index), meals: [long, "kurz"], complaints: [], medications: [], activities: [], wellbeing: nil)
         }

@@ -740,7 +740,7 @@ private struct ReportDiaryPage: View {
     let isFirst: Bool
     let calendar: Calendar
 
-    static let widths: [CGFloat] = [0.1, 0.29, 0.25, 0.13, 0.12, 0.11]
+    static let widths: [CGFloat] = [0.08, 0.27, 0.22, 0.2, 0.12, 0.11]
     static let tiny = Font.system(size: 7.5)
 
     var body: some View {
@@ -772,7 +772,7 @@ private struct ReportDiaryPage: View {
                     cell(row.complaints, empty: "", highlight: true)
                     cell(row.medications, empty: "")
                     cell(row.activities, empty: "")
-                    cell(row.wellbeing.map { [$0] } ?? [], empty: "")
+                    cell(row.wellbeingLines, empty: "")
                 }
                 .font(Self.tiny)
                 .padding(.vertical, 2)

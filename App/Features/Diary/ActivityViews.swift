@@ -208,7 +208,7 @@ struct ActivityHistoryView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Diese Woche")
                             .font(.headline)
-                        Text("\(thisWeek?.minutes ?? 0) Min. an \(thisWeek?.activeDays ?? 0) Tagen, \(thisWeek?.sessions ?? 0) Einheiten")
+                        Text(weekText(thisWeek))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Text("Ziel: 150 Min. mittel oder 75 Min. intensiv pro Woche (intensiv zählt doppelt).")
@@ -225,7 +225,8 @@ struct ActivityHistoryView: View {
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
                 }
                 .chartXAxis {
-                    AxisMarks(values: .stride(by: .weekOfYear)) { _ in
+                    AxisMarks(values: .stride(by: .weekOfYear, count: 2)) { _ in
+                        AxisGridLine()
                         AxisValueLabel(format: .dateTime.day().month(.abbreviated))
                     }
                 }
@@ -283,5 +284,13 @@ struct ActivityHistoryView: View {
         .sheet(item: $editing) { entry in
             ActivityEditorView(entry: entry)
         }
+    }
+
+    /// „50 Min. an 1 Tag, 2 Einheiten“
+    private func weekText(_ week: ActivityWeek?) -> String {
+        let minutes = week?.minutes ?? 0
+        let days = week?.activeDays ?? 0
+        let sessions = week?.sessions ?? 0
+        return "\(minutes) Min. an \(days) \(days == 1 ? "Tag" : "Tagen"), \(sessions) \(sessions == 1 ? "Einheit" : "Einheiten")"
     }
 }

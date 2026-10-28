@@ -26,6 +26,11 @@ public struct DiaryRow: Sendable, Hashable, Identifiable {
     public var isEmpty: Bool {
         meals.isEmpty && complaints.isEmpty && medications.isEmpty && activities.isEmpty && wellbeing == nil
     }
+
+    /// Befinden zeilenweise („Schlaf 7,5 Std.“, „Stimmung 4/5“ …).
+    public var wellbeingLines: [String] {
+        wellbeing.map { $0.components(separatedBy: " · ") } ?? []
+    }
 }
 
 /// Alles fürs Arzt-Tagebuch im Bericht.
@@ -133,7 +138,7 @@ extension DoctorReport {
                 day: day,
                 meals: (meals[day] ?? []).map { "\(time($0.date)) \($0.text)" },
                 complaints: complaintTexts,
-                medications: (meds[day] ?? []).map { "\(time($0.date)) \($0.text)" },
+                medications: groupedMedications(meds[day] ?? [], time: time),
                 activities: activityTexts,
                 wellbeing: checkIns[day].flatMap(wellbeingText)
             ))
@@ -141,6 +146,17 @@ extension DoctorReport {
             day = next
         }
         return rows
+    }
+
+    /// Einnahmen eines Tages je Medikament: „DAO-Enzym: 07:45, 12:15, 18:45“.
+    static func groupedMedications(_ events: [DiaryEvent], time: (Date) -> String) -> [String] {
+        var order: [String] = []
+        var times: [String: [String]] = [:]
+        for event in events.sorted(by: { $0.date < $1.date }) {
+            if times[event.text] == nil { order.append(event.text) }
+            times[event.text, default: []].append(time(event.date))
+        }
+        return order.map { "\($0): \(times[$0, default: []].joined(separator: ", "))" }
     }
 
     /// „Schlaf 7,5 Std. · Stimmung 4 · Stress 2“
@@ -157,10 +173,10 @@ extension DoctorReport {
 /// Verteilt die Tag-für-Tag-Tabelle auf Seiten. Geschätzt wird über Textlänge je Spalte.
 public enum DiaryPagination {
     /// Zeichen pro Zeile je Spalte (Essen, Beschwerden, Medikamente, Bewegung, Befinden).
-    public static let charsPerLine = [36, 31, 16, 15, 14]
+    public static let charsPerLine = [34, 28, 25, 15, 14]
 
     public static func lines(_ row: DiaryRow) -> Int {
-        let columns = [row.meals, row.complaints, row.medications, row.activities, row.wellbeing.map { [$0] } ?? []]
+        let columns = [row.meals, row.complaints, row.medications, row.activities, row.wellbeingLines]
         let perColumn = zip(columns, charsPerLine).map { items, width in
             items.reduce(0) { $0 + max(1, Int((Double($1.count) / Double(width)).rounded(.up))) }
         }

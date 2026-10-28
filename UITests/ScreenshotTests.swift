@@ -296,8 +296,7 @@ final class ScreenshotTests: XCTestCase {
             if scrollTo(build, in: app), tapIfPresent(build) {
                 Thread.sleep(forTimeInterval: 2)
                 snap(app, "79-bericht-seite-1")
-                for page in 2...5 {
-                    app.swipeUp()
+                for page in 2...8 {
                     app.swipeUp()
                     Thread.sleep(forTimeInterval: 0.5)
                     snap(app, "79-bericht-seite-\(page)")
