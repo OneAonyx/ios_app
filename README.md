@@ -4,7 +4,9 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Phase 7 – Arzt-Tagebuch.** Schmerzen mit Körperkarte und Stärke 0–10, Bewegung und Sport
+**Stand: Phase 8 – Apple Health über Kurzbefehle.** Schritte, Strecke, Schlaf, Gewicht und Ruhepuls
+kommen über einen Kurzbefehl aus Apple Health, Wasser und Gewicht gehen zurück, ohne
+Developer-Account. Aus Phase 7: **Arzt-Tagebuch.** Schmerzen mit Körperkarte und Stärke 0–10, Bewegung und Sport
 (Gym zählt automatisch), beschwerdefreie Tage, Tagebuch-Check auf „Heute“ mit Abend-Erinnerung und
 ein Arztbericht mit Tag-für-Tag-Tabelle, Fragen an den Arzt und wählbaren Teilen. Aus Phase 6: Routinen und Gewohnheiten mit Serien, Verträge und
 Fristen mit Kündigungs-Erinnerung, Geburtstage, Tagebuch mit Top 3 für morgen. Dein eigener
@@ -25,6 +27,8 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | App aufs iPhone bringen | [`docs/SIDELOAD.md`](docs/SIDELOAD.md) |
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
+| Apple Health über Kurzbefehle einrichten | [`docs/HEALTH-KURZBEFEHL.md`](docs/HEALTH-KURZBEFEHL.md) |
+| Phase 8 auf dem iPhone testen | [`docs/PHASE8-CHECKLIST.md`](docs/PHASE8-CHECKLIST.md) |
 | Arzt-Tagebuch: was erfassen, Schmerzen, Bewegung, Arztbericht | [`docs/ARZT-TAGEBUCH.md`](docs/ARZT-TAGEBUCH.md) |
 | Phase 7 auf dem iPhone testen | [`docs/PHASE7-CHECKLIST.md`](docs/PHASE7-CHECKLIST.md) |
 | Routinen, Verträge, Geburtstage, Widgets, Fokus, App-Sperre | [`docs/LEBEN.md`](docs/LEBEN.md) |

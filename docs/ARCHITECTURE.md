@@ -242,6 +242,23 @@ mit Startgewichten, Leben-Ablauf, Sicherung mit Leben.
 **Selbsttest:** zusätzlich Migration V6 → V7, Tagebuch-Ablauf (Schmerz nach Sport, Tabelle, PDF,
 nur Medikamente = eine Seite), Sicherung mit Tagebuch.
 
+## Phase 8: Apple Health über Kurzbefehle
+
+Ohne Developer-Account fehlt das HealthKit-Recht (Phase 0). Die Kurzbefehle-App darf Health lesen
+und schreiben; Orbit stellt dafür App-Intents bereit.
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Werte und Regeln | `TagwerkCore/Health/HealthBridge.swift` | `HealthValues` mit Prüfbereichen (Schlaf in Minuten wird umgerechnet), Zusammenführen je Tag, Auswertung, Export ohne Doppelte, Aufruf-URL |
+| `TagwerkSchemaV8` | `TagwerkKit/…/Models/SchemaV8.swift` | `HealthDay`; V7 → V8 leicht |
+| `HealthActions` | `…/Models/HealthActions.swift` | übernehmen (Gewicht → Körper mit Vermerk „Apple Health“, Schlaf → Check-in), Wasser- und Gewichts-Export mit Merker |
+| Sicherung | `…/Services/HealthBackupMapper.swift` | Health-Tageswerte |
+| Intents | `App/Intents/HealthIntents.swift` | „Health-Werte an Orbit“ (alle Felder optional), „Wasser für Health“, „Gewicht für Health“ |
+| Oberfläche | `App/Features/Health/HealthBridgeViews.swift` | Karte, Ansicht mit Verlauf, Anleitung |
+
+Rücksprung: `tagwerk://healthbridge/success|cancel|error` (eigener Host, weil `tagwerk://health`
+schon „Gesundheit“ öffnet).
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`
