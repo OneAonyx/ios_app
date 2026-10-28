@@ -282,6 +282,19 @@ Einnahmen holen ihre Protokoll-Einträge per Abfrage nur für den Zeitraum (`Med
 sind `nonisolated`). Nach zwei Jahren Daten dauert eine Sicherung im Simulator einige Sekunden, ohne
 dass die Oberfläche hängt.
 
+## Phase 10: Klarheit (Version 1.1)
+
+| Teil | Wo | Aufgabe |
+|---|---|---|
+| Startseiten-Karten | `TagwerkCore/Overview/TodayLayout.swift` | `TodayCard` (Titel, wann sie erscheint), `TodayLayout` mit Reihenfolge und ausgeblendeten Karten, als Text in `SettingsKeys.todayLayout` (in der Sicherung) |
+| Funktions-Verzeichnis | `TagwerkCore/Overview/FeatureIndex.swift` | Alle Funktionen mit Bereich, Ort und Stichworten; Suche mit Rangfolge, Umlaute dürfen fehlen |
+| Sprünge | `App/Services/FeatureRouter.swift` | `FeatureDestination.of(id)` (prüfbar, Selbsttest: jede Funktion hat ein Ziel), `AppModel.open(feature:)` öffnet im richtigen Tab |
+| Navigation | `AppModel.trainingPath`, `nutritionPath`, `healthPath` (`NavigationPath`), `settingsPath` | Tabs und Einstellungen lassen sich von außen auf eine Ansicht setzen; `HealthRoute` für Tagebuch-Ansichten |
+| Oberfläche | `TodayView`, `TodayLayoutEditor`, `FeatureDirectory`, `SettingsView` (`SettingsPage`) | Schnell erfassen, Aufgaben-Karte, kompakte Karten, Anpassen, Verzeichnis, Unterseiten |
+
+Ein Sprung aus einem Blatt (Suche, Einstellungen) schließt das Blatt zuerst und öffnet das Ziel
+kurz danach; zwei Blätter gleichzeitig zu wechseln verträgt SwiftUI nicht.
+
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 
 - keine `@Attribute(.unique)`, Eindeutigkeit über `stableID: String`

@@ -4,7 +4,12 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Version 1.0 – Phase 9 Sicherheit und Feinschliff.** Die tägliche Sicherung landet auf Wunsch
+**Stand: Version 1.1 – Phase 10 Klarheit.** Die Startseite ist aufgeräumt: eine Leiste „Schnell
+erfassen“, Fokus und fällige Aufgaben in einer Karte, Karten nur wenn es etwas zu tun gibt, und alles
+lässt sich unter „Startseite anpassen“ ein- und ausblenden. Die Suche findet jetzt auch Funktionen
+(„Arztbericht“, „iCloud“, „Muskel-Karte“) und zeigt ohne Suchbegriff alles, was Orbit kann. Die
+Einstellungen sind in Unterseiten gegliedert. Als Nächstes: Training-Coach, Rückblicke und Teilen,
+Tag planen (siehe Fahrplan). Aus Version 1.0: Die tägliche Sicherung landet auf Wunsch
 zusätzlich in einem Ordner deiner Wahl (z. B. iCloud Drive), Listen aus Apple Erinnerungen lassen sich
 einmalig übernehmen, eine Muskel-Karte zeigt das Wochenvolumen im Training, und Orbit bleibt auch nach
 Jahren an Daten schnell (geprüft mit einem Tempo-Test über zwei Jahre Beispieldaten). Aus Phase 8:
@@ -31,6 +36,7 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
 | Apple Health über Kurzbefehle einrichten | [`docs/HEALTH-KURZBEFEHL.md`](docs/HEALTH-KURZBEFEHL.md) |
+| Version 1.1 auf dem iPhone testen | [`docs/PHASE10-CHECKLIST.md`](docs/PHASE10-CHECKLIST.md) |
 | Version 1.0 auf dem iPhone testen | [`docs/PHASE9-CHECKLIST.md`](docs/PHASE9-CHECKLIST.md) |
 | Phase 8 auf dem iPhone testen | [`docs/PHASE8-CHECKLIST.md`](docs/PHASE8-CHECKLIST.md) |
 | Arzt-Tagebuch: was erfassen, Schmerzen, Bewegung, Arztbericht | [`docs/ARZT-TAGEBUCH.md`](docs/ARZT-TAGEBUCH.md) |
