@@ -8,21 +8,21 @@ import TagwerkCore
 /// Automatisch einmal am Tag, die letzten 14 Sicherungen bleiben.
 @MainActor
 public enum BackupService {
-    public static let keepCount = 14
+    nonisolated public static let keepCount = 14
 
-    public static var folderURL: URL {
+    nonisolated public static var folderURL: URL {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return documents.appendingPathComponent("Backups", isDirectory: true)
     }
 
-    public static var lastBackupDate: Date? {
+    nonisolated public static var lastBackupDate: Date? {
         let value = UserDefaults.standard.double(forKey: SettingsKeys.lastBackupAt)
         return value > 0 ? Date(timeIntervalSince1970: value) : nil
     }
 
     // MARK: Schreiben
 
-    public static func makeDocument(context: ModelContext, now: Date = .now) throws -> BackupDocument {
+    nonisolated public static func makeDocument(context: ModelContext, now: Date = .now) throws -> BackupDocument {
         let lists = try context.fetch(FetchDescriptor<TaskList>(sortBy: [SortDescriptor(\.sortIndex)]))
         let tasks = try context.fetch(FetchDescriptor<TaskItem>(sortBy: [SortDescriptor(\.createdAt)]))
         let medications = try context.fetch(FetchDescriptor<Medication>(sortBy: [SortDescriptor(\.sortIndex)]))
@@ -89,7 +89,7 @@ public enum BackupService {
 
     /// Schreibt eine Sicherung und räumt alte auf. Gibt die neue Datei zurück.
     @discardableResult
-    public static func writeBackup(context: ModelContext, now: Date = .now, calendar: Calendar) throws -> URL {
+    nonisolated public static func writeBackup(context: ModelContext, now: Date = .now, calendar: Calendar) throws -> URL {
         let fileManager = FileManager.default
         try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
         let document = try makeDocument(context: context, now: now)
@@ -105,6 +105,20 @@ public enum BackupService {
         // Zusätzlich in den gewählten Ordner (z. B. iCloud Drive), falls eingerichtet.
         ExternalBackup.copy(url, now: now)
         return url
+    }
+
+    private static var isAutoBackupRunning = false
+
+    /// Einmal am Tag beim Öffnen der App, im Hintergrund mit eigenem Kontext: Nach Jahren an Daten
+    /// dauert eine Sicherung einige Sekunden, die Oberfläche soll dabei nicht hängen.
+    public static func autoBackupInBackground(container: ModelContainer, now: Date = .now, calendar: Calendar) {
+        guard !isAutoBackupRunning, BackupRetention.isAutomaticBackupDue(lastBackup: lastBackupDate, now: now) else { return }
+        isAutoBackupRunning = true
+        Task.detached(priority: .utility) {
+            let context = ModelContext(container)
+            _ = try? writeBackup(context: context, now: now, calendar: calendar)
+            await MainActor.run { isAutoBackupRunning = false }
+        }
     }
 
     /// Einmal am Tag beim Öffnen der App.

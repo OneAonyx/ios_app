@@ -5,7 +5,7 @@ import TagwerkCore
 /// Übersetzt die Trainingsdaten zwischen Datenbank und Datensicherung.
 @MainActor
 enum TrainingBackupMapper {
-    static func makeBackup(context: ModelContext) throws -> TrainingBackup {
+    nonisolated static func makeBackup(context: ModelContext) throws -> TrainingBackup {
         let plans = try context.fetch(FetchDescriptor<WorkoutPlan>(sortBy: [SortDescriptor(\.createdAt)]))
         let sessions = try context.fetch(FetchDescriptor<WorkoutSession>(sortBy: [SortDescriptor(\.startedAt)]))
         let custom = try context.fetch(FetchDescriptor<CustomExercise>(sortBy: [SortDescriptor(\.createdAt)]))

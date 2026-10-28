@@ -5,7 +5,7 @@ import TagwerkCore
 /// Übersetzt Check-ins und Claude-Verlauf zwischen Datenbank und Datensicherung.
 @MainActor
 enum InsightsBackupMapper {
-    static func makeBackup(context: ModelContext) throws -> InsightsBackup {
+    nonisolated static func makeBackup(context: ModelContext) throws -> InsightsBackup {
         let checkIns = try context.fetch(FetchDescriptor<DailyCheckIn>(sortBy: [SortDescriptor(\.day)]))
         let exchanges = try context.fetch(FetchDescriptor<ClaudeExchange>(sortBy: [SortDescriptor(\.createdAt)]))
         return InsightsBackup(

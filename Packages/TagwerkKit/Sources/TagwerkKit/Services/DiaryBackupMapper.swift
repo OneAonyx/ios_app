@@ -5,7 +5,7 @@ import TagwerkCore
 /// Übersetzt Schmerzen, Bewegung und Tages-Vermerke zwischen Datenbank und Datensicherung.
 @MainActor
 enum DiaryBackupMapper {
-    static func makeBackup(context: ModelContext) throws -> DiaryBackup {
+    nonisolated static func makeBackup(context: ModelContext) throws -> DiaryBackup {
         let pains = try context.fetch(FetchDescriptor<PainEntry>(sortBy: [SortDescriptor(\.date)]))
         let activities = try context.fetch(FetchDescriptor<ActivityEntry>(sortBy: [SortDescriptor(\.date)]))
         let days = try context.fetch(FetchDescriptor<DiaryDay>(sortBy: [SortDescriptor(\.day)]))

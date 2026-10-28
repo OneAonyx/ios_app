@@ -5,7 +5,7 @@ import TagwerkCore
 /// Übersetzt Routinen, Gewohnheiten, Verträge, Geburtstage und Tagebuch zwischen Datenbank und Datensicherung.
 @MainActor
 enum LifeBackupMapper {
-    static func makeBackup(context: ModelContext) throws -> LifeBackup {
+    nonisolated static func makeBackup(context: ModelContext) throws -> LifeBackup {
         let habits = try context.fetch(FetchDescriptor<Habit>(sortBy: [SortDescriptor(\.sortIndex)]))
         let logs = try context.fetch(FetchDescriptor<HabitLog>(sortBy: [SortDescriptor(\.day)]))
         let contracts = try context.fetch(FetchDescriptor<Contract>(sortBy: [SortDescriptor(\.createdAt)]))

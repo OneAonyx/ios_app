@@ -5,7 +5,7 @@ import TagwerkCore
 /// Übersetzt die Health-Tageswerte zwischen Datenbank und Datensicherung.
 @MainActor
 enum HealthBackupMapper {
-    static func makeBackup(context: ModelContext) throws -> HealthBackup {
+    nonisolated static func makeBackup(context: ModelContext) throws -> HealthBackup {
         let days = try context.fetch(FetchDescriptor<HealthDay>(sortBy: [SortDescriptor(\.day)]))
         return HealthBackup(days: days.map {
             HealthDayRecord(

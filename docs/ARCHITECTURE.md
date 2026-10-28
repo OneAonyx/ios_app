@@ -274,6 +274,13 @@ Kein neues Schema (bleibt V8).
 **Abfragen:** Ansichten, die nur einen Tag oder eine Woche zeigen, holen per `#Predicate` nur diesen
 Zeitraum (Heute, Ernährung je Tag, Tagebuch-Check, Routinen, Gesundheit-Karten, Bewegung). Listen der
 letzten Einheiten nutzen `fetchLimit`. Ältere Einheiten öffnet die Detailansicht einzeln.
+Einnahmen holen ihre Protokoll-Einträge per Abfrage nur für den Zeitraum (`Medication.scheduledLogFacts`,
+`logsInRange`), Rekorde im Rückblick je Übung mit einer einzeiligen Abfrage.
+
+**Tägliche Sicherung im Hintergrund:** `BackupService.autoBackupInBackground` schreibt mit eigenem
+`ModelContext` auf einem Hintergrund-Thread (`makeDocument`, `writeBackup` und die `makeBackup`-Teile
+sind `nonisolated`). Nach zwei Jahren Daten dauert eine Sicherung im Simulator einige Sekunden, ohne
+dass die Oberfläche hängt.
 
 ## Regeln ab Phase 1 (SwiftData, CloudKit-tauglich)
 

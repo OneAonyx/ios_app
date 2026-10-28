@@ -333,7 +333,7 @@ final class AppModel {
         if state != focusFilter { focusFilter = state }
         scheduleRefresh()
         if storeError == nil, !AppInfo.isUITesting {
-            BackupService.autoBackupIfNeeded(context: context, calendar: Self.calendar)
+            BackupService.autoBackupInBackground(container: container, calendar: Self.calendar)
         }
         systemCheck.refreshOnActivate()
         BackgroundRefresh.schedule()

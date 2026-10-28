@@ -87,9 +87,11 @@ public enum MuscleMap {
         volumes.first { $0.muscle == muscle } ?? MuscleVolume(muscle: muscle, sets: 0, target: muscle.weeklyTarget)
     }
 
-    /// Farbe auf der Karte. Pflichtmuskeln ohne Sätze sind „zu wenig“, freiwillige ohne Sätze grau.
+    /// Farbe auf der Karte. Ohne Sätze grau („nicht trainiert“), damit die Woche nicht mit
+    /// lauter Warnfarben beginnt. Orange erst, wenn trainiert, aber unter dem Ziel.
     public static func level(_ volume: MuscleVolume) -> Level {
-        switch volume.status {
+        guard volume.sets > 0 else { return .none }
+        return switch volume.status {
         case .low: .low
         case .inRange: .inRange
         case .high: .high

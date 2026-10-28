@@ -53,8 +53,8 @@ struct MuscleMapTests {
         #expect(MuscleMap.level(MuscleMap.volume(of: .chest, in: volumes)) == .inRange)
         #expect(MuscleMap.level(MuscleMap.volume(of: .biceps, in: volumes)) == .low)
         #expect(MuscleMap.level(MuscleMap.volume(of: .triceps, in: volumes)) == .high)
-        // Pflichtmuskel ohne Sätze: zu wenig. Freiwilliger ohne Sätze: grau.
-        #expect(MuscleMap.level(MuscleMap.volume(of: .lats, in: volumes)) == .low)
+        // Ohne Sätze grau, auch bei Pflichtmuskeln.
+        #expect(MuscleMap.level(MuscleMap.volume(of: .lats, in: volumes)) == .none)
         #expect(MuscleMap.level(MuscleMap.volume(of: .quads, in: volumes)) == .none)
     }
 
@@ -75,13 +75,12 @@ struct MuscleMapTests {
             MuscleVolume(muscle: .biceps, sets: 4.5, target: MuscleGroup.biceps.weeklyTarget),
         ]
         let summary = MuscleMap.summary(volumes)
-        #expect(summary.hasPrefix("Im Ziel: Brust."))
-        #expect(summary.contains("Zu wenig: Latissimus"))
-        #expect(summary.contains("Bizeps"))
+        #expect(summary == "Im Ziel: Brust. Zu wenig: Bizeps.")
         #expect(!summary.contains("Viel:"))
         let spoken = MuscleMap.accessibilityText(side: .front, volumes: volumes)
         #expect(spoken.hasPrefix("Vorne: Brust im Ziel, 14 Sätze"))
         #expect(spoken.contains("Bizeps zu wenig, 4,5 Sätze"))
-        #expect(MuscleMap.summary([]).contains("Zu wenig"))
+        #expect(MuscleMap.summary([]) == "Diese Woche noch keine Sätze.")
+        #expect(MuscleMap.accessibilityText(side: .back, volumes: []).contains("Latissimus nicht trainiert, 0 Sätze"))
     }
 }

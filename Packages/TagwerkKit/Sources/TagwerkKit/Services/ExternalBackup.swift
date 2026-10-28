@@ -6,7 +6,7 @@ import TagwerkCore
 /// Der Ordner wird einmal im Dateien-Dialog gewählt und als Lesezeichen gemerkt. Jede Sicherung
 /// wird danach zusätzlich dorthin kopiert; auch dort bleiben die letzten 14. iCloud Drive lädt die
 /// Dateien selbst hoch, ein Developer-Account ist dafür nicht nötig.
-@MainActor
+/// Ohne Hauptthread-Bindung: Die tägliche Sicherung kopiert im Hintergrund.
 public enum ExternalBackup {
     static let bookmarkKey = "tagwerk.backup.externalBookmark"
     static let nameKey = "tagwerk.backup.externalName"

@@ -127,13 +127,27 @@ enum PerformanceTest {
                 let planned = ReminderPlanner.plan(candidates, now: now, horizon: ReminderScheduler.horizon)
                 return "\(planned.count) von \(candidates.count) geplant"
             },
-            Step(name: "Sicherung schreiben", budget: 12_000) {
-                let document = try BackupService.makeDocument(context: context, now: now)
-                let data = try BackupCodec.encode(document)
+            Step(name: "Sicherung schreiben (Hintergrund)", budget: 12_000) {
+                // Wie die tägliche Sicherung: eigener Kontext auf einem anderen Thread.
+                let container = context.container
                 let file = folder.appendingPathComponent("tempo-backup.json")
-                try data.write(to: file)
+                let outcome = BackgroundOutcome()
+                let done = DispatchSemaphore(value: 0)
+                DispatchQueue.global(qos: .utility).async {
+                    do {
+                        let background = ModelContext(container)
+                        let data = try BackupCodec.encode(try BackupService.makeDocument(context: background, now: now))
+                        try data.write(to: file)
+                        outcome.text = "\(data.count / 1_024) KB, nicht auf dem Hauptthread"
+                    } catch {
+                        outcome.failure = "\(error)"
+                    }
+                    done.signal()
+                }
+                done.wait()
+                if let failure = outcome.failure { throw SelfTest.Failure(description: failure) }
                 backupFile = file
-                return "\(data.count / 1_024) KB"
+                return outcome.text
             },
             Step(name: "Sicherung wiederherstellen", budget: 40_000) {
                 guard let backupFile else { throw SelfTest.Failure(description: "Keine Sicherung") }
@@ -142,6 +156,12 @@ enum PerformanceTest {
                 return "\(summary.tasks) Aufgaben, \(summary.meals) Mahlzeiten, \(summary.workouts) Einheiten"
             },
         ]
+    }
+
+    /// Ergebnis aus dem Hintergrund-Thread.
+    private final class BackgroundOutcome: @unchecked Sendable {
+        var text = ""
+        var failure: String?
     }
 
     private static func exerciseIDs(_ context: ModelContext) -> [String] {

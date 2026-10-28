@@ -5,7 +5,7 @@ import TagwerkCore
 /// Übersetzt Ernährung, Symptome und Wasser zwischen Datenbank und Datensicherung.
 @MainActor
 enum NutritionBackupMapper {
-    static func makeBackup(context: ModelContext) throws -> NutritionBackup {
+    nonisolated static func makeBackup(context: ModelContext) throws -> NutritionBackup {
         let customFoods = try context.fetch(FetchDescriptor<CustomFood>(sortBy: [SortDescriptor(\.createdAt)]))
         let preferences = try context.fetch(FetchDescriptor<FoodPreference>())
         let meals = try context.fetch(FetchDescriptor<MealEntry>(sortBy: [SortDescriptor(\.date)]))

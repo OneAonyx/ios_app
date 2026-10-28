@@ -293,7 +293,12 @@ public enum TrainingActions {
 
     /// Verlauf einer Übung aus abgeschlossenen Einheiten, neueste zuerst.
     public static func history(for exerciseID: String, excluding sessionID: String? = nil, limit: Int = 12, in context: ModelContext) -> [ExercisePerformance] {
-        let descriptor = FetchDescriptor<SetLog>(predicate: #Predicate { $0.exerciseID == exerciseID && $0.isDone })
+        // Nur die neuesten Sätze laden (großzügig ~15 je Einheit), nicht Jahre an Verlauf.
+        var descriptor = FetchDescriptor<SetLog>(
+            predicate: #Predicate { $0.exerciseID == exerciseID && $0.isDone },
+            sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = max(limit + 1, 4) * 15
         let logs = (try? context.fetch(descriptor)) ?? []
         var bySession: [String: (date: Date, sets: [SetLog])] = [:]
         for log in logs {
