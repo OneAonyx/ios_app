@@ -39,11 +39,11 @@ struct HealthView: View {
             }
             .navigationDestination(for: HealthRoute.self) { route in
                 switch route {
-                case .painHistory: PainHistoryView()
+                case .painHistory: ComplaintsView(mode: .pains)
                 case .activityHistory: ActivityHistoryView()
                 case .doctorReport: DoctorReportView()
                 case .healthBridge: HealthBridgeView()
-                case .symptomHistory: SymptomHistoryView()
+                case .symptomHistory: ComplaintsView(mode: .all)
                 case .periodReview: PeriodReviewView()
                 }
             }
@@ -522,47 +522,71 @@ private struct InsightRow: View {
 }
 
 /// Beschwerden der letzten Tage mit Schnellzugriff auf Erfassung, Verlauf und Muster.
+/// Beschwerden und Schmerzen der letzten 7 Tage in einer Karte.
 private struct SymptomsHealthCard: View {
     let now: Date
 
     @Environment(AppModel.self) private var app
     // Nur die letzten 7 Tage laden.
     @Query private var symptoms: [SymptomEntry]
+    @Query private var pains: [PainEntry]
 
     init(now: Date) {
         self.now = now
         let since = now.addingTimeInterval(-7 * 86_400)
         _symptoms = Query(filter: #Predicate<SymptomEntry> { $0.date >= since }, sort: \SymptomEntry.date, order: .reverse)
+        _pains = Query(filter: #Predicate<PainEntry> { $0.date >= since }, sort: \PainEntry.date, order: .reverse)
     }
 
     var body: some View {
         let weekAgo = now.addingTimeInterval(-7 * 86_400)
         let recent = symptoms.filter { $0.date >= weekAgo }
+        let recentPains = pains.filter { $0.date >= weekAgo }
         Card {
             VStack(alignment: .leading, spacing: Spacing.s) {
                 HStack {
-                    SectionHeader("Beschwerden", systemImage: "waveform.path.ecg", tint: ModuleAccent.health)
+                    SectionHeader("Beschwerden und Schmerzen", systemImage: "waveform.path.ecg", tint: ModuleAccent.health)
+                }
+                HStack(spacing: Spacing.xs) {
                     Button {
                         app.isAddingSymptom = true
                     } label: {
-                        Label("Eintragen", systemImage: "plus")
+                        Label("Beschwerde", systemImage: "plus")
                             .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 34)
                     }
-                    .tint(ModuleAccent.health)
                     .accessibilityIdentifier("health.symptom.add")
+                    Button {
+                        app.openPainEntry()
+                    } label: {
+                        Label("Schmerz", systemImage: "plus")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                    }
+                    .accessibilityIdentifier("health.pain.add")
                 }
-                if recent.isEmpty {
-                    Text("In den letzten 7 Tagen keine Beschwerden eingetragen.")
+                .buttonStyle(.borderedProminent)
+                .tint(ModuleAccent.health)
+                if recent.isEmpty && recentPains.isEmpty {
+                    Text("In den letzten 7 Tagen nichts eingetragen.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(recent.prefix(4)) { symptom in
+                    ForEach(recent.prefix(3)) { symptom in
                         SymptomRow(symptom: symptom, showsDate: true)
+                    }
+                    ForEach(recentPains.prefix(2)) { pain in
+                        PainRow(entry: pain, showsDate: true)
+                    }
+                    if recentPains.count > 0 {
+                        Text("Schmerzen 7 Tage: \(recentPains.count)×, höchstens \(recentPains.map(\.intensity).max() ?? 0)/10")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 HStack(spacing: Spacing.xs) {
                     NavigationLink {
-                        SymptomHistoryView()
+                        ComplaintsView(mode: .all)
                     } label: {
                         Label("Verlauf", systemImage: "list.bullet")
                             .frame(maxWidth: .infinity, minHeight: 34)

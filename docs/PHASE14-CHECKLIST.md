@@ -46,3 +46,24 @@
 | 5 | Stufe antippen | Umbenennen, Farbe, nach oben/unten, löschen |
 | 6 | **… → Als Bild teilen** | Bild der Rangliste zum Teilen |
 | 7 | Sicherung exportieren und wiederherstellen | Ranglisten und Unverträglichkeiten sind wieder da |
+
+## Geld
+
+| # | Schritt | Erwartet |
+|---|---|---|
+| 1 | **Planer → Geld** | Oben „Ich bekomme“ und „Ich zahle“ mit Summen |
+| 2 | **Eintragen**: Ich bekomme, Privat, „Lena“, „Konzertkarten“, 45 | Unter „Privat“ mit 45,00 € |
+| 3 | Rechnung mit Fälligkeit in der Vergangenheit eintragen | Steht oben, rot „seit … Tagen überfällig“, Hinweis in der Summe |
+| 4 | Eintrag öffnen → **Teilzahlung** 20 | Offen 25,00 €, Zahlung in der Liste |
+| 5 | **Erinnerung schicken** | Freundlicher Text mit Betrag zum Teilen (Nachrichten, WhatsApp …) |
+| 6 | **Geld bekommen, erledigt** | Wandert zu „Erledigt“ |
+| 7 | „Ich zahle“ für Lena eintragen | „Je Person, verrechnet“ zeigt den Saldo |
+
+## Beschwerden und Schmerzen
+
+| # | Schritt | Erwartet |
+|---|---|---|
+| 1 | **Gesundheit** | Eine Karte „Beschwerden und Schmerzen“ mit Knöpfen Beschwerde und Schmerz |
+| 2 | **Verlauf** | Beides nach Tagen gemischt, oben Tage mit Beschwerden und Schmerzen der letzten 30 Tage |
+| 3 | Oben **Schmerzen** | Körperkarte und Statistik wie bisher |
+| 4 | **+** oben rechts | Wahl: Beschwerde oder Schmerz |

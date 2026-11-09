@@ -47,7 +47,7 @@ struct PlanEditorView: View {
             Section {
                 ForEach(Array(days.enumerated()), id: \.element.stableID) { index, day in
                     let isNext = index == plan.nextDayIndex
-                    let move = { (offset: Int) in
+                    let move: (Int) -> Void = { offset in
                         withAnimation { TrainingActions.moveDay(day, by: offset, in: context) }
                         changed()
                     }
@@ -268,41 +268,21 @@ struct DayEditorView: View {
             Section {
                 ForEach(Array(items.enumerated()), id: \.element.stableID) { index, item in
                     let name = catalog.name(for: item.exerciseID)
-                    let move = { (offset: Int) in
+                    let move: (Int) -> Void = { offset in
                         withAnimation { TrainingActions.moveExercise(item, by: offset, in: context) }
                         app.trainingChanged()
                     }
-                    HStack(spacing: Spacing.s) {
-                        PositionBadge(text: item.superset.map { "\(index + 1)\($0)" } ?? "\(index + 1)")
-                        Button {
-                            editing = item
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(name)
-                                    .foregroundStyle(Color.primary)
-                                if let muscles = catalog.exercise(id: item.exerciseID)?.muscleSummary, !muscles.isEmpty {
-                                    Text(muscles)
-                                        .font(.caption)
-                                        .foregroundStyle(ModuleAccent.training)
-                                }
-                                Text(item.template.prescription + " · Pause \(item.restSeconds) s" + (item.superset.map { " · Supersatz \($0)" } ?? "") + (item.isOptional ? " · optional" : ""))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(editMode.isEditing)
-                        if editMode.isEditing {
-                            MoveButtons(canMoveUp: index > 0, canMoveDown: index < items.count - 1, onUp: { move(-1) }, onDown: { move(1) })
-                        } else {
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
-                                .accessibilityHidden(true)
-                        }
-                    }
+                    DayExerciseRow(
+                        position: item.superset.map { "\(index + 1)\($0)" } ?? "\(index + 1)",
+                        name: name,
+                        muscles: catalog.exercise(id: item.exerciseID)?.muscleSummary ?? "",
+                        detail: Self.detail(item),
+                        isEditing: editMode.isEditing,
+                        canMoveUp: index > 0,
+                        canMoveDown: index < items.count - 1,
+                        onEdit: { editing = item },
+                        onMove: move
+                    )
                     .frame(minHeight: TouchTarget.standard)
                     .swipeActions(edge: .leading) {
                         if index > 0 {
@@ -387,6 +367,61 @@ struct DayEditorView: View {
         .sheet(item: $editing) { item in
             PlanExerciseEditor(item: item, name: catalog.name(for: item.exerciseID))
         }
+    }
+}
+
+/// Eine Übung im Tag-Editor: Nummer, Name, Muskeln, Sätze; im Anordnen-Modus mit Pfeilen.
+private struct DayExerciseRow: View {
+    let position: String
+    let name: String
+    let muscles: String
+    let detail: String
+    let isEditing: Bool
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let onEdit: () -> Void
+    let onMove: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: Spacing.s) {
+            PositionBadge(text: position)
+            Button(action: onEdit) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .foregroundStyle(Color.primary)
+                    if !muscles.isEmpty {
+                        Text(muscles)
+                            .font(.caption)
+                            .foregroundStyle(ModuleAccent.training)
+                    }
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(isEditing)
+            if isEditing {
+                MoveButtons(canMoveUp: canMoveUp, canMoveDown: canMoveDown, onUp: { onMove(-1) }, onDown: { onMove(1) })
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+}
+
+extension DayEditorView {
+    /// „3 × 8–10 · Pause 90 s · Supersatz A · optional“
+    static func detail(_ item: PlanExercise) -> String {
+        var parts: [String] = [item.template.prescription, "Pause \(item.restSeconds) s"]
+        if let superset = item.superset { parts.append("Supersatz \(superset)") }
+        if item.isOptional { parts.append("optional") }
+        return parts.joined(separator: " · ")
     }
 }
 

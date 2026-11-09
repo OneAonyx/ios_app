@@ -126,7 +126,7 @@ struct NutritionDestination: View {
         case .weekTemplate: WeekTemplateView()
         case .patterns: PatternsView()
         case .ingredientCheck: IngredientCheckView()
-        case .symptoms: SymptomHistoryView()
+        case .symptoms: ComplaintsView(mode: .all)
         case .settings: NutritionSettingsView()
         }
     }

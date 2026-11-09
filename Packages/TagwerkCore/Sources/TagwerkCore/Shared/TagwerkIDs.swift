@@ -35,6 +35,8 @@ public enum SettingsKeys {
     public static let briefingMinute = "tagwerk.settings.briefingMinute"
     /// Aktive Verträglichkeits-Profile (`SensitivityProfile.encoded`), leer = Standard (Laktose, Fruktose, Fett).
     public static let sensitivities = "tagwerk.settings.sensitivities"
+    /// Geld: wer dir etwas schuldet, was du zahlst (`MoneyBook.encode`).
+    public static let moneyEntries = "tagwerk.money.entries"
     /// Ranglisten aus dem Tier-Maker (`TierList.encode`).
     public static let tierLists = "tagwerk.life.tierLists"
     /// Gewählte Optionen im Wochenplan-Vorschlag („2-lunch=rezept;…“).
@@ -66,7 +68,7 @@ public enum SettingsKeys {
     public static let backedUp = [
         userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget,
         askBeforeMealMedication, showCheckIns, weeklyReviewReminder, trainingGoal, trainingExperience,
-        diaryReminderMinute, doctorQuestions, todayLayout, briefingMinute, sensitivities, mealPlanChoices, tierLists,
+        diaryReminderMinute, doctorQuestions, todayLayout, briefingMinute, sensitivities, mealPlanChoices, tierLists, moneyEntries,
     ]
 }
 

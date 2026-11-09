@@ -155,7 +155,7 @@ struct DiaryTodayCard: View {
     }
 }
 
-/// Karte im Tab „Gesundheit“: Tagebuch, Schmerzen, Bewegung, Arztbericht.
+/// Karte im Tab „Gesundheit“: Tagebuch, Bewegung, Arztbericht (Schmerzen stehen bei den Beschwerden).
 struct DiaryHealthCard: View {
     let now: Date
 
@@ -190,14 +190,14 @@ struct DiaryHealthCard: View {
                 DiaryChecklist(now: now)
                 Divider()
                 NavigationLink {
-                    PainHistoryView()
+                    ComplaintsView(mode: .all)
                 } label: {
                     DiaryLinkRow(
-                        title: "Schmerzen",
+                        title: "Beschwerden und Schmerzen",
                         detail: recentPains.isEmpty
-                            ? "In den letzten 7 Tagen keine"
-                            : "7 Tage: \(recentPains.count)×, höchstens \(recentPains.map(\.intensity).max() ?? 0)/10",
-                        systemImage: "figure.stand",
+                            ? "Verlauf, Körperkarte, Muster"
+                            : "Schmerzen 7 Tage: \(recentPains.count)×, höchstens \(recentPains.map(\.intensity).max() ?? 0)/10",
+                        systemImage: "waveform.path.ecg",
                         tint: .red
                     )
                 }

@@ -203,7 +203,7 @@ struct PatternsView: View {
                 .disabled(report.mealCount == 0 && report.symptomCount == 0)
                 .accessibilityIdentifier("patterns.claude")
                 NavigationLink {
-                    SymptomHistoryView()
+                    ComplaintsView(mode: .all)
                 } label: {
                     Label("Alle Beschwerden", systemImage: "list.bullet")
                 }

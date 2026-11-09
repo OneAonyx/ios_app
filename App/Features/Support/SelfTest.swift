@@ -36,7 +36,7 @@ enum SelfTest {
             run("Arzt-Tagebuch: Schmerz, Bewegung, Bericht", diaryFlow),
             run("Apple Health über Kurzbefehle", healthFlow),
             run("Ernährung: Tageslast, Muster, Einkauf", nutritionFlow),
-            run("Unverträglichkeiten, Ernährungsplan, Ranglisten", profilesPlanAndRankings),
+            run("Unverträglichkeiten, Ernährungsplan, Ranglisten, Geld", profilesPlanAndRankings),
             run("Einblicke: Check-in, Rückblick, Bericht", insightsFlow),
             run("Claude: Anfrage, Antwort, Übernahme", claudeFlow),
             run("Einnahmen und Vorrat", doseActionsAdjustStock),
@@ -624,7 +624,12 @@ enum SelfTest {
         list.addItem(title: "Chips", emoji: "🥔", tierID: list.tiers[0].id)
         defaults.set(TierList.encode([list]), forKey: SettingsKeys.tierLists)
         try check(TierList.decode(defaults.string(forKey: SettingsKeys.tierLists) ?? "").first?.items.count == 1, "Rangliste nicht gespeichert")
-        try check(SettingsKeys.backedUp.contains(SettingsKeys.tierLists) && SettingsKeys.backedUp.contains(SettingsKeys.sensitivities), "Nicht in der Sicherung")
+        try check(SettingsKeys.backedUp.contains(SettingsKeys.tierLists) && SettingsKeys.backedUp.contains(SettingsKeys.sensitivities)
+            && SettingsKeys.backedUp.contains(SettingsKeys.moneyEntries), "Nicht in der Sicherung")
+        var book = MoneyBook()
+        book.upsert(MoneyEntry(direction: .incoming, kind: .personal, counterparty: "Test", cents: 4_500, date: .now))
+        book.addPayment(to: book.entries[0].id, cents: 2_000, date: .now)
+        try check(MoneyBook.decode(MoneyBook.encode(book)).openCents(.incoming) == 2_500, "Geld: Teilzahlung")
         return "Profile, \(count) Mahlzeiten geplant, \(needs.count) Einkaufsartikel, Rangliste gespeichert"
     }
 

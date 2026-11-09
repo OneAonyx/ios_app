@@ -406,7 +406,10 @@ final class ScreenshotTests: XCTestCase {
             dismissSheet(in: app, doneIdentifier: "pain.cancel")
         }
         if scrollTo(pains, in: app), tapIfPresent(pains) {
-            snap(app, "74-schmerzen")
+            snap(app, "74-beschwerden-und-schmerzen")
+            if tapIfPresent(app.buttons["Schmerzen"].firstMatch, timeout: 2) {
+                snap(app, "74b-schmerzen-koerperkarte")
+            }
             tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
         }
         let activities = app.buttons["health.activities"]
@@ -514,6 +517,26 @@ final class ScreenshotTests: XCTestCase {
         if scrollTo(journal, in: app), tapIfPresent(journal) {
             snap(app, "58-tagebuch")
             dismissSheet(in: app, doneIdentifier: "journal.done")
+        }
+        // Geld: Eintrag „Lena schuldet mir 45 €“.
+        tapTab("Planer", in: app)
+        if tapIfPresent(app.buttons["Geld"].firstMatch) {
+            snap(app, "99-geld-leer")
+            if tapIfPresent(app.buttons["money.add"]) {
+                let name = app.textFields["money.counterparty"]
+                if name.waitForExistence(timeout: 3) {
+                    name.tap()
+                    name.typeText("Lena")
+                }
+                let amount = app.textFields["money.amount"]
+                if amount.waitForExistence(timeout: 2) {
+                    amount.tap()
+                    amount.typeText("45")
+                }
+                tapIfPresent(app.buttons["money.save"])
+            }
+            snap(app, "99-geld")
+            tapIfPresent(app.buttons["Leben"].firstMatch)
         }
         // Einstellungen: App-Sperre und Gym-Ankunft.
         tapTab("Heute", in: app)

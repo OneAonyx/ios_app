@@ -1,13 +1,14 @@
 import SwiftUI
 import TagwerkKit
 
-/// Planer-Tab mit vier Ansichten: Aufgaben, Agenda (14 Tage), Woche, Leben.
+/// Planer-Tab mit fünf Ansichten: Aufgaben, Agenda (14 Tage), Woche, Leben, Geld.
 struct PlannerView: View {
     enum Mode: String, CaseIterable, Identifiable {
         case tasks = "Aufgaben"
         case agenda = "Agenda"
         case week = "Woche"
         case life = "Leben"
+        case money = "Geld"
 
         var id: String { rawValue }
     }
@@ -23,6 +24,7 @@ struct PlannerView: View {
                 case .agenda: AgendaView()
                 case .week: WeekView()
                 case .life: LifeView()
+                case .money: MoneyView()
                 }
             }
             .navigationTitle("Planer")
@@ -46,7 +48,7 @@ struct PlannerView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .frame(maxWidth: 330)
+                    .frame(maxWidth: 360)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

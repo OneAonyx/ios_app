@@ -285,7 +285,7 @@ private struct PlanDaysCard: View {
                                 Text(day.name)
                                     .font(.body.weight(isNext ? .semibold : .regular))
                                     .foregroundStyle(Color.primary)
-                                Text("\(day.sortedExercises.filter { !$0.isOptional }.count) Übungen · ca. \(day.estimatedMinutes(week: plan.currentWeek, cycle: plan.cycle)) Min." + (isNext ? " · als Nächstes" : ""))
+                                Text(Self.dayDetail(day, plan: plan, isNext: isNext))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -330,6 +330,17 @@ private struct PlanDaysCard: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+extension PlanDaysCard {
+    /// „6 Übungen · ca. 55 Min. · als Nächstes“
+    static func dayDetail(_ day: PlanDay, plan: WorkoutPlan, isNext: Bool) -> String {
+        let count = day.sortedExercises.filter { !$0.isOptional }.count
+        let minutes = day.estimatedMinutes(week: plan.currentWeek, cycle: plan.cycle)
+        var text = "\(count) Übungen · ca. \(minutes) Min."
+        if isNext { text += " · als Nächstes" }
+        return text
     }
 }
 

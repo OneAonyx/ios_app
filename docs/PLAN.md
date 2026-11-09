@@ -569,6 +569,8 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 - **Ernährungsplan für die Woche:** 7 Tage × 4 Mahlzeiten, je zwei Optionen, laktosefrei, fruktosearm, ohne Fisch, 160–190 g Eiweiß am Tag; mit einem Tipp in Wochenplan und Einkaufsliste (`docs/ERNAEHRUNGSPLAN.md`).
 - **Training leichter anordnen:** Karte „Dein Plan“ im Training-Tab, Knopf „Reihenfolge ändern“ mit Pfeilen, Übung tauschen und entfernen im Editor, VoiceOver-Aktionen.
 - **Ranglisten (Tier-Maker)** unter Leben: Stufen S–D, Einträge mit Emoji oder Foto, als Bild teilen.
+- **Geld** (Planer → Geld): wer dir etwas schuldet und Rechnungen, die du gestellt hast (Ich bekomme), deine Schulden und offenen Rechnungen (Ich zahle); Teilzahlungen, Fälligkeit, überfällig, Saldo je Person, Erinnerung zum Verschicken.
+- **Beschwerden und Schmerzen zusammengelegt:** eine Karte im Gesundheit-Tab, ein gemeinsamer Verlauf mit Umschalter (Alle, Beschwerden, Schmerzen mit Körperkarte).
 
 **Phase 15 – Alltagstauglich** (geplant, Version 1.6)
 - **Signatur-Erinnerung:** Mitteilung einen Tag und drei Stunden vor Ablauf („Orbit läuft morgen um 14:20 ab – mit iloader auffrischen“), Zeile im Morgen-Briefing, Anleitung zum Auffrischen in der App.

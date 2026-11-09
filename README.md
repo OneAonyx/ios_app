@@ -8,7 +8,8 @@ Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone in
 Histamin: Laktose, Fruktose und Sorbit, Fett und große Mengen (Histamin bleibt wählbar), mit Bewertung je Menge,
 Zutaten-Scan, Tageslast und einem Ernährungsplan für die Woche (laktosefrei, fruktosearm, ohne Fisch; siehe
 [`docs/ERNAEHRUNGSPLAN.md`](docs/ERNAEHRUNGSPLAN.md)). Training lässt sich leichter anordnen, und unter Leben
-gibt es Ranglisten (Tier-Maker). Aus Version 1.4 – Phase 12 und 13: Rückblicke für Monat und Jahr mit Vergleich, ein
+gibt es Ranglisten (Tier-Maker). Neu im Planer: Geld (wer dir etwas schuldet, Rechnungen, eigene Schulden).
+Beschwerden und Schmerzen stehen jetzt an einem Ort. Aus Version 1.4 – Phase 12 und 13: Rückblicke für Monat und Jahr mit Vergleich, ein
 Arzt-Paket (PDF plus Tabellen als ZIP) und der Export aller Daten als Tabellen. Dazu „Tag planen“:
 ein leises Morgen-Briefing, „Tag abschließen“ am Abend und „Woche planen“ am Sonntag mit Fokus der
 Woche. Aus Version 1.2 – Phase 11 Training-Coach: Der Plan-Check schlägt je Übung vor, was sich
