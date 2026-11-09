@@ -1,4 +1,24 @@
-# Ernährung und Histamin in Orbit
+# Ernährung und Unverträglichkeiten in Orbit
+
+## Ab Version 1.5: Profile statt nur Histamin
+
+Unter **Ernährung → Ziele und Einstellungen → Meine Unverträglichkeiten** wählst du, wonach Orbit bewertet:
+
+| Profil | Bewertet nach |
+|---|---|
+| **Laktose** (Standard) | Laktose der gegessenen Menge: bis 0,5 g gut, ab 3 g schlecht, ab 8 g sehr schlecht (EFSA 2010: bis etwa 12 g auf einmal vertragen die meisten) |
+| **Fruktose und Sorbit** (Standard) | Fruktose-Überschuss 0–3 je Portion, Sorbit und andere Zuckeralkohole |
+| **Fett und große Mengen** (Standard) | Fett der Menge: ab 8 g mäßig, ab 15 g schlecht, ab 25 g sehr schlecht; Mahlzeiten ab 35 g Fett oder 1.100 kcal gelten als groß |
+| **Histamin** | die bisherige Skala unten |
+
+Die Bewertung eines Lebensmittels ist die schlechteste der aktiven Profile. Der Zutaten-Scan, die
+Tageslast und Claude-Anfragen richten sich ebenfalls nach den Profilen. Den Ernährungsplan für die Woche
+(laktosefrei, fruktosearm, ohne Fisch) findest du unter **Ernährung → Ernährungsplan für die Woche** und in
+[`ERNAEHRUNGSPLAN.md`](ERNAEHRUNGSPLAN.md).
+
+---
+
+## Histamin (bis Version 1.4 Standard)
 
 Ab Version 0.5 (Phase 4). Alles liegt im Tab **Ernährung**, Beschwerden auch unter **Gesundheit**.
 

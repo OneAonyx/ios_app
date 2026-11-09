@@ -562,15 +562,23 @@ Jede Phase endet mit einer installierbaren Version und einem kurzen Testlauf auf
 > und Medikamenten-Erinnerungen sind nicht mehr verlässlich. Deshalb kommt als Nächstes keine große neue
 > Funktion, sondern eine Phase, die den Alltag absichert und Rückmeldungen einsammelt.
 
-**Phase 14 – Alltagstauglich** (geplant, Version 1.5)
+**Phase 14 – Deine Wünsche** (umgesetzt, Version 1.5)
+- **Unverträglichkeiten statt Histamin:** Profile Laktose, Fruktose und Sorbit, Fett und große Mengen (Standard), Histamin wählbar. Lexikon mit Laktose (g/100 g), Fruktose (0–3) und Fett (g/100 g) für alle Lebensmittel, Bewertung je gegessener Menge, laktosefreie Produkte ergänzt.
+- Zutaten-Scan mit Regeln für Milchpulver, Molke, Laktose, Fruktosesirup, Sorbit und Zuckeralkohole; „laktosefrei“ auf der Packung wird erkannt.
+- Tageslast: große oder fettige Mahlzeiten (ab 35 g Fett oder 1.100 kcal) und viel Laktose auf einmal (über 12 g) zählen; Reste nur im Histamin-Profil.
+- **Ernährungsplan für die Woche:** 7 Tage × 4 Mahlzeiten, je zwei Optionen, laktosefrei, fruktosearm, ohne Fisch, 160–190 g Eiweiß am Tag; mit einem Tipp in Wochenplan und Einkaufsliste (`docs/ERNAEHRUNGSPLAN.md`).
+- **Training leichter anordnen:** Karte „Dein Plan“ im Training-Tab, Knopf „Reihenfolge ändern“ mit Pfeilen, Übung tauschen und entfernen im Editor, VoiceOver-Aktionen.
+- **Ranglisten (Tier-Maker)** unter Leben: Stufen S–D, Einträge mit Emoji oder Foto, als Bild teilen.
+
+**Phase 15 – Alltagstauglich** (geplant, Version 1.6)
 - **Signatur-Erinnerung:** Mitteilung einen Tag und drei Stunden vor Ablauf („Orbit läuft morgen um 14:20 ab – mit iloader auffrischen“), Zeile im Morgen-Briefing, Anleitung zum Auffrischen in der App.
 - **Rückmeldung in der App:** „Notiz zu Orbit“ (Über Orbit, Suche, Schnell erfassen): ein Satz, was fehlt oder stört; Orbit merkt sich Version und Bildschirm. Alle Notizen mit einem Tipp als Text kopieren und an Claude geben. So wird aus „Nach deinen Wünschen“ eine Liste statt Erinnerung.
 - **„Neu in Orbit“:** einmal nach einem Update kurz zeigen, was dazugekommen ist und wo es liegt (Schnell erfassen, Startseite anpassen, Suche mit allen Funktionen, Morgen-Briefing, Tag abschließen).
 - **„Heute“ abends kürzer:** Check-in als eine Zeile mit fünf Gesichtern, Rest aufklappbar; Check-in, Tagebuch-Lücken und „Tag abschließen“ als ein Abend-Block.
 - **Schneller prüfen (unsichtbar):** Zugriffsfehler zwischen App und Paketen schon im Linux-Lauf finden (statt erst nach 30 Minuten Mac-Lauf); die größten Dateien (Selbsttest, Arztbericht, Claude-Brücke) aufteilen.
 
-**Danach: zwei Wochen nutzen, Notizen sammeln.** Phase 15 entsteht aus deinen Notizen. Ideen, falls dir nichts fehlt:
-- **Histamin-Karenz-Programm:** die übliche Ernährungsumstellung in drei Abschnitten (Karenz 10–14 Tage, Testphase mit einzelnen Lebensmitteln, Dauerernährung) mit Tagesplan, Testprotokoll und Auswertung, welches Lebensmittel vertragen wurde.
+**Danach: zwei Wochen nutzen, Notizen sammeln.** Phase 16 entsteht aus deinen Notizen. Ideen, falls dir nichts fehlt:
+- **Austest-Programm für Laktose und Fruktose:** zwei Wochen Karenz, dann einzelne Lebensmittel in steigender Menge testen, mit Protokoll und Auswertung, wie viel du verträgst.
 - **Arzttermin vorbereiten:** Termin im Kalender mit „Arzt“ erkannt → am Vortag Erinnerung mit fertigem Arzt-Paket und deinen Fragen.
 - **Fokus-Zeit:** Aufgabe mit Timer (25 Minuten) als Live Activity in der Dynamic Island.
 - **Siri und Kontrollzentrum für die neuen Abläufe:** „Tag abschließen“, „Wie war mein Monat?“, Fokus der Woche als Sperrbildschirm-Widget.

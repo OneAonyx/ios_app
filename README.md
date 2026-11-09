@@ -4,7 +4,11 @@ Persönliche Alltags-App fürs iPhone: Aufgaben, Kalender, Medikamente, Apple He
 Histamin-Tagebuch, Gym-Training und mehr. Native SwiftUI-App, tief ins iPhone integriert
 (Widgets, Sperrbildschirm, Dynamic Island, Wecker, Siri und Kurzbefehle).
 
-**Stand: Version 1.4 – Phase 12 und 13.** Rückblicke für Monat und Jahr mit Vergleich, ein
+**Stand: Version 1.5 – Phase 14 (deine Wünsche).** Ernährung nach deinen Unverträglichkeiten statt nach
+Histamin: Laktose, Fruktose und Sorbit, Fett und große Mengen (Histamin bleibt wählbar), mit Bewertung je Menge,
+Zutaten-Scan, Tageslast und einem Ernährungsplan für die Woche (laktosefrei, fruktosearm, ohne Fisch; siehe
+[`docs/ERNAEHRUNGSPLAN.md`](docs/ERNAEHRUNGSPLAN.md)). Training lässt sich leichter anordnen, und unter Leben
+gibt es Ranglisten (Tier-Maker). Aus Version 1.4 – Phase 12 und 13: Rückblicke für Monat und Jahr mit Vergleich, ein
 Arzt-Paket (PDF plus Tabellen als ZIP) und der Export aller Daten als Tabellen. Dazu „Tag planen“:
 ein leises Morgen-Briefing, „Tag abschließen“ am Abend und „Woche planen“ am Sonntag mit Fokus der
 Woche. Aus Version 1.2 – Phase 11 Training-Coach: Der Plan-Check schlägt je Übung vor, was sich
@@ -41,6 +45,8 @@ Der vollständige Plan steht in [`docs/PLAN.md`](docs/PLAN.md).
 | Was die Schnellerfassung versteht | [`docs/SCHNELLERFASSUNG.md`](docs/SCHNELLERFASSUNG.md) |
 | Medikamente, Erinnerungen, Widget | [`docs/MEDIKAMENTE.md`](docs/MEDIKAMENTE.md) |
 | Apple Health über Kurzbefehle einrichten | [`docs/HEALTH-KURZBEFEHL.md`](docs/HEALTH-KURZBEFEHL.md) |
+| Version 1.5 auf dem iPhone testen | [`docs/PHASE14-CHECKLIST.md`](docs/PHASE14-CHECKLIST.md) |
+| Ernährungsplan für die Woche | [`docs/ERNAEHRUNGSPLAN.md`](docs/ERNAEHRUNGSPLAN.md) |
 | Version 1.4 auf dem iPhone testen | [`docs/PHASE12-13-CHECKLIST.md`](docs/PHASE12-13-CHECKLIST.md) |
 | Version 1.2 auf dem iPhone testen | [`docs/PHASE11-CHECKLIST.md`](docs/PHASE11-CHECKLIST.md) |
 | Version 1.1 auf dem iPhone testen | [`docs/PHASE10-CHECKLIST.md`](docs/PHASE10-CHECKLIST.md) |

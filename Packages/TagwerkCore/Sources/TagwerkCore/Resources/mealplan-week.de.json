@@ -2,7 +2,7 @@
   "version": 1,
   "id": "orbit-woche-laktosefrei",
   "title": "Wochenplan laktosefrei, fruktosearm, ohne Fisch",
-  "summary": "Sieben Tage mit je vier Mahlzeiten und zwei bis drei Optionen. Etwa 2.300–2.600 kcal und 160–180 g Eiweiß am Tag, je Mahlzeit höchstens rund 20 g Fett. Wiederholbar: Montag beginnt wieder von vorn.",
+  "summary": "Sieben Tage mit je vier Mahlzeiten und je zwei Optionen. Etwa 2.100–2.500 kcal und 160–190 g Eiweiß am Tag, je Mahlzeit höchstens rund 20 g Fett. Wiederholbar: Montag beginnt wieder von vorn.",
   "days": [
     {"weekday": 2, "meals": {"breakfast": ["wp-protein-oats-beeren", "wp-skyr-bowl-banane"], "lunch": ["haehnchen-reis-zucchini", "wp-pute-pasta-tomate"], "dinner": ["wp-steak-ofenkartoffeln", "wp-haehnchen-wraps-dip"], "snack": ["wp-shake-banane", "wp-skyr-beeren-mandeln"]}},
     {"weekday": 3, "meals": {"breakfast": ["wp-skyr-bowl-banane", "wp-overnight-oats-kiwi"], "lunch": ["wp-pute-pasta-tomate", "wp-hack-reis-paprika"], "dinner": ["wp-haehnchen-wraps-dip", "wp-asia-reis-pak-choi-ei"], "snack": ["wp-huettenkaese-reiswaffeln", "wp-vollkornbrot-pute"]}},

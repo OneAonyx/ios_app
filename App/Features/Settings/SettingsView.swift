@@ -519,7 +519,7 @@ struct RoadmapView: View {
         let systemImage: String
     }
 
-    private let currentPhase = 14
+    private let currentPhase = 15
 
     private let phases: [Phase] = [
         Phase(id: 0, title: "Fundament & Systemcheck", detail: "Abgeschlossen: 5 von 6 Tests, Health erst mit Developer-Account.", systemImage: "hammer"),
@@ -536,7 +536,8 @@ struct RoadmapView: View {
         Phase(id: 11, title: "Training-Coach", detail: "Abgeschlossen: Plan-Check mit Vorschlägen je Übung zum Übernehmen, Hinweis vor der nächsten Einheit, wo diese Woche noch Sätze fehlen.", systemImage: "figure.strengthtraining.traditional"),
         Phase(id: 12, title: "Rückblicke und Teilen", detail: "Abgeschlossen: Monats- und Jahresrückblick mit Vergleich, Arzt-Paket aus PDF und Tabellen (ZIP), Export aller Daten als Tabellen.", systemImage: "chart.xyaxis.line"),
         Phase(id: 13, title: "Tag planen", detail: "Abgeschlossen: Morgen-Briefing als Mitteilung, Tag abschließen mit Top 3 für morgen, Woche planen mit Fokus der Woche und Trainingstagen.", systemImage: "sun.horizon"),
-        Phase(id: 14, title: "Nach deinen Wünschen", detail: "Was dir im Alltag mit Orbit auffällt: Was fehlt, was stört, was schneller gehen soll.", systemImage: "bubble.left.and.text.bubble.right"),
+        Phase(id: 14, title: "Deine Wünsche", detail: "Abgeschlossen: Unverträglichkeiten wählbar (Laktose, Fruktose, Fett und Mengen statt Histamin), Ernährungsplan für die Woche, Training leichter anordnen, Ranglisten (Tier-Maker).", systemImage: "bubble.left.and.text.bubble.right"),
+        Phase(id: 15, title: "Alltagstauglich", detail: "Erinnerung vor Ablauf der Signatur, Notizen zu Orbit direkt in der App, „Neu in Orbit“ nach Updates, „Heute“ abends kürzer.", systemImage: "checkmark.shield"),
     ]
 
     var body: some View {
