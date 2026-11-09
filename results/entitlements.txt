@@ -1,0 +1,18 @@
+Berechtigungen der App:
+[Dict]
+	[Key] com.apple.developer.healthkit
+	[Value]
+		[Bool] true
+	[Key] com.apple.developer.healthkit.access
+	[Value]
+		[Array]
+	[Key] com.apple.security.application-groups
+	[Value]
+		[Array]
+			[String] group.de.tagwerk.app
+Berechtigungen des Widgets:
+[Dict]
+	[Key] com.apple.security.application-groups
+	[Value]
+		[Array]
+			[String] group.de.tagwerk.app
