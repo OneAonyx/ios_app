@@ -562,7 +562,9 @@ enum SelfTest {
         }
         let report = NutritionActions.triggerReport(days: 30, now: now, in: context)
         let keys = report.findings.map(\.key)
-        try check(keys.contains("tomate") && !keys.contains("haehnchenbrust"), "Muster: \(keys)")
+        // Tomate und Nudeln kamen immer zusammen: eines steht vorn, das andere als „zusammen mit“.
+        let tomatoFound = report.findings.contains { $0.key == "tomate" || $0.companions.contains("Tomate") }
+        try check(tomatoFound && !keys.contains("haehnchenbrust"), "Muster: \(keys)")
 
         // Eigene Einschätzung „ok“ senkt die Tageslast auf null (Milch: 4,8 g Laktose in 100 ml).
         NutritionActions.setProfile(.standard)

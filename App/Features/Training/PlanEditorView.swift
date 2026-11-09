@@ -389,14 +389,17 @@ private struct DayExerciseRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
                         .foregroundStyle(Color.primary)
-                    if !muscles.isEmpty {
-                        Text(muscles)
+                    // Beim Anordnen nur der Name, damit Platz für die Pfeile bleibt.
+                    if !isEditing {
+                        if !muscles.isEmpty {
+                            Text(muscles)
+                                .font(.caption)
+                                .foregroundStyle(ModuleAccent.training)
+                        }
+                        Text(detail)
                             .font(.caption)
-                            .foregroundStyle(ModuleAccent.training)
+                            .foregroundStyle(.secondary)
                     }
-                    Text(detail)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())

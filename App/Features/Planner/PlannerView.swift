@@ -40,16 +40,20 @@ struct PlannerView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Picker("Ansicht", selection: $mode) {
-                        ForEach(Mode.allCases) { mode in
-                            Text(mode.rawValue).tag(mode)
-                        }
+            // Fünf Bereiche passen nicht in die Titelleiste: eigene Zeile über dem Inhalt.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                Picker("Ansicht", selection: $mode) {
+                    ForEach(Mode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
                     }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 360)
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, Spacing.m)
+                .padding(.vertical, Spacing.xs)
+                .background(.bar)
+                .accessibilityIdentifier("planner.mode")
+            }
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         app.openQuickAdd()

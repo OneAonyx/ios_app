@@ -195,16 +195,18 @@ struct MoveButtons: View {
     let onDown: () -> Void
 
     var body: some View {
-        HStack(spacing: Spacing.xs) {
+        HStack(spacing: 4) {
             Button(action: onUp) {
                 Image(systemName: "arrow.up")
-                    .frame(width: 28, height: 28)
+                    .font(.subheadline.weight(.semibold))
+                    .frame(width: 22, height: 26)
             }
             .disabled(!canMoveUp)
             .accessibilityLabel("Nach oben")
             Button(action: onDown) {
                 Image(systemName: "arrow.down")
-                    .frame(width: 28, height: 28)
+                    .font(.subheadline.weight(.semibold))
+                    .frame(width: 22, height: 26)
             }
             .disabled(!canMoveDown)
             .accessibilityLabel("Nach unten")
