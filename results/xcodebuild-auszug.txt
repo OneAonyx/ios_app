@@ -1,0 +1,29 @@
+3437:Test Case '-[TagwerkUITests.ScreenshotTests testClarity]' passed (181.617 seconds).
+3854:Test Case '-[TagwerkUITests.ScreenshotTests testDarkMode]' passed (182.538 seconds).
+4242:Test Case '-[TagwerkUITests.ScreenshotTests testDiary]' passed (176.882 seconds).
+4529:Test Case '-[TagwerkUITests.ScreenshotTests testImportAndBackup]' passed (105.373 seconds).
+4835:Test Case '-[TagwerkUITests.ScreenshotTests testInsights]' passed (94.509 seconds).
+5091:Test Case '-[TagwerkUITests.ScreenshotTests testLargeText]' passed (106.505 seconds).
+5615:Test Case '-[TagwerkUITests.ScreenshotTests testLife]' passed (156.470 seconds).
+6032:Test Case '-[TagwerkUITests.ScreenshotTests testLightMode]' passed (140.552 seconds).
+6393:Test Case '-[TagwerkUITests.ScreenshotTests testNutrition]' passed (105.658 seconds).
+6441:Test Case '-[TagwerkUITests.ScreenshotTests testOnboarding]' passed (20.146 seconds).
+6468:TEMPO: Zwei Jahre Daten anlegen: 5214 ms – 30.903 Einträge über 730 Tage
+6469:TEMPO: Tagebuch heute: 36 ms (Grenze 400 ms) – 0 Mahlzeiten, 3 Einnahmen fällig
+6470:TEMPO: Tagebuch 90 Tage: 54 ms (Grenze 2500 ms) – 90 Tage, 44 vollständig
+6471:TEMPO: Arztbericht 90 Tage: 587 ms (Grenze 5000 ms) – 29 Beschwerden, 90 Tageszeilen
+6472:TEMPO: Arztbericht als PDF: 776 ms (Grenze 8000 ms) – 15 Seiten
+6473:TEMPO: Wochenrückblick: 147 ms (Grenze 1500 ms) – 85 Zeichen
+6474:TEMPO: Auslöser-Analyse 90 Tage: 213 ms (Grenze 3000 ms) – 0 Auffälligkeiten
+6475:TEMPO: Ernährung heute: 4 ms (Grenze 400 ms) – Tageslast 0.0
+6476:TEMPO: Wochenvolumen Training: 0 ms (Grenze 800 ms) – 7 Muskeln
+6477:TEMPO: Kraftverlauf einer Übung: 69 ms (Grenze 800 ms) – 30 Einheiten
+6478:TEMPO: Aufgaben: Liste „Heute“: 134 ms (Grenze 800 ms) – 298 von 1500
+6479:TEMPO: Einnahmen heute: 32 ms (Grenze 600 ms) – 3 Einnahmen
+6480:TEMPO: Erinnerungen planen: 71 ms (Grenze 2000 ms) – 21 von 21 geplant
+6481:TEMPO: Sicherung schreiben (Hintergrund): 6877 ms (Grenze 12000 ms) – 11096 KB, nicht auf dem Hauptthread
+6482:TEMPO: Sicherung wiederherstellen: 5294 ms (Grenze 40000 ms) – 1500 Aufgaben, 2190 Mahlzeiten, 522 Einheiten
+6487:Test Case '-[TagwerkUITests.ScreenshotTests testPerformance]' passed (27.354 seconds).
+6507:Test Case '-[TagwerkUITests.ScreenshotTests testSelfTest]' passed (16.319 seconds).
+7043:Test Case '-[TagwerkUITests.ScreenshotTests testTraining]' passed (143.173 seconds).
+7057:** TEST SUCCEEDED **
