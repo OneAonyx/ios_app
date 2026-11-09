@@ -24,7 +24,7 @@ struct NutritionContentTests {
         #expect(foods.foods.count >= 300)
         #expect(foods.validationIssues == [])
         // Jede Bewertung kommt vor, jede Kategorie mit Lebensmitteln.
-        for score in HistamineScore.allCases {
+        for score in FoodScore.allCases {
             #expect(foods.foods.contains { $0.score == score }, "\(score)")
         }
         let tomato = try #require(foods.food(id: "tomate"))
@@ -87,7 +87,11 @@ struct NutritionContentTests {
             for ingredient in recipe.ingredients {
                 #expect(foods.food(id: ingredient.food) != nil, "\(recipe.id): \(ingredient.food)")
             }
-            #expect(recipe.worstScore(catalog: foods) <= .moderate, "\(recipe.id)")
+            // Die ursprünglichen Rezepte sind histaminarm; die Wochenplan-Rezepte („wp-“) sind für Laktose,
+            // Fruktose und Fett ausgelegt (siehe MealPlanTemplateTests).
+            if !recipe.id.hasPrefix("wp-") {
+                #expect(recipe.worstScore(catalog: foods) <= .moderate, "\(recipe.id)")
+            }
             #expect(!recipe.steps.isEmpty)
         }
         let highProtein = recipes.recipes.filter { $0.proteinPerServing(catalog: foods) >= 25 }
@@ -146,22 +150,22 @@ struct IngredientTests {
 struct LoadTests {
     @Test func freshLowHistamineMealIsCalm() {
         let lunch = meal("1", date(2026, 10, 27, 12), [item("haehnchenbrust", 150), item("reis", 70), item("zucchini", 200)])
-        let load = HistamineLoad.compute([lunch])
+        let load = DailyLoad.compute([lunch])
         #expect(load.points == 0)
         #expect(load.level == .calm)
     }
 
     @Test func pizzaAndLeftoversRaiseTheLoad() {
         let pizza = meal("1", date(2026, 10, 27, 19), [item("pizza", 300)])
-        let load = HistamineLoad.compute([pizza])
+        let load = DailyLoad.compute([pizza])
         #expect(load.points == 18)
         #expect(load.level == .high)
         #expect(load.contributors.first?.name == "Pizza")
 
         let tomato = meal("2", date(2026, 10, 27, 12), [item("tomate", 100)])
-        #expect(HistamineLoad.compute([tomato]).points == 3)
+        #expect(DailyLoad.compute([tomato]).points == 3)
         let reheated = meal("3", date(2026, 10, 27, 12), [item("tomate", 100)], freshness: .reheated)
-        let reheatedLoad = HistamineLoad.compute([reheated])
+        let reheatedLoad = DailyLoad.compute([reheated])
         #expect(reheatedLoad.points == 6)
         #expect(reheatedLoad.level == .elevated)
         #expect(reheatedLoad.contributors.map(\.name).contains("Aufgewärmt"))
@@ -169,7 +173,7 @@ struct LoadTests {
 
     @Test func toleranceChangesLoad() {
         let mine = meal("1", date(2026, 10, 27, 12), [item("tomate", 100, tolerance: .ok)])
-        #expect(HistamineLoad.compute([mine]).points == 0)
+        #expect(DailyLoad.compute([mine]).points == 0)
     }
 
     @Test func proteinAndWaterTargets() {
@@ -377,10 +381,10 @@ struct ShoppingAndScanTests {
         #expect(restored.nutrition == backup)
 
         let snapshot = NutritionWidgetSnapshot(
-            writtenAt: date(2026, 10, 27, 13), day: date(2026, 10, 27), loadPoints: 6, levelRaw: HistamineLoad.Level.elevated.rawValue,
+            writtenAt: date(2026, 10, 27, 13), day: date(2026, 10, 27), loadPoints: 6, levelRaw: DailyLoad.Level.elevated.rawValue,
             protein: 96, proteinTarget: 150, waterML: 1500, waterTarget: 2500, mealCount: 2, topContributors: ["Tomate", "Reste"]
         )
-        #expect(snapshot.sentence(now: date(2026, 10, 27, 14), calendar: berlin) == "Histamin heute: erhöht (vor allem Tomate, Reste). Eiweiß 96 von 150 g, Wasser 1,5 von 2,5 l.")
+        #expect(snapshot.sentence(now: date(2026, 10, 27, 14), calendar: berlin) == "Verträglichkeit heute: erhöht (vor allem Tomate, Reste). Eiweiß 96 von 150 g, Wasser 1,5 von 2,5 l.")
         let tomorrow = snapshot.current(now: date(2026, 10, 28, 8), calendar: berlin)
         #expect(tomorrow.waterML == 0)
         #expect(tomorrow.proteinTarget == 150)

@@ -26,13 +26,30 @@ public enum NutritionActions {
 
     /// Mitgelieferte Lebensmittel, Regeln und Rezepte (einmal geladen).
     public static let bundledFoods = FoodCatalog.bundled()
-    public static let analyzer = IngredientAnalyzer.bundled()
+    /// Alle Zutatenregeln (zum Speichern gescannter Produkte mit allen Markierungen).
+    public static let allRules = IngredientAnalyzer.bundled()
     public static let bundledRecipes = RecipeCatalog.bundled()
 
-    /// Mitgelieferte plus eigene und gescannte Lebensmittel.
+    /// Aktive Verträglichkeits-Profile (Einstellung, Standard: Laktose, Fruktose, Fett).
+    public static var profile: SensitivityProfile {
+        SensitivityProfile.decode(UserDefaults.standard.string(forKey: SettingsKeys.sensitivities))
+    }
+
+    public static func setProfile(_ profile: SensitivityProfile) {
+        UserDefaults.standard.set(profile.encoded, forKey: SettingsKeys.sensitivities)
+    }
+
+    /// Zutatenregeln der aktiven Profile (für die Anzeige).
+    public static var analyzer: IngredientAnalyzer { allRules.filtered(profile.active) }
+
+    /// Mitgelieferte plus eigene und gescannte Lebensmittel, bewertet nach den aktiven Profilen.
     public static func catalog(in context: ModelContext) -> FoodCatalog {
         let custom = (try? context.fetch(FetchDescriptor<CustomFood>())) ?? []
-        return bundledFoods.adding(custom.map(\.info))
+        return catalog(custom: custom)
+    }
+
+    public static func catalog(custom: [CustomFood], profile: SensitivityProfile = profile) -> FoodCatalog {
+        bundledFoods.adding(custom.map(\.info)).applying(profile)
     }
 
     public static func recipes(in context: ModelContext) -> RecipeCatalog {
@@ -337,7 +354,8 @@ public enum NutritionActions {
             meals: facts(meals, catalog: catalog, in: context),
             waterML: water(on: date, calendar: calendar, in: context),
             proteinTarget: proteinTarget(in: context),
-            waterTarget: waterTarget
+            waterTarget: waterTarget,
+            sensitivities: profile.active
         )
     }
 
@@ -446,6 +464,41 @@ public enum NutritionActions {
         context.insert(entry)
         save(context)
         return entry
+    }
+
+    /// Mitgelieferter Wochenplan (laktosefrei, fruktosearm, ohne Fisch).
+    public static let weekTemplate = MealPlanTemplate.bundledWeek()
+
+    /// Gewählte Optionen im Wochenplan-Vorschlag.
+    public static var planChoices: [String: String] {
+        get { decodeChoices(UserDefaults.standard.string(forKey: SettingsKeys.mealPlanChoices) ?? "") }
+        set { UserDefaults.standard.set(encodeChoices(newValue), forKey: SettingsKeys.mealPlanChoices) }
+    }
+
+    public static func decodeChoices(_ text: String) -> [String: String] {
+        var result: [String: String] = [:]
+        for pair in text.split(separator: ";") {
+            let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+            if parts.count == 2 { result[parts[0]] = parts[1] }
+        }
+        return result
+    }
+
+    public static func encodeChoices(_ choices: [String: String]) -> String {
+        choices.keys.sorted().map { "\($0)=\(choices[$0] ?? "")" }.joined(separator: ";")
+    }
+
+    /// Den Wochenplan-Vorschlag für die Woche ab `weekStart` übernehmen (je Mahlzeit 1 Portion).
+    /// Vorhandene Einträge derselben Mahlzeit werden ersetzt.
+    @discardableResult
+    public static func applyTemplate(
+        _ template: MealPlanTemplate, weekStart: Date, choices: [String: String], calendar: Calendar, in context: ModelContext
+    ) -> Int {
+        let entries = template.entries(weekStart: weekStart, choices: choices, calendar: calendar)
+        for entry in entries {
+            plan(entry.recipeID, servings: 1, on: entry.day, mealType: entry.meal, calendar: calendar, in: context)
+        }
+        return entries.count
     }
 
     public static func delete(_ entry: MealPlanEntry, in context: ModelContext) {

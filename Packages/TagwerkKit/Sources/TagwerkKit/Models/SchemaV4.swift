@@ -244,8 +244,8 @@ public extension TagwerkSchemaV4.CustomFood {
             name: name,
             aliases: aliasesText.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
             category: FoodCategory(rawValue: categoryRaw) ?? .other,
-            score: HistamineScore(rawValue: min(max(score, 0), 3)) ?? .moderate,
-            flags: flagsText.split(separator: ",").compactMap { HistamineFlag(rawValue: String($0)) },
+            score: FoodScore(rawValue: min(max(score, 0), 3)) ?? .moderate,
+            flags: flagsText.split(separator: ",").compactMap { FoodFlag(rawValue: String($0)) },
             protein: protein,
             kcal: kcal,
             portion: max(1, portion),
@@ -262,8 +262,16 @@ public extension TagwerkSchemaV4.CustomFood {
         name = info.name
         aliasesText = info.aliases.joined(separator: ";")
         categoryRaw = info.category.rawValue
-        score = info.score.rawValue
-        flagsText = info.flags.map(\.rawValue).joined(separator: ",")
+        // Aus den Bewertungen speichern, nicht aus `score`/`flags` (die gelten nur für die aktiven Profile):
+        // Histamin als Zahl, Laktose, Fruktose, Sorbit und Fett als Markierungen.
+        let ratings = info.ratings
+        var flags = ratings.histamineFlags
+        if (ratings.lactose ?? 0) >= 1 { flags.append(.lactose) }
+        if ratings.fructose >= .poor { flags.append(.fructose) }
+        if ratings.sorbitol { flags.append(.sorbitol) }
+        if (ratings.fat ?? 0) >= 20 { flags.append(.fatRich) }
+        score = ratings.histamine.rawValue
+        flagsText = flags.map(\.rawValue).joined(separator: ",")
         protein = info.protein
         kcal = info.kcal
         portion = info.portion
@@ -304,17 +312,12 @@ public extension TagwerkSchemaV4.MealEntry {
             freshness: freshness,
             place: place,
             items: sortedItems.map { item in
-                let food = catalog.food(id: item.foodID)
-                let general = food?.score ?? .moderate
-                return MealItemFact(
-                    foodID: item.foodID,
-                    name: food?.name ?? item.name,
-                    grams: item.grams,
-                    score: tolerance(item.foodID).effectiveScore(general: general),
-                    flags: food?.flags ?? [],
-                    proteinPer100: food?.protein ?? 0,
-                    kcalPer100: food?.kcal ?? 0
-                )
+                guard let food = catalog.food(id: item.foodID) else {
+                    return MealItemFact(foodID: item.foodID, name: item.name, grams: item.grams, score: tolerance(item.foodID).effectiveScore(general: .moderate))
+                }
+                // Bewertung für die gegessene Menge (Laktose und Fett hängen von der Menge ab).
+                let general = catalog.score(food, grams: item.grams)
+                return MealItemFact(food: food, grams: item.grams, score: tolerance(item.foodID).effectiveScore(general: general))
             }
         )
     }

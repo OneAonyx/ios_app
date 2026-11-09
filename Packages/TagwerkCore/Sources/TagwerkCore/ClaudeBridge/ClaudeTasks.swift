@@ -31,7 +31,7 @@ public enum ClaudeTask: String, Codable, Sendable, CaseIterable, Identifiable {
         case .trainingPlan: "Claude schlägt einen angepassten Plan vor. Du siehst die Änderungen, bevor sie übernommen werden."
         case .weeklyReview: "Kennzahlen deiner Woche mit Tipps für die nächste."
         case .food: "Für Lebensmittel, die nicht im Lexikon stehen."
-        case .recipes: "Histaminarme, eiweißreiche Rezepte nach deinen Wünschen."
+        case .recipes: "Verträgliche, eiweißreiche Rezepte nach deinen Wünschen."
         case .patterns: "Claude ordnet die gefundenen Muster ein und schlägt Tests vor."
         case .progress: "Geht es zu schnell oder zu langsam? Kraftverlauf, Gewicht und Maße mit Tipps."
         case .photos: "Fortschrittsfotos im Vergleich, über die Claude-App mit Bildern."
@@ -82,7 +82,30 @@ public struct ClaudePrompt: Sendable, Hashable {
 
 /// Baut die Anfragen. Persönliche Angaben (Name, Notizen) gehen nie mit.
 public enum ClaudePromptBuilder {
-    static let intro = "Du hilfst in der iPhone-App „Orbit“ (Alltag, Training, Ernährung bei Histaminintoleranz). Antworte auf Deutsch, sachlich und konkret."
+    static let intro = "Du hilfst in der iPhone-App „Orbit“ (Alltag, Training, Ernährung bei Unverträglichkeiten). Antworte auf Deutsch, sachlich und konkret."
+
+    /// „Laktoseintoleranz, Fruktosemalabsorption (Fruktose und Sorbit), Empfindlichkeit gegen sehr fettige oder große Mahlzeiten“
+    static func conditions(_ profile: SensitivityProfile) -> String {
+        let parts = profile.ordered.map { sensitivity -> String in
+            switch sensitivity {
+            case .lactose: "Laktoseintoleranz"
+            case .fructose: "Fruktosemalabsorption (Fruktose-Überschuss und Sorbit)"
+            case .fat: "Empfindlichkeit gegen sehr fettige oder große Mahlzeiten"
+            case .histamine: "Histaminintoleranz"
+            }
+        }
+        return parts.isEmpty ? "keine bekannten Unverträglichkeiten" : parts.joined(separator: ", ")
+    }
+
+    /// Regeln für Rezepte je Profil.
+    static func recipeRules(_ profile: SensitivityProfile) -> String {
+        var rules: [String] = []
+        if profile.contains(.lactose) { rules.append("laktosefrei (laktosefreie Milchprodukte verwenden; gereifter Hartkäse wie Parmesan und Butter in kleinen Mengen sind erlaubt)") }
+        if profile.contains(.fructose) { rules.append("fruktosearm (kein Apfel, keine Birne, Mango, Wassermelone, kein Honig, Agavendicksaft, Trockenobst, Fruchtsaft, keine Süßstoffe mit Sorbit; Zwiebel und Knoblauch höchstens wenig, besser Frühlingszwiebelgrün oder Knoblauchöl)") }
+        if profile.contains(.fat) { rules.append("moderat im Fett (höchstens etwa 20 g Fett pro Portion, nichts Frittiertes, keine Sahnesaucen, mageres Fleisch) und normale Portionsgrößen") }
+        if profile.contains(.histamine) { rules.append("histaminarm (nur frische Zutaten, kein Essig außer Branntweinessig, keine gereiften Käse, keine Tomate, kein Spinat, keine Avocado, kein Alkohol, keine Sojasauce)") }
+        return rules.isEmpty ? "ausgewogen" : rules.joined(separator: ", ")
+    }
 
     static func outputRule(format: String, ref: String, example: String) -> String {
         """
@@ -157,15 +180,15 @@ public enum ClaudePromptBuilder {
         return ClaudePrompt(task: .weeklyReview, ref: ref, text: parts.compactMap { $0 }.joined(separator: "\n\n"), includedData: data)
     }
 
-    public static func food(name: String, brand: String? = nil, ingredients: String? = nil, ref: String) -> ClaudePrompt {
+    public static func food(name: String, brand: String? = nil, ingredients: String? = nil, profile: SensitivityProfile = .standard, ref: String) -> ClaudePrompt {
         let categories = FoodCategory.allCases.map(\.rawValue).joined(separator: ", ")
-        let example = #"{"format":"orbit.food.v1","ref":"\#(ref)","name":"Quinoa-Riegel","category":"sweets","score":1,"flags":["L"],"hint":"Enthält Cashew.","protein":8,"kcal":420,"portion":40}"#
+        let example = #"{"format":"orbit.food.v1","ref":"\#(ref)","name":"Quinoa-Riegel","category":"sweets","score":1,"flags":["L"],"lactose":0.5,"fructose":1,"sorbitol":false,"fat":18,"hint":"Enthält Cashew und etwas Milchpulver.","protein":8,"kcal":420,"portion":40}"#
         let parts = [
             intro,
-            "AUFGABE: Bewerte dieses Lebensmittel für Menschen mit Histaminintoleranz auf der in DACH üblichen Skala: 0 gut verträglich, 1 mäßig, 2 schlecht, 3 sehr schlecht.",
+            "AUFGABE: Bewerte dieses Lebensmittel für mich (\(conditions(profile))).",
             "LEBENSMITTEL: \(name)" + (brand.map { " (Marke: \($0))" } ?? ""),
             ingredients.map { "ZUTATEN: \($0)" },
-            "Markierungen in \"flags\": H = histaminreich/verderblich, A = andere biogene Amine, L = Histaminliberator, B = hemmt den Abbau (DAO). \"category\" ist einer von: \(categories). \"protein\" und \"kcal\" je 100 g, \"portion\" übliche Portion in g. \"hint\" ein kurzer Satz mit dem wichtigsten Grund oder Tipp.",
+            "FELDER: \"lactose\" = Laktose in g je 100 g (Schätzung, 0 wenn laktosefrei). \"fructose\" = Fruktose-Überschuss 0–3 für eine übliche Portion (0 unauffällig, 3 sehr viel überschüssige Fruktose). \"sorbitol\" = true bei Sorbit oder anderen Zuckeralkoholen. \"fat\" = Fett in g je 100 g. \"score\" = Histamin-Bewertung 0–3 (DACH-Skala), \"flags\" dazu: H = histaminreich, A = biogene Amine, L = Liberator, B = hemmt DAO. \"category\" ist einer von: \(categories). \"protein\" und \"kcal\" je 100 g, \"portion\" übliche Portion in g. \"hint\" ein kurzer Satz mit dem wichtigsten Grund oder Tipp für meine Unverträglichkeiten.",
             outputRule(format: ClaudeFoodAnswer.format, ref: ref, example: example),
         ]
         var data = ["Name des Lebensmittels"]
@@ -192,11 +215,11 @@ public enum ClaudePromptBuilder {
         }
     }
 
-    public static func recipes(_ context: RecipeContext, ref: String) -> ClaudePrompt {
+    public static func recipes(_ context: RecipeContext, profile: SensitivityProfile = .standard, ref: String) -> ClaudePrompt {
         let example = #"{"format":"orbit.recipes.v1","ref":"\#(ref)","recipes":[{"title":"Hähnchen mit Reis","summary":"Schnell und mild.","servings":2,"minutes":25,"tags":["Abend"],"ingredients":[{"name":"Hähnchenbrust","grams":300},{"name":"Olivenöl","grams":10,"amount":"1 EL"}],"steps":["Reis kochen.","Hähnchen braten."]}]}"#
         let parts = [
             intro,
-            "AUFGABE: Schlage \(context.count) Rezepte vor, histaminarm (nur frische Zutaten, kein Essig außer Branntweinessig, keine gereiften Käse, keine Tomate, kein Spinat, keine Avocado, kein Alkohol, keine Sojasauce) und eiweißreich (etwa \(context.proteinPerServing) g Eiweiß pro Portion), für \(context.servings) Portionen. Mengen in Gramm für das ganze Rezept.",
+            "AUFGABE: Schlage \(context.count) Rezepte vor, \(recipeRules(profile)) und eiweißreich (etwa \(context.proteinPerServing) g Eiweiß pro Portion), für \(context.servings) Portionen. Mengen in Gramm für das ganze Rezept.",
             context.wish.isEmpty ? nil : "WUNSCH: \(context.wish)",
             context.tolerated.isEmpty ? nil : "VERTRAGE ICH GUT: " + context.tolerated.joined(separator: ", "),
             context.avoid.isEmpty ? nil : "MEIDE ICH: " + context.avoid.joined(separator: ", "),
@@ -211,7 +234,8 @@ public enum ClaudePromptBuilder {
     }
 
     public static func patterns(
-        _ report: TriggerReport, symptomSummary: [String], checkIns: CheckInAverages?, avoid: [String], wish: String, ref: String
+        _ report: TriggerReport, symptomSummary: [String], checkIns: CheckInAverages?, avoid: [String], wish: String,
+        profile: SensitivityProfile = .standard, ref: String
     ) -> ClaudePrompt {
         let example = #"{"format":"orbit.text.v1","ref":"\#(ref)","title":"Mögliche Auslöser","text":"**Am auffälligsten:** …\n\n**So kannst du es testen:**\n1. …"}"#
         let findings = report.findings.isEmpty
@@ -225,7 +249,7 @@ public enum ClaudePromptBuilder {
         }
         let parts = [
             intro,
-            "AUFGABE: Ordne diese Auswertung meines Ernährungs- und Beschwerdetagebuchs ein (Histaminintoleranz). Was ist am ehesten ein Auslöser, was eher Zufall? Schlage einen einfachen Plan vor, wie ich Verdächtiges gezielt teste (z. B. Auslassen und Wiedereinführen). Höchstens 250 Wörter, Markdown erlaubt. Keine Diagnose, weise bei starken Beschwerden auf ärztlichen Rat hin.",
+            "AUFGABE: Ordne diese Auswertung meines Ernährungs- und Beschwerdetagebuchs ein (bekannt oder vermutet: \(conditions(profile))). Was ist am ehesten ein Auslöser, was eher Zufall? Schlage einen einfachen Plan vor, wie ich Verdächtiges gezielt teste (z. B. Auslassen und Wiedereinführen). Höchstens 250 Wörter, Markdown erlaubt. Keine Diagnose, weise bei starken Beschwerden auf ärztlichen Rat hin.",
             wish.isEmpty ? nil : "FRAGE: \(wish)",
             "DATEN: \(report.mealCount) Mahlzeiten, \(report.symptomCount) Beschwerden.",
             "BESCHWERDEN: " + (symptomSummary.isEmpty ? "–" : symptomSummary.joined(separator: ", ")),
@@ -337,6 +361,11 @@ public struct ClaudeFoodAnswer: Codable, Sendable, Hashable {
     public var category: String?
     public var score: Int
     public var flags: [String]?
+    /// Laktose g/100 g, Fruktose 0–3, Sorbit, Fett g/100 g (ab Version 1.5 der App).
+    public var lactose: Double?
+    public var fructose: Int?
+    public var sorbitol: Bool?
+    public var fat: Double?
     public var hint: String?
     public var protein: Double?
     public var kcal: Double?
@@ -440,12 +469,26 @@ public enum ClaudeAnswerParser {
             id = "\(base)-\(counter)"
             counter += 1
         }
+        let histamine = FoodScore(rawValue: min(max(answer.score, 0), 3)) ?? .moderate
+        let histamineFlags = (answer.flags ?? []).compactMap(FoodFlag.init(rawValue:)).filter { $0.sensitivity == .histamine }
+        let ratings = FoodRatings(
+            histamine: histamine, histamineFlags: histamineFlags, lactose: answer.lactose.map { max(0, $0) },
+            fructose: answer.fructose.flatMap { FoodScore(rawValue: min(max($0, 0), 3)) } ?? .good,
+            sorbitol: answer.sorbitol ?? false, fat: answer.fat.map { max(0, $0) }
+        )
+        // Eigene Lebensmittel speichern Laktose, Fruktose und Fett als Markierungen (siehe FoodRatings.legacy).
+        var flags = histamineFlags
+        if (ratings.lactose ?? 0) >= 1 { flags.append(.lactose) }
+        if ratings.fructose >= .poor { flags.append(.fructose) }
+        if ratings.sorbitol { flags.append(.sorbitol) }
+        if (ratings.fat ?? 0) >= 20 { flags.append(.fatRich) }
         return FoodInfo(
             id: id,
             name: answer.name.trimmingCharacters(in: .whitespaces),
             category: answer.category.flatMap(FoodCategory.init(rawValue:)) ?? .other,
-            score: HistamineScore(rawValue: min(max(answer.score, 0), 3)) ?? .moderate,
-            flags: (answer.flags ?? []).compactMap(HistamineFlag.init(rawValue:)),
+            score: histamine,
+            flags: flags,
+            ratings: ratings,
             protein: answer.protein,
             kcal: answer.kcal,
             portion: max(1, answer.portion ?? 100),

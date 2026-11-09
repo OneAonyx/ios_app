@@ -11,6 +11,7 @@ enum NutritionRoute: Hashable {
     case recipes
     case recipe(String)
     case mealPlan
+    case weekTemplate
     case patterns
     case ingredientCheck
     case symptoms
@@ -44,7 +45,7 @@ struct MealDraftItem: Identifiable, Hashable {
     var grams: Double
 }
 
-extension HistamineScore {
+extension FoodScore {
     var color: Color {
         switch self {
         case .good: .green
@@ -65,7 +66,7 @@ extension HistamineScore {
     }
 }
 
-extension HistamineLoad.Level {
+extension DailyLoad.Level {
     var color: Color {
         switch self {
         case .calm: .green
@@ -77,7 +78,7 @@ extension HistamineLoad.Level {
 
 /// Bewertung als Kapsel: Symbol und Zahl, nie nur Farbe.
 struct ScoreBadge: View {
-    let score: HistamineScore
+    let score: FoodScore
     var showsTitle = false
 
     var body: some View {
@@ -91,7 +92,7 @@ struct ScoreBadge: View {
         .padding(.vertical, 3)
         .background(score.color.opacity(0.16), in: Capsule())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Histamin \(score.label)")
+        .accessibilityLabel("Verträglichkeit \(score.label)")
     }
 }
 
@@ -154,7 +155,7 @@ struct FoodRow: View {
 
 /// Tageslast als Balken mit Stufen.
 struct LoadBar: View {
-    let load: HistamineLoad
+    let load: DailyLoad
 
     var body: some View {
         GeometryReader { proxy in
@@ -164,17 +165,17 @@ struct LoadBar: View {
                     .fill(load.level.color.gradient)
                     .frame(width: max(8, proxy.size.width * load.fraction))
                 // Grenzen „erhöht“ und „hoch“.
-                ForEach([HistamineLoad.elevatedFrom, HistamineLoad.highFrom], id: \.self) { mark in
+                ForEach([DailyLoad.elevatedFrom, DailyLoad.highFrom], id: \.self) { mark in
                     Rectangle()
                         .fill(Color.primary.opacity(0.25))
                         .frame(width: 1.5, height: 10)
-                        .offset(x: proxy.size.width * mark / HistamineLoad.scaleMax)
+                        .offset(x: proxy.size.width * mark / DailyLoad.scaleMax)
                 }
             }
         }
         .frame(height: 10)
         .accessibilityElement()
-        .accessibilityLabel("Histamin-Tageslast \(load.level.title)")
+        .accessibilityLabel("Verträglichkeit heute \(load.level.title)")
     }
 }
 
@@ -227,7 +228,7 @@ struct NutritionRings: View {
 }
 
 /// „Vor allem: Tomate, Reste“ bzw. bei ruhiger Last „Kleine Beiträge: Mandeln“.
-func loadContributorsText(_ load: HistamineLoad) -> String {
+func loadContributorsText(_ load: DailyLoad) -> String {
     let names = load.contributors.prefix(3).map(\.name).joined(separator: ", ")
     return (load.level == .calm ? "Kleine Beiträge: " : "Vor allem: ") + names
 }

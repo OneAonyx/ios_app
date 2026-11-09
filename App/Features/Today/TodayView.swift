@@ -622,7 +622,7 @@ private struct TrainingTodayCard: View {
     }
 }
 
-/// Histamin-Tageslast, Eiweiß und Wasser auf einen Blick.
+/// Verträglichkeit, Eiweiß und Wasser auf einen Blick.
 private struct NutritionTodayCard: View {
     let now: Date
 
@@ -658,7 +658,8 @@ private struct NutritionTodayCard: View {
             meals: todayMeals.map { $0.fact(catalog: catalog) { tolerances[$0] ?? .unknown } },
             waterML: water.filter { calendar.isDate($0.date, inSameDayAs: now) }.reduce(0) { $0 + $1.milliliters },
             proteinTarget: NutritionTargets.proteinTarget(bodyweight: metrics.first { $0.type == .weight }?.value, perKg: proteinPerKg),
-            waterTarget: waterTarget
+            waterTarget: waterTarget,
+            sensitivities: NutritionActions.profile.active
         )
         let load = day.load
         Card {
@@ -691,7 +692,7 @@ private struct NutritionTodayCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Ernährung: Histamin \(load.level.title), \(summary(day))")
+            .accessibilityLabel("Ernährung: Verträglichkeit \(load.level.title), \(summary(day))")
         }
         .accessibilityIdentifier("today.nutrition")
     }

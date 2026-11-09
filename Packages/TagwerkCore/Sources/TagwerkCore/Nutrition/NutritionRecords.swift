@@ -184,14 +184,14 @@ public struct NutritionWidgetSnapshot: Codable, Sendable, Equatable {
     }
 
     public static let empty = NutritionWidgetSnapshot(
-        writtenAt: .distantPast, day: .distantPast, loadPoints: 0, levelRaw: HistamineLoad.Level.calm.rawValue,
+        writtenAt: .distantPast, day: .distantPast, loadPoints: 0, levelRaw: DailyLoad.Level.calm.rawValue,
         protein: 0, proteinTarget: NutritionTargets.proteinTarget(bodyweight: nil), waterML: 0,
         waterTarget: NutritionTargets.defaultWaterML, mealCount: 0, topContributors: []
     )
 
-    public var level: HistamineLoad.Level { HistamineLoad.Level(rawValue: levelRaw) ?? .calm }
+    public var level: DailyLoad.Level { DailyLoad.Level(rawValue: levelRaw) ?? .calm }
 
-    public var loadFraction: Double { min(1, loadPoints / HistamineLoad.scaleMax) }
+    public var loadFraction: Double { min(1, loadPoints / DailyLoad.scaleMax) }
 
     /// Werte von gestern zählen heute nicht mehr.
     public func isCurrent(now: Date, calendar: Calendar) -> Bool {
@@ -209,10 +209,10 @@ public struct NutritionWidgetSnapshot: Codable, Sendable, Equatable {
         return fresh
     }
 
-    /// Antwort für Siri: „Histamin heute: ruhig. Eiweiß 96 von 150 g, Wasser 1,5 von 2,5 l.“
+    /// Antwort für Siri: „Verträglichkeit heute: ruhig. Eiweiß 96 von 150 g, Wasser 1,5 von 2,5 l.“
     public func sentence(now: Date, calendar: Calendar) -> String {
         let today = current(now: now, calendar: calendar)
-        var text = "Histamin heute: \(today.level.title)"
+        var text = "Verträglichkeit heute: \(today.level.title)"
         if !today.topContributors.isEmpty, today.level != .calm {
             text += " (vor allem \(today.topContributors.prefix(2).joined(separator: ", ")))"
         }

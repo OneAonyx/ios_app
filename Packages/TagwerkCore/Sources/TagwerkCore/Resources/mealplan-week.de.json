@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "orbit-woche-laktosefrei",
+  "title": "Wochenplan laktosefrei, fruktosearm, ohne Fisch",
+  "summary": "Sieben Tage mit je vier Mahlzeiten und zwei bis drei Optionen. Etwa 2.300–2.600 kcal und 160–180 g Eiweiß am Tag, je Mahlzeit höchstens rund 20 g Fett. Wiederholbar: Montag beginnt wieder von vorn.",
+  "days": [
+    {"weekday": 2, "meals": {"breakfast": ["wp-protein-oats-beeren", "wp-skyr-bowl-banane"], "lunch": ["haehnchen-reis-zucchini", "wp-pute-pasta-tomate"], "dinner": ["wp-steak-ofenkartoffeln", "wp-haehnchen-wraps-dip"], "snack": ["wp-shake-banane", "wp-skyr-beeren-mandeln"]}},
+    {"weekday": 3, "meals": {"breakfast": ["wp-skyr-bowl-banane", "wp-overnight-oats-kiwi"], "lunch": ["wp-pute-pasta-tomate", "wp-hack-reis-paprika"], "dinner": ["wp-haehnchen-wraps-dip", "wp-asia-reis-pak-choi-ei"], "snack": ["wp-huettenkaese-reiswaffeln", "wp-vollkornbrot-pute"]}},
+    {"weekday": 4, "meals": {"breakfast": ["wp-ruehrei-brot-schinken", "wp-protein-oats-beeren"], "lunch": ["wp-haehnchen-curry-leicht", "haehnchen-reis-zucchini"], "dinner": ["wp-rinderfrikadellen-pueree", "wp-steak-ofenkartoffeln"], "snack": ["wp-skyr-beeren-mandeln", "wp-shake-banane"]}},
+    {"weekday": 5, "meals": {"breakfast": ["wp-overnight-oats-kiwi", "wp-skyr-bowl-banane"], "lunch": ["wp-hack-reis-paprika", "wp-blech-haehnchen-kartoffel"], "dinner": ["wp-asia-reis-pak-choi-ei", "wp-kartoffel-ei-spinat"], "snack": ["wp-shake-banane", "wp-huettenkaese-reiswaffeln"]}},
+    {"weekday": 6, "meals": {"breakfast": ["wp-protein-oats-beeren", "wp-ruehrei-brot-schinken"], "lunch": ["wp-blech-haehnchen-kartoffel", "wp-haehnchen-curry-leicht"], "dinner": ["wp-schweinefilet-bulgur", "wp-haehnchen-wraps-dip"], "snack": ["wp-vollkornbrot-pute", "wp-skyr-beeren-mandeln"]}},
+    {"weekday": 7, "meals": {"breakfast": ["wp-ruehrei-brot-schinken", "wp-skyr-bowl-banane"], "lunch": ["wp-rind-reisnudeln-brokkoli", "wp-pute-pasta-tomate"], "dinner": ["wp-burger-ofenspalten", "wp-kartoffel-ei-spinat"], "snack": ["wp-skyr-beeren-mandeln", "wp-shake-banane"]}},
+    {"weekday": 1, "meals": {"breakfast": ["wp-overnight-oats-kiwi", "wp-ruehrei-brot-schinken"], "lunch": ["wp-kalbsschnitzel-kartoffeln", "wp-rind-reisnudeln-brokkoli"], "dinner": ["wp-kuerbis-haehnchen-suppe", "wp-asia-reis-pak-choi-ei"], "snack": ["wp-huettenkaese-reiswaffeln", "wp-vollkornbrot-pute"]}}
+  ],
+  "guidelines": [
+    "Laktose: Laktosefreie Milchprodukte haben dieselben Nährwerte. Gereifter Hartkäse (Parmesan, Bergkäse) und Butter in kleinen Mengen enthalten praktisch keine Laktose. Bis etwa 12 g Laktose auf einmal vertragen die meisten Betroffenen; im Plan sind es unter 1 g je Mahlzeit.",
+    "Fruktose: Obst nur eine Portion je Mahlzeit und aus der verträglichen Gruppe (Beeren, Kiwi, Banane, Zitrusfrüchte). Kein Apfel, keine Birne, kein Honig, kein Fruchtsaft, keine Süßstoffe mit Sorbit. Zwiebel und Knoblauch sind ersetzt durch Ingwer, Kräuter, Paprika- und Currypulver.",
+    "Fett und Menge: Je Mahlzeit höchstens etwa 20 g Fett, mageres Fleisch, Ofen statt Fritteuse, keine Sahnesaucen. Vier Mahlzeiten statt zwei großer, damit keine Mahlzeit über 800 kcal liegt.",
+    "Eiweiß: 40–60 g je Hauptmahlzeit (Ziel 1,6–2,2 g je kg Körpergewicht am Tag, verteilt auf 3–4 Mahlzeiten).",
+    "Mehr Energie: Reis-, Nudel- oder Kartoffelportion um die Hälfte erhöhen oder einen zweiten Snack nehmen. Weniger Energie: Snack weglassen.",
+    "Meal Prep: Mittagsgerichte sind für zwei Portionen ausgelegt; die zweite Portion ist das Mittagessen für morgen oder kommt in den Gefrierschrank."
+  ]
+}

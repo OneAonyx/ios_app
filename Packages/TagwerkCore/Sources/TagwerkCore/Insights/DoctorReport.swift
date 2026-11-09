@@ -111,7 +111,7 @@ public struct DoctorReport: Sendable {
         mealCount: Int,
         avoidedFoods: [String],
         cautionFoods: [String],
-        loads: [HistamineLoad],
+        loads: [DailyLoad],
         weights: [WeightPoint],
         checkIns: [CheckInFact],
         calendar: Calendar

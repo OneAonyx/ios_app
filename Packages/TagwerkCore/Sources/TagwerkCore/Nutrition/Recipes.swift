@@ -70,12 +70,19 @@ public struct RecipeInfo: Codable, Sendable, Hashable, Identifiable {
         ingredients.reduce(0) { $0 + (catalog.food(id: $1.food)?.kcal(grams: $1.grams) ?? 0) } / Double(servings)
     }
 
-    /// Schlechteste Zutat, mit eigener Einschätzung.
-    public func worstScore(catalog: FoodCatalog, tolerance: (String) -> Tolerance = { _ in .unknown }) -> HistamineScore {
+    /// Schlechteste Zutat für die Menge in einer Portion, mit eigener Einschätzung.
+    public func worstScore(catalog: FoodCatalog, tolerance: (String) -> Tolerance = { _ in .unknown }) -> FoodScore {
         ingredients.compactMap { item in
-            catalog.food(id: item.food).map { tolerance(item.food).effectiveScore(general: $0.score) }
+            catalog.food(id: item.food).map { food in
+                tolerance(item.food).effectiveScore(general: catalog.score(food, grams: item.grams / Double(servings)))
+            }
         }
         .max() ?? .good
+    }
+
+    /// Fett je Portion (g).
+    public func fatPerServing(catalog: FoodCatalog) -> Double {
+        ingredients.reduce(0) { $0 + (catalog.food(id: $1.food)?.fat(grams: $1.grams) ?? 0) } / Double(servings)
     }
 
     /// „300 g Hähnchenbrust“ bzw. „2 EL Olivenöl“, auf `servings` Portionen umgerechnet.
@@ -119,7 +126,7 @@ public struct RecipeCatalog: Sendable {
 
     /// Alle Stichworte („Frühstück“, „Meal Prep“ …) in fester Reihenfolge.
     public var tags: [String] {
-        let preferred = ["Frühstück", "Mittag", "Abend", "Snack", "Süß", "Vegetarisch", "Fisch", "Suppe", "Meal Prep", "Grill"]
+        let preferred = ["Frühstück", "Mittag", "Abend", "Snack", "Laktosefrei", "Süß", "Vegetarisch", "Fisch", "Suppe", "Meal Prep", "Grill"]
         let all = Set(recipes.flatMap(\.tags))
         return preferred.filter(all.contains) + all.subtracting(preferred).sorted()
     }
@@ -207,14 +214,14 @@ public struct ShoppingNeed: Sendable, Hashable, Identifiable {
     public var name: String
     public var grams: Double
     public var category: ShoppingCategory
-    public var score: HistamineScore
+    public var score: FoodScore
     public var note: String?
 
     public var id: String { foodID }
 
     /// „600 g“, „1,2 kg“, „750 ml“
     public var amountText: String {
-        ShoppingNeed.amount(grams: grams, isLiquid: category == .drinks || foodID == "milch" || foodID == "gemuesebruehe")
+        ShoppingNeed.amount(grams: grams, isLiquid: category == .drinks || foodID == "milch" || foodID == "milch-laktosefrei" || foodID == "gemuesebruehe")
     }
 
     public static func amount(grams: Double, isLiquid: Bool) -> String {

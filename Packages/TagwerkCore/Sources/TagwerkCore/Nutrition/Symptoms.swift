@@ -3,7 +3,8 @@ import Foundation
 // MARK: - Symptome
 
 public enum SymptomType: String, Codable, Sendable, CaseIterable, Identifiable {
-    case headache, flush, itching, hives, bloating, abdominalPain, diarrhea, nausea
+    // Verdauung zuerst (häufigste Beschwerden bei Laktose, Fruktose und fettigem Essen).
+    case bloating, fullness, abdominalPain, diarrhea, nausea, headache, flush, itching, hives
     case palpitations, stuffyNose, runnyNose, fatigue, dizziness, other
 
     public var id: String { rawValue }
@@ -15,6 +16,7 @@ public enum SymptomType: String, Codable, Sendable, CaseIterable, Identifiable {
         case .itching: "Juckreiz"
         case .hives: "Quaddeln"
         case .bloating: "Blähungen"
+        case .fullness: "Völlegefühl"
         case .abdominalPain: "Bauchschmerz"
         case .diarrhea: "Durchfall"
         case .nausea: "Übelkeit"
@@ -34,6 +36,7 @@ public enum SymptomType: String, Codable, Sendable, CaseIterable, Identifiable {
         case .itching: "hand.raised.fingers.spread"
         case .hives: "circle.dotted"
         case .bloating: "wind"
+        case .fullness: "circle.circle"
         case .abdominalPain: "bolt.heart"
         case .diarrhea: "toilet"
         case .nausea: "face.dashed"
@@ -54,6 +57,7 @@ public enum SymptomType: String, Codable, Sendable, CaseIterable, Identifiable {
         case .itching: ["juckreiz", "jucken", "juckt"]
         case .hives: ["quaddeln", "nesselsucht", "ausschlag"]
         case .bloating: ["blaehungen", "blaehbauch", "aufgeblaeht"]
+        case .fullness: ["voellegefuehl", "voll", "zu viel gegessen", "schwer im magen"]
         case .abdominalPain: ["bauchschmerz", "bauchschmerzen", "bauchweh", "magenschmerzen", "kraempfe"]
         case .diarrhea: ["durchfall"]
         case .nausea: ["uebelkeit", "uebel"]
@@ -130,7 +134,7 @@ public struct TriggerFinding: Sendable, Hashable, Identifiable {
     /// Verhältnis zur Grundrate aller Mahlzeiten (2 = doppelt so oft wie sonst).
     public var lift: Double
     /// Höchste Bewertung (bei Lebensmitteln), für die Reihenfolge bei Gleichstand.
-    public var score: HistamineScore
+    public var score: FoodScore
     /// Lebensmittel, die immer zusammen mit diesem gegessen wurden. Welches davon
     /// der Auslöser ist, lässt sich aus den Daten nicht trennen.
     public var companions: [String]
@@ -231,14 +235,14 @@ public enum TriggerAnalysis {
         struct Tally {
             var name: String
             var isFactor: Bool
-            var score: HistamineScore = .good
+            var score: FoodScore = .good
             var count = 0
             var soon = 0
             var weight = 0.0
             var mealIDs: [String] = []
         }
         var tallies: [String: Tally] = [:]
-        func add(_ key: String, name: String, isFactor: Bool, score: HistamineScore = .good, meal: MealFact) {
+        func add(_ key: String, name: String, isFactor: Bool, score: FoodScore = .good, meal: MealFact) {
             guard let entry = mealWeights[meal.id] else { return }
             var tally = tallies[key] ?? Tally(name: name, isFactor: isFactor)
             tally.count += 1

@@ -3,7 +3,7 @@ import SwiftUI
 import TagwerkCore
 import TagwerkKit
 
-/// Tab „Ernährung“: Tagebuch mit Histamin-Tageslast, Eiweiß, Wasser und Mahlzeiten.
+/// Tab „Ernährung“: Tagebuch mit Verträglichkeit (Laktose, Fruktose, Fett …), Eiweiß, Wasser und Mahlzeiten.
 struct NutritionView: View {
     @Environment(AppModel.self) private var app
     @State private var dayOffset = 0
@@ -63,6 +63,7 @@ private struct NutritionDayContent: View {
     @Query private var metrics: [BodyMetric]
     @AppStorage(SettingsKeys.proteinPerKg) private var proteinPerKg = NutritionTargets.defaultProteinPerKg
     @AppStorage(SettingsKeys.waterTarget) private var waterTarget = NutritionTargets.defaultWaterML
+    @AppStorage(SettingsKeys.sensitivities) private var sensitivityText = ""
 
     init(date: Date, now: Date, dayOffset: Binding<Int>) {
         self.date = date
@@ -81,7 +82,8 @@ private struct NutritionDayContent: View {
 
     var body: some View {
         let calendar = AppModel.calendar
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let profile = SensitivityProfile.decode(sensitivityText)
+        let catalog = NutritionActions.catalog(custom: customFoods, profile: profile)
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         let facts = meals.map { $0.fact(catalog: catalog) { tolerances[$0] ?? .unknown } }
         let day = NutritionDay(
@@ -89,7 +91,8 @@ private struct NutritionDayContent: View {
             meals: facts,
             waterML: water.reduce(0) { $0 + $1.milliliters },
             proteinTarget: NutritionTargets.proteinTarget(bodyweight: metrics.first?.value, perKg: proteinPerKg),
-            waterTarget: waterTarget
+            waterTarget: waterTarget,
+            sensitivities: profile.active
         )
 
         ScrollView {
@@ -120,6 +123,7 @@ struct NutritionDestination: View {
         case .recipes: RecipeListView()
         case let .recipe(id): RecipeDetailView(recipeID: id)
         case .mealPlan: MealPlanView()
+        case .weekTemplate: WeekTemplateView()
         case .patterns: PatternsView()
         case .ingredientCheck: IngredientCheckView()
         case .symptoms: SymptomHistoryView()
@@ -180,22 +184,31 @@ private struct DayOverviewCard: View {
         let load = day.load
         Card {
             VStack(alignment: .leading, spacing: Spacing.s) {
-                HStack(alignment: .firstTextBaseline) {
-                    SectionHeader("Histamin-Tageslast", systemImage: "gauge.with.dots.needle.33percent", tint: ModuleAccent.nutrition)
-                    Label(load.level.title, systemImage: load.level.symbol)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(load.level.color)
-                        .fixedSize()
-                }
-                LoadBar(load: load)
-                if load.contributors.isEmpty {
-                    Text(day.meals.isEmpty ? "Noch keine Mahlzeit eingetragen." : "Bisher nur gut verträgliche Lebensmittel.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(loadContributorsText(load))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                if !day.sensitivities.isEmpty {
+                    HStack(alignment: .firstTextBaseline) {
+                        SectionHeader("Verträglichkeit", systemImage: "gauge.with.dots.needle.33percent", tint: ModuleAccent.nutrition)
+                        Label(load.level.title, systemImage: load.level.symbol)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(load.level.color)
+                            .fixedSize()
+                    }
+                    LoadBar(load: load)
+                    if load.contributors.isEmpty {
+                        Text(day.meals.isEmpty ? "Noch keine Mahlzeit eingetragen." : "Bisher nur gut verträgliche Lebensmittel.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(loadContributorsText(load))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    if !day.meals.isEmpty {
+                        ForEach(day.sensitivityLines, id: \.self) { line in
+                            Text(line)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 Divider()
                 NutritionRings(day: day)
@@ -375,6 +388,8 @@ private struct NutritionLinksCard: View {
                 link("Einkaufsliste", "cart", .shopping, id: "nutrition.shopping")
                 Divider().padding(.leading, 52)
                 link("Rezepte", "book", .recipes, id: "nutrition.recipes")
+                Divider().padding(.leading, 52)
+                link("Ernährungsplan für die Woche", "list.bullet.clipboard", .weekTemplate, id: "nutrition.weekTemplate")
                 Divider().padding(.leading, 52)
                 link("Wochenplan", "calendar", .mealPlan, id: "nutrition.plan")
                 Divider().padding(.leading, 52)

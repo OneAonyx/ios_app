@@ -46,7 +46,7 @@ public enum MealType: String, Codable, Sendable, CaseIterable, Identifiable {
     }
 }
 
-/// Wie frisch das Essen war. Reste und Aufgewärmtes enthalten mehr Histamin.
+/// Wie frisch das Essen war. Reste und Aufgewärmtes enthalten mehr Histamin (zählt nur im Histamin-Profil).
 public enum Freshness: String, Codable, Sendable, CaseIterable, Identifiable {
     case fresh, leftover, reheated
 
@@ -103,15 +103,19 @@ public struct MealItemFact: Sendable, Hashable {
     public var name: String
     public var grams: Double
     /// Bewertung inkl. eigener Einschätzung.
-    public var score: HistamineScore
-    public var flags: [HistamineFlag]
+    public var score: FoodScore
+    public var flags: [FoodFlag]
     /// Eiweiß g/100 g.
     public var proteinPer100: Double
     public var kcalPer100: Double
+    /// Laktose g/100 g.
+    public var lactosePer100: Double
+    /// Fett g/100 g.
+    public var fatPer100: Double
 
     public init(
-        foodID: String, name: String, grams: Double, score: HistamineScore, flags: [HistamineFlag] = [],
-        proteinPer100: Double = 0, kcalPer100: Double = 0
+        foodID: String, name: String, grams: Double, score: FoodScore, flags: [FoodFlag] = [],
+        proteinPer100: Double = 0, kcalPer100: Double = 0, lactosePer100: Double = 0, fatPer100: Double = 0
     ) {
         self.foodID = foodID
         self.name = name
@@ -120,10 +124,23 @@ public struct MealItemFact: Sendable, Hashable {
         self.flags = flags
         self.proteinPer100 = proteinPer100
         self.kcalPer100 = kcalPer100
+        self.lactosePer100 = lactosePer100
+        self.fatPer100 = fatPer100
+    }
+
+    /// Aus einem Lebensmittel, bewertet für die Menge.
+    public init(food: FoodInfo, grams: Double, score: FoodScore) {
+        self.init(
+            foodID: food.id, name: food.name, grams: grams, score: score, flags: food.flags,
+            proteinPer100: food.protein ?? 0, kcalPer100: food.kcal ?? 0,
+            lactosePer100: food.ratings.lactose ?? 0, fatPer100: food.ratings.fat ?? 0
+        )
     }
 
     public var protein: Double { proteinPer100 * grams / 100 }
     public var kcal: Double { kcalPer100 * grams / 100 }
+    public var lactose: Double { lactosePer100 * grams / 100 }
+    public var fat: Double { fatPer100 * grams / 100 }
 }
 
 public struct MealFact: Sendable, Hashable {
@@ -145,14 +162,29 @@ public struct MealFact: Sendable, Hashable {
 
     public var protein: Double { items.reduce(0) { $0 + $1.protein } }
     public var kcal: Double { items.reduce(0) { $0 + $1.kcal } }
-    public var worstScore: HistamineScore? { items.map(\.score).max() }
+    public var lactose: Double { items.reduce(0) { $0 + $1.lactose } }
+    public var fat: Double { items.reduce(0) { $0 + $1.fat } }
+    public var worstScore: FoodScore? { items.map(\.score).max() }
+
+    /// Große oder sehr fettige Mahlzeit: ab 35 g Fett oder 1.100 kcal auf einmal.
+    /// Große, fettreiche Mahlzeiten verzögern die Magenentleerung und lösen bei empfindlichem Darm
+    /// häufiger Völlegefühl, Übelkeit und Durchfall aus.
+    public var isHeavy: Bool { fat >= MealLimits.heavyFat || kcal >= MealLimits.heavyKcal }
+}
+
+/// Grenzen für eine einzelne Mahlzeit.
+public enum MealLimits {
+    public static let heavyFat = 35.0
+    public static let heavyKcal = 1_100.0
+    /// Laktose, die die meisten mit Laktoseintoleranz auf einmal vertragen (EFSA 2010: etwa 12 g).
+    public static let lactosePerMeal = 12.0
 }
 
 // MARK: - Tageslast
 
-/// Grobe Histamin-Tageslast aus den Mahlzeiten. Nur eine Orientierung: Wie viel Histamin
-/// tatsächlich drin war, hängt von Frische, Lagerung und Zubereitung ab.
-public struct HistamineLoad: Sendable, Hashable {
+/// Grobe Tageslast aus den Mahlzeiten für die aktiven Profile. Nur eine Orientierung: Wie gut
+/// etwas vertragen wird, hängt von Menge, Kombination und Tagesform ab.
+public struct DailyLoad: Sendable, Hashable {
     public enum Level: String, Sendable, CaseIterable {
         case calm, elevated, high
 
@@ -207,7 +239,7 @@ public struct HistamineLoad: Sendable, Hashable {
     public var fraction: Double { min(1, points / Self.scaleMax) }
 
     /// Punkte je Bewertung: nicht linear, damit „3“ deutlich mehr zählt als „1“.
-    static func weight(_ score: HistamineScore) -> Double {
+    static func weight(_ score: FoodScore) -> Double {
         switch score {
         case .good: 0
         case .moderate: 1
@@ -221,18 +253,30 @@ public struct HistamineLoad: Sendable, Hashable {
         min(3, max(0.25, grams / 100))
     }
 
-    public static func compute(_ meals: [MealFact]) -> HistamineLoad {
+    /// `sensitivities`: Frische zählt nur bei Histamin, große Mahlzeiten nur bei „Fett und Mengen“.
+    public static func compute(_ meals: [MealFact], sensitivities: Set<Sensitivity> = Set(Sensitivity.allCases)) -> DailyLoad {
         var byName: [String: Double] = [:]
         var total = 0.0
+        let freshnessCounts = sensitivities.contains(.histamine)
         for meal in meals {
-            let multiplier: Double
+            var multiplier = 1.0
             var surcharge = 0.0
-            switch meal.freshness {
-            case .fresh: multiplier = 1
-            case .leftover: multiplier = 1.5; surcharge = 1
-            case .reheated: multiplier = 1.5; surcharge = 1.5
+            if freshnessCounts {
+                switch meal.freshness {
+                case .fresh: break
+                case .leftover: multiplier = 1.5; surcharge = 1
+                case .reheated: multiplier = 1.5; surcharge = 1.5
+                }
+                if meal.place == .out { surcharge += 1 }
             }
-            if meal.place == .out { surcharge += 1 }
+            if sensitivities.contains(.fat), meal.isHeavy {
+                byName["Große oder fettige Mahlzeit", default: 0] += 3
+                total += 3
+            }
+            if sensitivities.contains(.lactose), meal.lactose > MealLimits.lactosePerMeal {
+                byName["Viel Laktose auf einmal", default: 0] += 2
+                total += 2
+            }
             for item in meal.items {
                 let points = weight(item.score) * portionFactor(grams: item.grams) * multiplier
                 guard points > 0 else { continue }
@@ -248,7 +292,7 @@ public struct HistamineLoad: Sendable, Hashable {
         let contributors = byName
             .map { Contributor(name: $0.key, points: $0.value) }
             .sorted { $0.points > $1.points }
-        return HistamineLoad(points: total, contributors: contributors)
+        return DailyLoad(points: total, contributors: contributors)
     }
 }
 
@@ -277,17 +321,46 @@ public struct NutritionDay: Sendable, Hashable {
     public var proteinTarget: Double
     public var waterTarget: Int
 
-    public init(day: Date, meals: [MealFact], waterML: Int, proteinTarget: Double, waterTarget: Int = NutritionTargets.defaultWaterML) {
+    /// Aktive Profile für die Tageslast.
+    public var sensitivities: Set<Sensitivity>
+
+    public init(
+        day: Date, meals: [MealFact], waterML: Int, proteinTarget: Double, waterTarget: Int = NutritionTargets.defaultWaterML,
+        sensitivities: Set<Sensitivity> = Set(Sensitivity.allCases)
+    ) {
         self.day = day
         self.meals = meals
         self.waterML = waterML
         self.proteinTarget = proteinTarget
         self.waterTarget = waterTarget
+        self.sensitivities = sensitivities
     }
 
-    public var load: HistamineLoad { HistamineLoad.compute(meals) }
+    public var load: DailyLoad { DailyLoad.compute(meals, sensitivities: sensitivities) }
     public var protein: Double { meals.reduce(0) { $0 + $1.protein } }
     public var kcal: Double { meals.reduce(0) { $0 + $1.kcal } }
+    public var lactose: Double { meals.reduce(0) { $0 + $1.lactose } }
+    public var fat: Double { meals.reduce(0) { $0 + $1.fat } }
+    /// Fett der fettesten Mahlzeit.
+    public var maxMealFat: Double { meals.map(\.fat).max() ?? 0 }
+
+    /// Kurze Zeilen zu den aktiven Profilen: „Laktose 4 g“, „Fett 62 g, größte Mahlzeit 28 g“.
+    public var sensitivityLines: [String] {
+        var lines: [String] = []
+        if sensitivities.contains(.lactose) {
+            lines.append("Laktose \(WeightFormat.number((lactose * 10).rounded() / 10)) g")
+        }
+        if sensitivities.contains(.fat) {
+            var text = "Fett \(Int(fat.rounded())) g"
+            if meals.count > 1 { text += ", fettigste Mahlzeit \(Int(maxMealFat.rounded())) g" }
+            lines.append(text)
+        }
+        if sensitivities.contains(.fructose) {
+            let fruity = Set(meals.flatMap(\.items).filter { $0.flags.contains(.fructose) || $0.flags.contains(.sorbitol) }.map(\.name))
+            if !fruity.isEmpty { lines.append("Fruktose: \(fruity.sorted().joined(separator: ", "))") }
+        }
+        return lines
+    }
 
     public var proteinFraction: Double { proteinTarget > 0 ? min(1, protein / proteinTarget) : 0 }
     public var waterFraction: Double { waterTarget > 0 ? min(1, Double(waterML) / Double(waterTarget)) : 0 }

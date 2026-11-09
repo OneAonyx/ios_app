@@ -62,7 +62,7 @@ public enum FoodLookupService {
             return known
         }
         let product = try await fetch(barcode: barcode)
-        let report = product.ingredients.map { NutritionActions.analyzer.analyze($0) }
+        let report = product.ingredients.map { NutritionActions.allRules.analyze($0) }
         let info = product.foodInfo(report: report, catalog: catalog)
         NutritionActions.saveCustomFood(info, in: context)
         return info

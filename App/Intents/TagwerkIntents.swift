@@ -97,10 +97,10 @@ struct NextWorkoutIntent: AppIntent {
     }
 }
 
-/// „Ist Avocado histaminarm?“ – Antwort offline aus dem Lexikon, mit eigener Einschätzung.
+/// „Verträgt man Avocado?“ – Antwort offline aus dem Lexikon nach deinen Profilen, mit eigener Einschätzung.
 struct CheckFoodIntent: AppIntent {
-    static let title: LocalizedStringResource = "Histamin-Check"
-    static let description = IntentDescription("Sagt, wie gut ein Lebensmittel bei Histaminintoleranz verträglich ist.")
+    static let title: LocalizedStringResource = "Verträglichkeits-Check"
+    static let description = IntentDescription("Sagt, wie gut ein Lebensmittel bei deinen Unverträglichkeiten (z. B. Laktose, Fruktose, Fett) verträglich ist.")
     static let openAppWhenRun: Bool = false
 
     @Parameter(title: "Lebensmittel", requestValueDialog: IntentDialog("Welches Lebensmittel?"))
@@ -118,10 +118,10 @@ struct CheckFoodIntent: AppIntent {
     }
 }
 
-/// „Wie ist meine Histamin-Last heute?“
+/// „Wie ist meine Verträglichkeit heute?“
 struct NutritionTodayIntent: AppIntent {
     static let title: LocalizedStringResource = "Ernährung heute"
-    static let description = IntentDescription("Nennt Histamin-Tageslast, Eiweiß und Wasser von heute.")
+    static let description = IntentDescription("Nennt Verträglichkeit, Eiweiß und Wasser von heute.")
     static let openAppWhenRun: Bool = false
 
     @MainActor
@@ -268,11 +268,11 @@ struct TagwerkShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: CheckFoodIntent(),
             phrases: [
-                "Histamin-Check in \(.applicationName)",
-                "Ist das histaminarm in \(.applicationName)",
-                "\(.applicationName) Histamin-Check",
+                "Verträglichkeit prüfen in \(.applicationName)",
+                "Vertrage ich das in \(.applicationName)",
+                "\(.applicationName) Verträglichkeits-Check",
             ],
-            shortTitle: "Histamin-Check",
+            shortTitle: "Verträglichkeit prüfen",
             systemImageName: "fork.knife"
         )
         // Höchstens 10 Kurzbefehle: Der Systemcheck ist als Aktion in der Kurzbefehle-App weiter da.

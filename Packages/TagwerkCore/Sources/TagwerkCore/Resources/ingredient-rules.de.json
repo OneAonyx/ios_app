@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "rules": [
     {"id": "hefeextrakt", "name": "Hefeextrakt", "keywords": ["hefeextrakt", "hefeauszug", "speisewuerze", "fluessigwuerze", "^wuerze"], "exclude": ["wuerzmischung", "wuerzpaste"], "eNumbers": [], "score": 3, "flags": ["H"], "reason": "Hefeextrakt und Speisewürze enthalten viel Histamin und Glutamat."},
     {"id": "sojasauce", "name": "Sojasauce", "keywords": ["sojasauce", "sojasosse", "shoyu", "tamari"], "exclude": [], "eNumbers": [], "score": 3, "flags": ["H", "A"], "reason": "Fermentiert."},
@@ -87,6 +87,20 @@
     {"id": "annatto", "name": "Annatto", "keywords": ["annatto", "bixin", "norbixin"], "exclude": [], "eNumbers": ["160b"], "score": 1, "flags": [], "reason": "Farbstoff, bei manchen ein Auslöser."},
     {"id": "propionate", "name": "Propionate", "keywords": ["propionsaeure", "propionat"], "exclude": [], "eNumbers": ["280", "281", "282", "283"], "score": 1, "flags": [], "reason": "Konservierungsstoff in Brot."},
     {"id": "bha-bht", "name": "BHA und BHT", "keywords": ["butylhydroxyanisol", "butylhydroxytoluol"], "exclude": [], "eNumbers": ["320", "321"], "score": 1, "flags": [], "reason": "Synthetische Antioxidationsmittel."},
-    {"id": "lysozym", "name": "Lysozym", "keywords": ["lysozym"], "exclude": [], "eNumbers": ["1105"], "score": 1, "flags": ["L"], "reason": "Enzym aus Hühnereiweiß."}
+    {"id": "lysozym", "name": "Lysozym", "keywords": ["lysozym"], "exclude": [], "eNumbers": ["1105"], "score": 1, "flags": ["L"], "reason": "Enzym aus Hühnereiweiß."},
+    {"id": "lac-laktose", "kind": "lactose", "name": "Laktose", "keywords": ["laktose", "lactose", "milchzucker"], "exclude": ["laktosefrei", "lactosefrei"], "eNumbers": [], "score": 3, "flags": ["LAC"], "reason": "Milchzucker als Zutat."},
+    {"id": "lac-milchpulver", "kind": "lactose", "name": "Milchpulver oder Molke", "keywords": ["milchpulver", "magermilchpulver", "vollmilchpulver", "molkenpulver", "molkenerzeugnis", "suessmolkenpulver", "^molke", "milchtrockenmasse", "milcherzeugnis"], "exclude": ["molkenproteinisolat", "molkeneiweissisolat"], "eNumbers": [], "score": 3, "flags": ["LAC"], "reason": "Getrocknete Milch und Molke bestehen zu einem großen Teil aus Laktose."},
+    {"id": "lac-milch", "kind": "lactose", "name": "Milch oder Sahne", "keywords": ["^milch", "^vollmilch", "^magermilch", "^kondensmilch", "^sahne", "^rahm", "^joghurt", "^quark", "^buttermilch", "^frischkaese", "^schlagsahne", "^schmand"], "exclude": ["milchsaeure", "milcheiweiss", "milchprotein", "kokosmilch", "mandelmilch", "hafermilch", "sojamilch", "reismilch", "milchfrei"], "eNumbers": [], "score": 2, "flags": ["LAC"], "reason": "Enthält Laktose, die Menge hängt vom Anteil ab."},
+    {"id": "lac-kaese", "kind": "lactose", "name": "Käse", "keywords": ["kaese"], "exclude": ["kaesekultur"], "eNumbers": [], "score": 1, "flags": ["LAC"], "reason": "Gereifter Hartkäse ist praktisch laktosefrei, Frisch- und Schmelzkäse enthalten Laktose."},
+    {"id": "fru-fruktose", "kind": "fructose", "name": "Fruktose oder Fruktosesirup", "keywords": ["fruktose", "fructose", "fruchtzucker", "isoglukose", "invertzucker"], "exclude": [], "eNumbers": [], "score": 3, "flags": ["FRU"], "reason": "Zugesetzte Fruktose bzw. Sirup mit viel Fruktose."},
+    {"id": "fru-agave", "kind": "fructose", "name": "Agavendicksaft", "keywords": ["agave"], "exclude": [], "eNumbers": [], "score": 3, "flags": ["FRU"], "reason": "Besteht größtenteils aus Fruktose."},
+    {"id": "fru-dicksaft", "kind": "fructose", "name": "Fruchtsaftkonzentrat", "keywords": ["dicksaft", "saftkonzentrat", "fruchtsuesse"], "exclude": [], "eNumbers": [], "score": 2, "flags": ["FRU"], "reason": "Konzentrierter Fruchtzucker."},
+    {"id": "fru-honig", "kind": "fructose", "name": "Honig", "keywords": ["^honig"], "exclude": ["honigmelone"], "eNumbers": [], "score": 2, "flags": ["FRU"], "reason": "Mehr Fruktose als Glukose."},
+    {"id": "fru-sorbit", "kind": "fructose", "name": "Sorbit", "keywords": ["sorbit", "sorbitol"], "exclude": ["sorbinsaeure", "sorbat"], "eNumbers": ["420"], "score": 3, "flags": ["SOR"], "reason": "Zuckeralkohol, hemmt die Aufnahme von Fruktose im Darm."},
+    {"id": "fru-zuckeralkohole", "kind": "fructose", "name": "Zuckeralkohole", "keywords": ["mannit", "maltit", "isomalt", "xylit", "lactit"], "exclude": [], "eNumbers": ["421", "953", "965", "966", "967"], "score": 2, "flags": ["SOR"], "reason": "Zuckeralkohole wirken in größeren Mengen abführend und verstärken Fruktose-Beschwerden."},
+    {"id": "fru-inulin", "kind": "fructose", "name": "Inulin oder Oligofruktose", "keywords": ["inulin", "oligofructose", "oligofruktose", "fructooligosaccharid", "chicoreewurzelfaser", "chicoreefaser"], "exclude": [], "eNumbers": [], "score": 2, "flags": ["FRU"], "reason": "Ballaststoffe aus Fruktose-Ketten, oft schlecht verträglich."},
+    {"id": "fru-trockenobst", "kind": "fructose", "name": "Trockenobst", "keywords": ["trockenobst", "rosinen", "sultaninen", "^datteln", "trockenpflaumen"], "exclude": [], "eNumbers": [], "score": 2, "flags": ["FRU"], "reason": "Konzentrierter Fruchtzucker, teils mit Sorbit."},
+    {"id": "fru-apfel-birne", "kind": "fructose", "name": "Apfel oder Birne", "keywords": ["^apfel", "^birne"], "exclude": ["apfelessig", "apfelsaeure", "apfelpektin", "apfelfaser"], "eNumbers": [], "score": 2, "flags": ["FRU", "SOR"], "reason": "Viel überschüssige Fruktose und Sorbit."},
+    {"id": "fru-zwiebel-knoblauch", "kind": "fructose", "name": "Zwiebel oder Knoblauch", "keywords": ["zwiebel", "knoblauch"], "exclude": [], "eNumbers": [], "score": 1, "flags": ["FRU"], "reason": "Fruktane, auf die viele mit Fruktose-Beschwerden ebenfalls reagieren."}
   ]
 }

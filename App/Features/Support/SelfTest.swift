@@ -502,7 +502,7 @@ enum SelfTest {
         InsightsActions.markSent(food, in: context)
         let other = InsightsActions.createExchange(ClaudeBridgeActions.foodPrompt(name: "Anderes"), title: "Anderes", in: context)
         InsightsActions.markSent(other, in: context)
-        let response = "Gern!\n```json\n{\"format\":\"orbit.food.v1\",\"ref\":\"\(foodPrompt.ref)\",\"name\":\"Testriegel\",\"category\":\"sweets\",\"score\":2,\"flags\":[\"L\"],\"hint\":\"Kakao setzt Histamin frei.\",\"protein\":8}\n```"
+        let response = "Gern!\n```json\n{\"format\":\"orbit.food.v1\",\"ref\":\"\(foodPrompt.ref)\",\"name\":\"Testriegel\",\"category\":\"sweets\",\"score\":2,\"flags\":[\"L\"],\"lactose\":6,\"fat\":22,\"hint\":\"Kakao setzt Histamin frei.\",\"protein\":8}\n```"
         let received = ClaudeBridgeActions.receive(response, in: context)
         try check(received?.stableID == food.stableID && food.status == .answered, "Antwort falsch zugeordnet")
         guard case .food(let info) = try ClaudeBridgeActions.parse(food, in: context) else {
@@ -510,7 +510,7 @@ enum SelfTest {
         }
         ClaudeBridgeActions.applyFood(info, from: food, in: context)
         let saved = NutritionActions.catalog(in: context).foods.first { $0.name == "Testriegel" }
-        try check(saved?.score == .poor && food.status == .applied, "Lebensmittel nicht gespeichert")
+        try check(saved?.ratings.histamine == .poor && saved?.flags.contains(.lactose) == true && food.status == .applied, "Lebensmittel nicht gespeichert")
 
         // Trainingsplan: Anfrage mit Plan und Übungsnamen, Antwort wird neuer aktiver Plan.
         guard let planPrompt = ClaudeBridgeActions.trainingPrompt(wish: "Mehr Rücken", calendar: calendar, in: context) else {

@@ -126,7 +126,7 @@ private struct EmptyMedicationsCard: View {
                 IconBadge(systemImage: "pills.fill", tint: ModuleAccent.medication, size: 48)
                 Text("Noch keine Medikamente")
                     .font(.title3.weight(.semibold))
-                Text("Lege Medikamente und Nahrungsergänzung an, z. B. DAO-Enzym vor dem Essen. Orbit erinnert dich, zählt den Vorrat und zeigt, wie regelmäßig du sie nimmst.")
+                Text("Lege Medikamente und Nahrungsergänzung an, z. B. Laktase-Tabletten vor dem Essen. Orbit erinnert dich, zählt den Vorrat und zeigt, wie regelmäßig du sie nimmst.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Button(action: onAdd) {

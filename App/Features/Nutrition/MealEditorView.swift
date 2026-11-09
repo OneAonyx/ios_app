@@ -42,13 +42,13 @@ struct MealEditorView: View {
             items: items.map { item in
                 let food = NutritionActions.food(item.foodID, catalog: catalog)
                 return MealItemFact(
-                    foodID: item.foodID, name: food.name, grams: item.grams,
-                    score: (tolerances[item.foodID] ?? .unknown).effectiveScore(general: food.score),
-                    flags: food.flags, proteinPer100: food.protein ?? 0, kcalPer100: food.kcal ?? 0
+                    food: food, grams: item.grams,
+                    score: (tolerances[item.foodID] ?? .unknown).effectiveScore(general: catalog.score(food, grams: item.grams))
                 )
             }
         )
-        let mealLoad = HistamineLoad.compute([fact])
+        let profile = NutritionActions.profile
+        let mealLoad = DailyLoad.compute([fact], sensitivities: profile.active)
         NavigationStack {
             Form {
                 if meal == nil {
@@ -77,7 +77,7 @@ struct MealEditorView: View {
                     Text("Was gab es?")
                 } footer: {
                     if !items.isEmpty {
-                        Text("\(Int(fact.protein.rounded())) g Eiweiß · \(Int(fact.kcal.rounded())) kcal · Histamin \(mealLoad.level.title)")
+                        Text(mealFooter(fact, load: mealLoad, profile: profile))
                     }
                 }
                 Section {
@@ -93,7 +93,9 @@ struct MealEditorView: View {
                     }
                     TextField("Notiz", text: $note, axis: .vertical)
                 } footer: {
-                    Text("Reste und Aufgewärmtes enthalten mehr Histamin als frisch Gekochtes.")
+                    if profile.contains(.histamine) {
+                        Text("Reste und Aufgewärmtes enthalten mehr Histamin als frisch Gekochtes.")
+                    }
                 }
                 if meal != nil {
                     Section {
@@ -127,6 +129,22 @@ struct MealEditorView: View {
             }
         }
         .onAppear(perform: loadValues)
+    }
+
+    /// „38 g Eiweiß · 620 kcal · 18 g Fett · 2 g Laktose · Verträglichkeit ruhig“
+    private func mealFooter(_ fact: MealFact, load: DailyLoad, profile: SensitivityProfile) -> String {
+        var parts = ["\(Int(fact.protein.rounded())) g Eiweiß", "\(Int(fact.kcal.rounded())) kcal"]
+        if profile.contains(.fat) { parts.append("\(Int(fact.fat.rounded())) g Fett") }
+        if profile.contains(.lactose) { parts.append("\(WeightFormat.number((fact.lactose * 10).rounded() / 10)) g Laktose") }
+        if !profile.active.isEmpty { parts.append("Verträglichkeit \(load.level.title)") }
+        var text = parts.joined(separator: " · ")
+        if profile.contains(.fat), fact.isHeavy {
+            text += "\nGroße oder fettige Mahlzeit: lieber kleiner portionieren oder auf zwei Mahlzeiten verteilen."
+        }
+        if profile.contains(.lactose), fact.lactose > MealLimits.lactosePerMeal {
+            text += "\nMehr als 12 g Laktose auf einmal: laktosefreie Variante oder Laktase-Tablette."
+        }
+        return text
     }
 
     private func loadValues() {
@@ -198,7 +216,7 @@ private struct MealItemEditorRow: View {
     }
 }
 
-/// „DAO schon genommen?“ – Medikamente mit dem Hinweis „vor dem Essen“.
+/// „Laktase schon genommen?“ – Medikamente mit dem Hinweis „vor dem Essen“.
 private struct MealMedicationSection: View {
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context

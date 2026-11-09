@@ -95,7 +95,7 @@ struct DoctorReportView: View {
             }
 
             Section {
-                TextField("z. B. Kann das Histamin sein? Soll ich DAO weiter nehmen?", text: $questions, axis: .vertical)
+                TextField("z. B. Soll ich einen Atemtest auf Laktose und Fruktose machen?", text: $questions, axis: .vertical)
                     .lineLimit(3...8)
                     .accessibilityIdentifier("report.questions")
             } header: {
@@ -670,7 +670,7 @@ private struct ReportSecondPage: View {
 
     @ViewBuilder
     private var nutrition: some View {
-            ReportHeading("Ernährung und mögliche Auslöser (Histamin)")
+            ReportHeading("Ernährung und mögliche Auslöser")
             Text(nutritionSummary)
                 .font(ReportStyle.body)
             if report.findings.isEmpty {
@@ -768,7 +768,7 @@ private struct ReportSecondPage: View {
     private var nutritionSummary: String {
         var parts = ["\(report.mealCount) Mahlzeiten erfasst"]
         if report.loadDays > 0 {
-            parts.append("Histamin-Tageslast an \(report.elevatedLoadDays) von \(report.loadDays) Tagen erhöht oder hoch")
+            parts.append("Verträglichkeit (Tageslast) an \(report.elevatedLoadDays) von \(report.loadDays) Tagen erhöht oder hoch")
         }
         return parts.joined(separator: ". ") + "."
     }

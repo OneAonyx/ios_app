@@ -81,15 +81,16 @@ public enum FeatureIndex {
         // Ernährung
         Feature("logMeal", "Mahlzeit eintragen", area: .nutrition, path: "Ernährung → Plus oben rechts", symbol: "fork.knife", keywords: ["essen", "mahlzeit", "frühstück", "mittagessen", "abendessen", "snack"], isAction: true),
         Feature("water", "Wasser trinken (+250 ml)", area: .nutrition, path: "Heute → Schnell erfassen", symbol: "drop", keywords: ["wasser", "trinken", "glas"], isAction: true),
-        Feature("lexicon", "Lebensmittel-Lexikon", area: .nutrition, path: "Ernährung → Lexikon", symbol: "text.book.closed", keywords: ["histamin", "lebensmittel", "verträglich", "liste", "bewertung"]),
+        Feature("lexicon", "Lebensmittel-Lexikon", area: .nutrition, path: "Ernährung → Lexikon", symbol: "text.book.closed", keywords: ["histamin", "laktose", "fruktose", "verträglichkeit", "lebensmittel", "verträglich", "liste", "bewertung"]),
         Feature("ingredientCheck", "Barcode und Zutaten prüfen", area: .nutrition, path: "Ernährung → Zutaten prüfen", symbol: "barcode.viewfinder", keywords: ["scan", "scanner", "barcode", "zutatenliste", "e-nummer", "kamera"]),
         Feature("shopping", "Einkaufsliste", area: .nutrition, path: "Ernährung → Einkauf", symbol: "cart", keywords: ["einkaufen", "supermarkt", "liste"]),
-        Feature("recipes", "Rezepte", area: .nutrition, path: "Ernährung → Rezepte", symbol: "book", keywords: ["kochen", "rezept", "histaminarm", "eiweiß"]),
+        Feature("recipes", "Rezepte", area: .nutrition, path: "Ernährung → Rezepte", symbol: "book", keywords: ["kochen", "rezept", "laktosefrei", "histaminarm", "eiweiß"]),
+        Feature("weekTemplate", "Ernährungsplan für die Woche", area: .nutrition, path: "Ernährung → Ernährungsplan für die Woche", symbol: "list.bullet.clipboard", keywords: ["ernährungsplan", "plan", "laktosefrei", "fruktosearm", "woche", "diät", "muskelaufbau", "essen"]),
         Feature("mealPlan", "Wochen-Essensplan", area: .nutrition, path: "Ernährung → Wochenplan", symbol: "calendar.day.timeline.left", keywords: ["essensplan", "planen", "meal prep"]),
         Feature("patterns", "Muster und Auslöser", area: .nutrition, path: "Ernährung → Muster", symbol: "waveform.path.ecg", keywords: ["auslöser", "analyse", "verdacht", "unverträglichkeit", "trigger"]),
         Feature("addSymptom", "Beschwerde eintragen", area: .nutrition, path: "Heute → Schnell erfassen", symbol: "bandage", keywords: ["symptom", "kopfschmerz", "bauch", "juckreiz", "übelkeit"], isAction: true),
         Feature("symptoms", "Beschwerden (Verlauf)", area: .health, path: "Gesundheit → Beschwerden", symbol: "list.bullet.clipboard", keywords: ["symptome", "verlauf", "beschwerden"]),
-        Feature("nutritionSettings", "Ziele für Eiweiß und Wasser", area: .nutrition, path: "Ernährung → Einstellungen", symbol: "slider.horizontal.3", keywords: ["eiweiß", "protein", "wasserziel", "ziel", "dao"]),
+        Feature("nutritionSettings", "Unverträglichkeiten und Ziele", area: .nutrition, path: "Ernährung → Ziele und Einstellungen", symbol: "slider.horizontal.3", keywords: ["unverträglichkeit", "laktose", "fruktose", "fett", "histamin", "intoleranz", "eiweiß", "protein", "wasserziel", "ziel", "laktase"]),
 
         // Gesundheit
         Feature("medications", "Medikamente", area: .health, path: "Gesundheit", symbol: "pills", keywords: ["tabletten", "einnahme", "vorrat", "wecker", "dosis"]),

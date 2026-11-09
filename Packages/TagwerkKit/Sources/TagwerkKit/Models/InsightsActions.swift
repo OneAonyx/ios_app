@@ -206,7 +206,7 @@ public enum InsightsActions {
             dayFactors: factors
         )
         let byDay = Dictionary(grouping: facts) { calendar.startOfDay(for: $0.date) }
-        let loads = byDay.values.map { HistamineLoad.compute($0) }
+        let loads = byDay.values.map { DailyLoad.compute($0, sensitivities: NutritionActions.profile.active) }
 
         let tolerances = NutritionActions.tolerances(in: context)
         let avoided = tolerances.filter { $0.value == .avoid }.keys.map { catalog.name(for: $0) }

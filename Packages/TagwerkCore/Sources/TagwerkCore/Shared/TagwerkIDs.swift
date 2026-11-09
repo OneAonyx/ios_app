@@ -33,6 +33,10 @@ public enum SettingsKeys {
     public static let todayLayout = "tagwerk.settings.todayLayout"
     /// Morgen-Briefing: Minute des Tages, −1 = aus (Standard 7:15).
     public static let briefingMinute = "tagwerk.settings.briefingMinute"
+    /// Aktive Verträglichkeits-Profile (`SensitivityProfile.encoded`), leer = Standard (Laktose, Fruktose, Fett).
+    public static let sensitivities = "tagwerk.settings.sensitivities"
+    /// Gewählte Optionen im Wochenplan-Vorschlag („2-lunch=rezept;…“).
+    public static let mealPlanChoices = "tagwerk.settings.mealPlanChoices"
     /// Fokus der Woche (`WeekFocus.store`).
     public static let weekFocus = "tagwerk.settings.weekFocus"
     /// Sonntags um 18 Uhr an den Wochenrückblick erinnern.
@@ -60,7 +64,7 @@ public enum SettingsKeys {
     public static let backedUp = [
         userName, showCalendarEvents, hiddenCalendarIDs, defaultReminderOffset, proteinPerKg, waterTarget,
         askBeforeMealMedication, showCheckIns, weeklyReviewReminder, trainingGoal, trainingExperience,
-        diaryReminderMinute, doctorQuestions, todayLayout, briefingMinute,
+        diaryReminderMinute, doctorQuestions, todayLayout, briefingMinute, sensitivities, mealPlanChoices,
     ]
 }
 

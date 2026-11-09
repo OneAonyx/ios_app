@@ -314,7 +314,7 @@ struct SettingsPageView: View {
                 LabeledContent("Installiert über", value: AppGroup.isSideloaded ? "kostenlose Apple-ID" : "Xcode, TestFlight oder Simulator")
             }
             Section {
-                Text("Orbit ist kein Medizinprodukt. Histamin-Bewertungen sind eine Orientierung, und Erinnerungen ersetzen keine ärztliche Beratung. Alle Daten bleiben auf deinem iPhone.")
+                Text("Orbit ist kein Medizinprodukt. Bewertungen der Verträglichkeit sind eine Orientierung, und Erinnerungen ersetzen keine ärztliche Beratung. Alle Daten bleiben auf deinem iPhone.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } header: {

@@ -30,12 +30,14 @@ public struct ScannedProduct: Sendable, Hashable {
     public var ingredients: String?
     public var proteinPer100: Double?
     public var kcalPer100: Double?
+    public var fatPer100: Double?
     public var quantity: String?
 
     public init(
         barcode: String, name: String, brand: String? = nil, ingredients: String? = nil,
-        proteinPer100: Double? = nil, kcalPer100: Double? = nil, quantity: String? = nil
+        proteinPer100: Double? = nil, kcalPer100: Double? = nil, fatPer100: Double? = nil, quantity: String? = nil
     ) {
+        self.fatPer100 = fatPer100
         self.barcode = barcode
         self.name = name
         self.brand = brand
@@ -51,15 +53,20 @@ public struct ScannedProduct: Sendable, Hashable {
         return "\(brand) \(name)"
     }
 
-    /// Als eigenes Lebensmittel speichern. Die Bewertung kommt aus der Zutatenliste.
+    /// Als eigenes Lebensmittel speichern. Die Bewertung kommt aus der Zutatenliste (mit allen Regeln geprüft):
+    /// `score` ist die Histamin-Bewertung, Laktose, Fruktose und Fett stehen als Markierungen dabei.
     public func foodInfo(report: IngredientReport?, catalog: FoodCatalog) -> FoodInfo {
         let guessed = catalog.bestMatch(for: name)
+        var flags = Set(report?.flags ?? [])
+        if let fat = fatPer100, fat >= 20 { flags.insert(.fatRich) }
+        if NameMatcher.normalize(name).contains("laktosefrei") { flags.remove(.lactose) }
+        let histamine = report.map { $0.worstScore(for: .histamine) ?? .good } ?? guessed?.ratings.histamine ?? .moderate
         return FoodInfo(
             id: "barcode-\(barcode)",
             name: displayName,
             category: guessed?.category ?? .other,
-            score: report?.worstScore ?? guessed?.score ?? .moderate,
-            flags: Array(Set(report?.hits.flatMap(\.rule.flags) ?? [])).sorted { $0.rawValue < $1.rawValue },
+            score: histamine,
+            flags: flags.sorted { $0.rawValue < $1.rawValue },
             protein: proteinPer100,
             kcal: kcalPer100,
             portion: 100,
@@ -118,6 +125,7 @@ public enum OpenFoodFacts {
             ingredients: text("ingredients_text_de") ?? text("ingredients_text"),
             proteinPer100: number("proteins_100g"),
             kcalPer100: kcal.map { $0.rounded() },
+            fatPer100: number("fat_100g"),
             quantity: text("quantity")
         )
     }

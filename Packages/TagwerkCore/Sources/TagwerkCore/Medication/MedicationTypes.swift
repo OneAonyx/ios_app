@@ -81,7 +81,7 @@ public enum MedicationForm: String, Codable, Sendable, CaseIterable, Identifiabl
     }
 }
 
-/// Bezug zur Mahlzeit, z. B. DAO-Enzym „vor dem Essen“.
+/// Bezug zur Mahlzeit, z. B. Laktase-Tabletten „vor dem Essen“.
 public enum MealTiming: String, Codable, Sendable, CaseIterable, Identifiable {
     case none
     case beforeMeal

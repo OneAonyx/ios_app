@@ -186,7 +186,7 @@ private struct ScannedFoodView: View {
                 VStack(alignment: .leading, spacing: Spacing.s) {
                     Text(food.name)
                         .font(.title3.weight(.bold))
-                    ScoreBadge(score: food.score, showsTitle: true)
+                    ScoreBadge(score: food.applying(NutritionActions.profile).score, showsTitle: true)
                     if let protein = food.protein {
                         Text("\(WeightFormat.number(protein)) g Eiweiß je 100 g")
                             .font(.subheadline)
@@ -328,7 +328,7 @@ struct IngredientReportView: View {
                 }
             }
             if report.isEmpty, report.ingredientCount > 0 {
-                Text("Achte trotzdem auf Frische und Lagerung: Auch unkritische Zutaten bilden mit der Zeit Histamin.")
+                Text("Geprüft nach deinen Profilen (\(NutritionActions.profile.summary)). Die Menge entscheidet mit: Laktose und Fett zählen erst ab einer gewissen Portion.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

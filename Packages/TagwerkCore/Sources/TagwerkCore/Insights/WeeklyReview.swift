@@ -147,8 +147,8 @@ public struct WeeklyReview: Sendable, Hashable {
             let target = days.first?.proteinTarget ?? 0
             let waterAverage = days.reduce(0) { $0 + $1.waterML } / days.count
             var lines = [Line(
-                label: "Ø Histamin-Tageslast",
-                value: HistamineLoad(points: average, contributors: []).level.title,
+                label: "Ø Verträglichkeit (Tageslast)",
+                value: DailyLoad(points: average, contributors: []).level.title,
                 detail: elevated == 0 ? "an keinem Tag erhöht" : "\(elevated) von \(days.count) Tagen erhöht oder hoch",
                 tone: elevated == 0 ? .good : (elevated <= 2 ? .neutral : .attention)
             )]

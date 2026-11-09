@@ -4,7 +4,7 @@ import TagwerkCore
 import TagwerkKit
 import WidgetKit
 
-/// Histamin-Tageslast, Eiweiß und Wasser auf Home- und Sperrbildschirm.
+/// Verträglichkeit, Eiweiß und Wasser auf Home- und Sperrbildschirm.
 struct NutritionWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: WidgetKinds.nutrition, provider: NutritionProvider()) { entry in
@@ -13,7 +13,7 @@ struct NutritionWidget: Widget {
                 .widgetURL(URL(string: "\(TagwerkIDs.urlScheme)://ernaehrung"))
         }
         .configurationDisplayName("Ernährung")
-        .description("Histamin-Tageslast, Eiweiß und Wasser von heute. Mit Knopf für ein Glas Wasser.")
+        .description("Verträglichkeit, Eiweiß und Wasser von heute. Mit Knopf für ein Glas Wasser.")
         .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryRectangular, .accessoryInline])
     }
 }
@@ -48,7 +48,7 @@ struct NutritionProvider: TimelineProvider {
     }
 
     static let sample = NutritionWidgetSnapshot(
-        writtenAt: .now, day: .now, loadPoints: 3, levelRaw: HistamineLoad.Level.calm.rawValue,
+        writtenAt: .now, day: .now, loadPoints: 3, levelRaw: DailyLoad.Level.calm.rawValue,
         protein: 96, proteinTarget: 148, waterML: 1500, waterTarget: 2500, mealCount: 2, topContributors: ["Tomate"]
     )
 }
@@ -61,7 +61,7 @@ struct NutritionWidgetView: View {
         let snapshot = entry.snapshot
         switch family {
         case .accessoryInline:
-            Text("\(Image(systemName: "drop.fill")) \(NutritionDay.liters(snapshot.waterML)) l · Histamin \(snapshot.level.title)")
+            Text("\(Image(systemName: "drop.fill")) \(NutritionDay.liters(snapshot.waterML)) l · Verträglich: \(snapshot.level.title)")
         case .accessoryCircular:
             Gauge(value: min(Double(snapshot.waterML), Double(snapshot.waterTarget)), in: 0...Double(max(snapshot.waterTarget, 1))) {
                 Image(systemName: "drop.fill")
@@ -72,7 +72,7 @@ struct NutritionWidgetView: View {
             .widgetAccentable()
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 1) {
-                Label("Histamin \(snapshot.level.title)", systemImage: symbol(snapshot.level))
+                Label("Verträglichkeit \(snapshot.level.title)", systemImage: symbol(snapshot.level))
                     .font(.headline)
                     .widgetAccentable()
                 Text("Eiweiß \(Int(snapshot.protein.rounded())) / \(Int(snapshot.proteinTarget.rounded())) g")
@@ -82,7 +82,7 @@ struct NutritionWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         default:
             VStack(alignment: .leading, spacing: 6) {
-                Label("Histamin", systemImage: symbol(snapshot.level))
+                Label("Verträglich", systemImage: symbol(snapshot.level))
                     .font(.caption.weight(.bold))
                     .foregroundStyle(color(snapshot.level))
                 Text(snapshot.level.title.capitalized)
@@ -112,9 +112,9 @@ struct NutritionWidgetView: View {
         }
     }
 
-    private func symbol(_ level: HistamineLoad.Level) -> String { level.symbol }
+    private func symbol(_ level: DailyLoad.Level) -> String { level.symbol }
 
-    private func color(_ level: HistamineLoad.Level) -> Color {
+    private func color(_ level: DailyLoad.Level) -> Color {
         switch level {
         case .calm: .green
         case .elevated: .orange

@@ -14,7 +14,7 @@ struct RecipeListView: View {
     @State private var askingClaude = false
 
     var body: some View {
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let catalog = NutritionActions.catalog(custom: customFoods)
         let recipes = NutritionActions.bundledRecipes.adding(customRecipes.map(\.info))
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         let results = recipes.search(query, tag: tag, catalog: catalog)
@@ -48,7 +48,7 @@ struct RecipeListView: View {
                     }
                     .accessibilityIdentifier("recipes.claude")
                 } footer: {
-                    Text("Histaminarm und eiweißreich, passend zu deinen verträglichen und gemiedenen Lebensmitteln.")
+                    Text("Eiweißreich und passend zu deinen Unverträglichkeiten sowie deinen verträglichen und gemiedenen Lebensmitteln.")
                 }
             }
         }
@@ -124,7 +124,7 @@ struct RecipeDetailView: View {
     @State private var planning = false
 
     var body: some View {
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let catalog = NutritionActions.catalog(custom: customFoods)
         let recipes = NutritionActions.bundledRecipes.adding(customRecipes.map(\.info))
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         if let recipe = recipes.recipe(id: recipeID) {
@@ -297,18 +297,34 @@ struct MealPlanView: View {
                     .accessibilityLabel("Nächste Woche")
                 }
             }
+            Section {
+                NavigationLink(value: NutritionRoute.weekTemplate) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Ernährungsplan übernehmen")
+                            Text("Laktosefrei, fruktosearm, ohne Fisch – mit Optionen je Mahlzeit")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "list.bullet.clipboard")
+                            .foregroundStyle(ModuleAccent.nutrition)
+                    }
+                }
+                .accessibilityIdentifier("plan.template")
+            }
             ForEach(days, id: \.self) { day in
                 Section(day.nutritionDayLabel(calendar: calendar)) {
-                    ForEach([MealType.lunch, .dinner]) { type in
+                    ForEach(MealType.allCases) { type in
                         let entry = weekEntries.first { calendar.isDate($0.day, inSameDayAs: day) && $0.mealType == type }
                         Button {
                             choosing = PlanSlot(day: day, mealType: type)
                         } label: {
                             HStack {
-                                Text(type == .lunch ? "Mittag" : "Abend")
-                                    .font(.subheadline)
+                                Image(systemName: type.symbol)
                                     .foregroundStyle(.secondary)
-                                    .frame(width: 56, alignment: .leading)
+                                    .frame(width: 24)
+                                    .accessibilityLabel(type.title)
                                 if let entry, let recipe = recipes.recipe(id: entry.recipeID) {
                                     Text(recipe.title)
                                         .foregroundStyle(Color.primary)
@@ -385,7 +401,7 @@ private struct RecipePickerSheet: View {
     @State private var servings = 2
 
     var body: some View {
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let catalog = NutritionActions.catalog(custom: customFoods)
         let recipes = NutritionActions.bundledRecipes.adding(customRecipes.map(\.info))
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         NavigationStack {

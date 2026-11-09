@@ -46,7 +46,7 @@ enum SpotlightIndexer {
         if defaults.string(forKey: contentKey) != contentSignature {
             var items: [CSSearchableItem] = []
             items += foods.map { food in
-                item(.food, food.id, title: food.name, detail: "Histamin \(food.score.rawValue) · \(food.score.title) · \(food.category.title)", keywords: food.aliases + ["Lebensmittel", "Histamin"])
+                item(.food, food.id, title: food.name, detail: "Verträglichkeit \(food.score.rawValue) · \(food.score.title) · \(food.category.title)", keywords: food.aliases + ["Lebensmittel", "Histamin"])
             }
             items += exercises.map { exercise in
                 let muscles = exercise.primary.map(\.title).joined(separator: ", ")

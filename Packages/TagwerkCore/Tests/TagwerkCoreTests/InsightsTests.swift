@@ -153,7 +153,7 @@ struct DoctorReportTests {
                 .init(name: "Ibuprofen 400 mg", schedule: "Bei Bedarf", hint: nil, adherence: nil, extraIntakes: 3, isActive: true),
             ],
             symptoms: rows, findings: [], mealCount: 60, avoidedFoods: ["Tomate"], cautionFoods: ["Banane"],
-            loads: [HistamineLoad(points: 2, contributors: []), HistamineLoad(points: 12, contributors: [])],
+            loads: [DailyLoad(points: 2, contributors: []), DailyLoad(points: 12, contributors: [])],
             weights: [.init(date: date(2026, 10, 2), value: 82.6), .init(date: date(2026, 10, 26), value: 82.1)],
             checkIns: [CheckInFact(day: date(2026, 10, 10), sleep: 3)],
             calendar: berlin

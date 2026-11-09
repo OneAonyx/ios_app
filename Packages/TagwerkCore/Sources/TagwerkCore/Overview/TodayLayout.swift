@@ -49,7 +49,7 @@ public enum TodayCard: String, CaseIterable, Codable, Sendable, Identifiable {
         case .diary: "Was fürs Arzt-Tagebuch heute noch fehlt"
         case .events: "Nur an Tagen mit Terminen"
         case .habits: "Nur wenn heute Routinen anstehen"
-        case .nutrition: "Histamin-Tageslast, Eiweiß und Wasser in einer Zeile"
+        case .nutrition: "Verträglichkeit, Eiweiß und Wasser in einer Zeile"
         case .upcoming: "Geburtstage und Fristen der nächsten Tage"
         case .review: "Sonntagnachmittag und Montagvormittag"
         case .journal: "Abends ab 19 Uhr, bis du geschrieben hast"

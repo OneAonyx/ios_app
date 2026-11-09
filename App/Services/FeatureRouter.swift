@@ -51,6 +51,7 @@ enum FeatureDestination {
         case "shopping": .nutrition(.shopping)
         case "recipes": .nutrition(.recipes)
         case "mealPlan": .nutrition(.mealPlan)
+        case "weekTemplate": .nutrition(.weekTemplate)
         case "patterns": .nutrition(.patterns)
         case "nutritionSettings": .nutrition(.settings)
         case "addSymptom": .addSymptom

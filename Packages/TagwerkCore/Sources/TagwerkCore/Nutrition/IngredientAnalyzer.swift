@@ -10,14 +10,17 @@ public struct IngredientRule: Codable, Sendable, Hashable, Identifiable {
     public var keywords: [String]
     public var exclude: [String]
     public var eNumbers: [String]
-    public var score: HistamineScore
-    public var flags: [HistamineFlag]
+    public var score: FoodScore
+    public var flags: [FoodFlag]
     public var reason: String
+    /// Zu welchem Profil die Regel gehört (JSON-Feld „kind“, Standard Histamin).
+    public var sensitivity: Sensitivity
 
     public init(
         id: String, name: String, keywords: [String], exclude: [String] = [], eNumbers: [String] = [],
-        score: HistamineScore, flags: [HistamineFlag] = [], reason: String
+        score: FoodScore, flags: [FoodFlag] = [], reason: String, sensitivity: Sensitivity = .histamine
     ) {
+        self.sensitivity = sensitivity
         self.id = id
         self.name = name
         self.keywords = keywords
@@ -29,7 +32,7 @@ public struct IngredientRule: Codable, Sendable, Hashable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, keywords, exclude, eNumbers, score, flags, reason
+        case id, name, keywords, exclude, eNumbers, score, flags, reason, kind
     }
 
     public init(from decoder: Decoder) throws {
@@ -40,9 +43,23 @@ public struct IngredientRule: Codable, Sendable, Hashable, Identifiable {
         exclude = try c.decodeIfPresent([String].self, forKey: .exclude) ?? []
         eNumbers = try c.decodeIfPresent([String].self, forKey: .eNumbers) ?? []
         let raw = try c.decodeIfPresent(Int.self, forKey: .score) ?? 1
-        score = HistamineScore(rawValue: min(max(raw, 0), 3)) ?? .moderate
-        flags = (try c.decodeIfPresent([String].self, forKey: .flags) ?? []).compactMap(HistamineFlag.init(rawValue:))
+        score = FoodScore(rawValue: min(max(raw, 0), 3)) ?? .moderate
+        flags = (try c.decodeIfPresent([String].self, forKey: .flags) ?? []).compactMap(FoodFlag.init(rawValue:))
         reason = try c.decodeIfPresent(String.self, forKey: .reason) ?? ""
+        sensitivity = (try c.decodeIfPresent(String.self, forKey: .kind)).flatMap(Sensitivity.init(rawValue:)) ?? .histamine
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(keywords, forKey: .keywords)
+        try c.encode(exclude, forKey: .exclude)
+        try c.encode(eNumbers, forKey: .eNumbers)
+        try c.encode(score.rawValue, forKey: .score)
+        try c.encode(flags.map(\.rawValue), forKey: .flags)
+        try c.encode(reason, forKey: .reason)
+        try c.encode(sensitivity.rawValue, forKey: .kind)
     }
 }
 
@@ -53,7 +70,7 @@ public struct IngredientHit: Sendable, Hashable, Identifiable {
     public var matched: String
 
     public var id: String { rule.id }
-    public var score: HistamineScore { rule.score }
+    public var score: FoodScore { rule.score }
 }
 
 /// Ergebnis der Prüfung einer Zutatenliste.
@@ -63,7 +80,17 @@ public struct IngredientReport: Sendable, Hashable {
     /// Anzahl erkannter Zutaten (grob, nach Kommas).
     public var ingredientCount: Int
 
-    public var worstScore: HistamineScore? { hits.map(\.score).max() }
+    public var worstScore: FoodScore? { hits.map(\.score).max() }
+
+    /// Schlechteste Bewertung der Treffer eines Profils.
+    public func worstScore(for sensitivity: Sensitivity) -> FoodScore? {
+        hits.filter { $0.rule.sensitivity == sensitivity }.map(\.score).max()
+    }
+
+    /// Alle Markierungen der Treffer.
+    public var flags: [FoodFlag] {
+        Array(Set(hits.flatMap(\.rule.flags))).sorted { $0.rawValue < $1.rawValue }
+    }
 
     public var isEmpty: Bool { hits.isEmpty }
 
@@ -100,6 +127,11 @@ public struct IngredientAnalyzer: Sendable {
     private let keywords: [Keyword]
     private let excludes: [[String]]
     private let eNumberRules: [String: Int]
+
+    /// Nur die Regeln der aktiven Profile.
+    public func filtered(_ sensitivities: Set<Sensitivity>) -> IngredientAnalyzer {
+        IngredientAnalyzer(rules: rules.filter { sensitivities.contains($0.sensitivity) })
+    }
 
     public init(rules: [IngredientRule]) {
         self.rules = rules
@@ -164,6 +196,10 @@ public struct IngredientAnalyzer: Sendable {
             }
         }
 
+        // „laktosefrei“ auf der Packung: Milchzutaten zählen nicht.
+        if normalized.contains("laktosefrei") || normalized.contains("lactosefrei") {
+            hitsByRule = hitsByRule.filter { $0.value.rule.sensitivity != .lactose }
+        }
         let hits = hitsByRule.values.sorted { lhs, rhs in
             if lhs.score != rhs.score { return lhs.score > rhs.score }
             return lhs.rule.name.localizedCompare(rhs.rule.name) == .orderedAscending

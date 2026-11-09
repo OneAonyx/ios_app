@@ -139,7 +139,7 @@ struct MedicationEditorView: View {
 
     private var basicsSection: some View {
         Section {
-            TextField("Name, z. B. DAO-Enzym", text: $draft.name)
+            TextField("Name, z. B. Laktase-Tabletten", text: $draft.name)
                 .font(.headline)
                 .accessibilityIdentifier("medEditor.name")
             TextField("Stärke, z. B. 400 mg", text: $draft.dosage)

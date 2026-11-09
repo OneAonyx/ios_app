@@ -6,7 +6,7 @@ import TagwerkKit
 /// Filter im Lexikon.
 private enum LexiconFilter: Hashable {
     case all
-    case score(HistamineScore)
+    case score(FoodScore)
     case mine
 
     var title: String {
@@ -28,9 +28,11 @@ struct FoodLexiconView: View {
     @State private var creating = false
     @State private var scanning = false
     @State private var askingClaude = false
+    @AppStorage(SettingsKeys.sensitivities) private var sensitivityText = ""
 
     var body: some View {
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let profile = SensitivityProfile.decode(sensitivityText)
+        let catalog = NutritionActions.catalog(custom: customFoods, profile: profile)
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         let mine = Set(preferences.filter { $0.tolerance != .unknown || $0.isFavorite }.map(\.foodID)).union(customFoods.map(\.stableID))
         let results = catalog.search(query).filter { food in
@@ -51,7 +53,7 @@ struct FoodLexiconView: View {
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
             } footer: {
-                Text("0 gut · 1 mäßig · 2 schlecht · 3 sehr schlecht verträglich")
+                Text("0 gut · 1 mäßig · 2 schlecht · 3 sehr schlecht verträglich, für eine übliche Portion. Bewertet für: \(profile.summary).")
             }
             if query.isEmpty {
                 ForEach(FoodGroup.make(catalog.grouped(results))) { group in
@@ -135,7 +137,7 @@ struct FoodPickerView: View {
     @State private var scanning = false
 
     var body: some View {
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let catalog = NutritionActions.catalog(custom: customFoods)
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         let favorites = preferences.filter(\.isFavorite).compactMap { catalog.food(id: $0.foodID) }
             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
@@ -235,11 +237,13 @@ struct FoodDetailView: View {
     @State private var editing = false
 
     var body: some View {
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let catalog = NutritionActions.catalog(custom: customFoods)
         let food = NutritionActions.food(foodID, catalog: catalog)
         let preference = preferences.first { $0.foodID == foodID }
         let tolerance = preference?.tolerance ?? .unknown
         let effective = tolerance.effectiveScore(general: food.score)
+        let profile = catalog.profile ?? NutritionActions.profile
+        let hints = food.hints(for: profile)
         List {
             Section {
                 VStack(alignment: .leading, spacing: Spacing.s) {
@@ -262,12 +266,23 @@ struct FoodDetailView: View {
                 }
                 .padding(.vertical, Spacing.xxs)
             }
-            if !food.flags.isEmpty || food.hint != nil {
+            if !profile.active.isEmpty {
+                Section {
+                    ForEach(profile.ordered) { sensitivity in
+                        SensitivityRow(sensitivity: sensitivity, food: food)
+                    }
+                } header: {
+                    Text("Für eine Portion (\(food.amountLabel(grams: food.portion)))")
+                } footer: {
+                    Text("Bewertet nach deinen Profilen. Ändern unter Ernährung → Ziele und Einstellungen.")
+                }
+            }
+            if !food.flags.isEmpty || !hints.isEmpty {
                 Section("Warum") {
                     ForEach(food.flags) { flag in
                         Label(flag.title, systemImage: "tag")
                     }
-                    if let hint = food.hint {
+                    ForEach(hints, id: \.self) { hint in
                         Label(hint, systemImage: "lightbulb")
                     }
                 }
@@ -299,9 +314,11 @@ struct FoodDetailView: View {
             Section("Nährwerte je 100 g") {
                 LabeledContent("Eiweiß", value: food.protein.map { "\(WeightFormat.number($0)) g" } ?? "–")
                 LabeledContent("Energie", value: food.kcal.map { "\(Int($0.rounded())) kcal" } ?? "–")
+                LabeledContent("Fett", value: food.ratings.fat.map { "\(WeightFormat.number($0)) g" } ?? "–")
+                LabeledContent("Laktose", value: food.ratings.lactose.map { "\(WeightFormat.number($0)) g" } ?? "keine Angabe")
                 LabeledContent("Übliche Portion", value: food.unit.map { "\($0) (\(WeightFormat.number(food.portion)) g)" } ?? food.amountLabel(grams: food.portion))
             }
-            if let tip = food.category.tip {
+            if let tip = food.category.tip(for: profile) {
                 Section("Tipp") {
                     Text(tip)
                         .font(.subheadline)
@@ -352,6 +369,48 @@ struct FoodDetailView: View {
     }
 }
 
+/// Bewertung eines Lebensmittels für ein Profil, mit Menge.
+private struct SensitivityRow: View {
+    let sensitivity: Sensitivity
+    let food: FoodInfo
+
+    var body: some View {
+        let score = food.ratings.score(for: sensitivity, grams: food.portion)
+        HStack(spacing: Spacing.s) {
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(sensitivity.title)
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: sensitivity.symbol)
+                    .foregroundStyle(score.color)
+            }
+            Spacer(minLength: Spacing.xs)
+            ScoreBadge(score: score)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var detail: String {
+        switch sensitivity {
+        case .lactose:
+            let grams = food.lactose(grams: food.portion)
+            return grams < 0.05 ? "laktosefrei" : "\(WeightFormat.number((grams * 10).rounded() / 10)) g Laktose"
+        case .fat:
+            return "\(WeightFormat.number(food.fat(grams: food.portion).rounded())) g Fett"
+        case .fructose:
+            var text = food.ratings.fructose == .good ? "unauffällig" : "Fruktose-Überschuss \(food.ratings.fructose.title)"
+            if food.ratings.sorbitol { text += ", Sorbit" }
+            return text
+        case .histamine:
+            return food.ratings.histamine.title
+        }
+    }
+}
+
 /// Eigenes Lebensmittel anlegen oder bearbeiten.
 struct CustomFoodEditor: View {
     var initialName = ""
@@ -362,8 +421,8 @@ struct CustomFoodEditor: View {
     @Environment(\.modelContext) private var context
     @State private var name = ""
     @State private var category: FoodCategory = .other
-    @State private var score: HistamineScore = .moderate
-    @State private var flags: Set<HistamineFlag> = []
+    @State private var score: FoodScore = .moderate
+    @State private var flags: Set<FoodFlag> = []
     @State private var protein = ""
     @State private var portion = 100.0
     @State private var didLoad = false
@@ -387,21 +446,27 @@ struct CustomFoodEditor: View {
                     }
                 }
                 Section {
-                    Picker("Bewertung", selection: $score) {
-                        ForEach(HistamineScore.allCases) { item in
-                            Text(item.label).tag(item)
-                        }
-                    }
-                    ForEach(HistamineFlag.allCases) { flag in
-                        Toggle(flag.title, isOn: Binding(
-                            get: { flags.contains(flag) },
-                            set: { if $0 { flags.insert(flag) } else { flags.remove(flag) } }
-                        ))
+                    ForEach([FoodFlag.lactose, .fructose, .sorbitol, .fatRich]) { flag in
+                        flagToggle(flag)
                     }
                 } header: {
-                    Text("Histamin")
+                    Text("Verträglichkeit")
                 } footer: {
-                    Text("Unsicher? Lieber „1 · mäßig“ wählen und nach ein paar Mahlzeiten anpassen.")
+                    Text("Was auf der Packung steht oder was du weißt. Unsicher? Lieber einschalten und nach ein paar Mahlzeiten anpassen.")
+                }
+                if NutritionActions.profile.contains(.histamine) {
+                    Section {
+                        Picker("Bewertung", selection: $score) {
+                            ForEach(FoodScore.allCases) { item in
+                                Text(item.label).tag(item)
+                            }
+                        }
+                        ForEach(FoodFlag.allCases.filter { $0.sensitivity == .histamine }) { flag in
+                            flagToggle(flag)
+                        }
+                    } header: {
+                        Text("Histamin")
+                    }
                 }
                 Section("Nährwerte") {
                     HStack {
@@ -435,8 +500,15 @@ struct CustomFoodEditor: View {
             if let existing {
                 name = existing.name
                 category = existing.category
-                score = existing.score
-                flags = Set(existing.flags)
+                // Gespeichert wird die Histamin-Bewertung, Laktose, Fruktose und Fett als Markierungen.
+                let ratings = existing.ratings
+                score = ratings.histamine
+                var loaded = Set(ratings.histamineFlags)
+                if (ratings.lactose ?? 0) >= 1 { loaded.insert(.lactose) }
+                if ratings.fructose >= .poor { loaded.insert(.fructose) }
+                if ratings.sorbitol { loaded.insert(.sorbitol) }
+                if (ratings.fat ?? 0) >= 20 { loaded.insert(.fatRich) }
+                flags = loaded
                 protein = existing.protein.map { WeightFormat.number($0) } ?? ""
                 portion = existing.portion
             } else {
@@ -458,12 +530,20 @@ struct CustomFoodEditor: View {
         info.name = trimmed
         info.category = category
         info.score = score
-        info.flags = HistamineFlag.allCases.filter(flags.contains)
+        info.flags = FoodFlag.allCases.filter(flags.contains)
+        info.ratings = FoodRatings.legacy(score: score, flags: info.flags)
         info.protein = Double(protein.replacingOccurrences(of: ",", with: "."))
         info.portion = portion
         info.isCustom = true
         NutritionActions.saveCustomFood(info, in: context)
         onSave(info)
         dismiss()
+    }
+
+    private func flagToggle(_ flag: FoodFlag) -> some View {
+        Toggle(flag.title, isOn: Binding(
+            get: { flags.contains(flag) },
+            set: { if $0 { flags.insert(flag) } else { flags.remove(flag) } }
+        ))
     }
 }

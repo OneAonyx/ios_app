@@ -263,18 +263,45 @@ private struct FindingRow: View {
     }
 }
 
-/// Ziele für Eiweiß und Wasser, Nachfrage zu Medikamenten vor dem Essen.
+/// Unverträglichkeiten, Ziele für Eiweiß und Wasser, Nachfrage zu Medikamenten vor dem Essen.
 struct NutritionSettingsView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.modelContext) private var context
     @AppStorage(SettingsKeys.proteinPerKg) private var proteinPerKg = NutritionTargets.defaultProteinPerKg
     @AppStorage(SettingsKeys.waterTarget) private var waterTarget = NutritionTargets.defaultWaterML
     @AppStorage(SettingsKeys.askBeforeMealMedication) private var askMedication = true
+    @AppStorage(SettingsKeys.sensitivities) private var sensitivityText = ""
     @Query private var customFoods: [CustomFood]
 
     var body: some View {
         let bodyweight = NutritionActions.bodyweight(in: context)
+        let profile = SensitivityProfile.decode(sensitivityText)
         Form {
+            Section {
+                ForEach(Sensitivity.allCases) { sensitivity in
+                    Toggle(isOn: Binding(
+                        get: { profile.contains(sensitivity) },
+                        set: { on in
+                            var updated = profile
+                            if on { updated.active.insert(sensitivity) } else { updated.active.remove(sensitivity) }
+                            sensitivityText = updated.encoded
+                            app.nutritionChanged()
+                        }
+                    )) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Label(sensitivity.title, systemImage: sensitivity.symbol)
+                            Text(sensitivity.detail)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityIdentifier("nutrition.sensitivity.\(sensitivity.rawValue)")
+                }
+            } header: {
+                Text("Meine Unverträglichkeiten")
+            } footer: {
+                Text("Danach richten sich Bewertungen im Lexikon, der Zutaten-Scan, die Tageslast und Vorschläge von Claude. Gewissheit bringt ein Atemtest beim Arzt (Laktose und Fruktose); bis dahin hilft das Tagebuch, Muster zu sehen.")
+            }
             Section {
                 Stepper(value: $proteinPerKg, in: 1.2...2.6, step: 0.1) {
                     LabeledContent("Eiweiß je kg", value: "\(WeightFormat.number((proteinPerKg * 10).rounded() / 10)) g")
@@ -296,19 +323,19 @@ struct NutritionSettingsView: View {
             } header: {
                 Text("Medikamente vor dem Essen")
             } footer: {
-                Text("Fragt bei Medikamenten mit dem Hinweis „vor dem Essen“ (z. B. DAO-Enzym), ob du sie schon genommen hast.")
+                Text("Fragt bei Medikamenten mit dem Hinweis „vor dem Essen“ (z. B. Laktase-Tabletten), ob du sie schon genommen hast.")
             }
             if !customFoods.isEmpty {
                 Section("Eigene und gescannte Lebensmittel") {
                     ForEach(customFoods.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }) { food in
                         NavigationLink(value: NutritionRoute.food(food.stableID)) {
-                            FoodRow(food: food.info)
+                            FoodRow(food: food.info.applying(profile))
                         }
                     }
                 }
             }
         }
-        .navigationTitle("Ziele")
+        .navigationTitle("Ziele und Verträglichkeit")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: proteinPerKg) { app.nutritionChanged() }
         .onChange(of: waterTarget) { app.nutritionChanged() }

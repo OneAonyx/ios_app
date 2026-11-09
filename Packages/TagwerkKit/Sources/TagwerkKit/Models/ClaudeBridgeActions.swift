@@ -91,12 +91,13 @@ public enum ClaudeBridgeActions {
             name: name.trimmingCharacters(in: .whitespaces),
             brand: trimmedBrand?.isEmpty == false ? trimmedBrand : nil,
             ingredients: trimmedIngredients?.isEmpty == false ? trimmedIngredients : nil,
+            profile: NutritionActions.profile,
             ref: ref
         )
     }
 
     public static func recipesPrompt(wish: String, count: Int = 3, servings: Int = 2, ref: String = ClaudePromptBuilder.makeRef(), in context: ModelContext) -> ClaudePrompt {
-        ClaudePromptBuilder.recipes(recipeContext(wish: wish, count: count, servings: servings, in: context), ref: ref)
+        ClaudePromptBuilder.recipes(recipeContext(wish: wish, count: count, servings: servings, in: context), profile: NutritionActions.profile, ref: ref)
     }
 
     /// Verträgliche und gemiedene Lebensmittel sowie das Eiweißziel je Portion.
@@ -119,9 +120,10 @@ public enum ClaudeBridgeActions {
         public var symptomSummary: [String]
         public var checkIns: CheckInAverages
         public var avoid: [String]
+        public var profile: SensitivityProfile = .standard
 
         public func prompt(wish: String, ref: String) -> ClaudePrompt {
-            ClaudePromptBuilder.patterns(report, symptomSummary: symptomSummary, checkIns: checkIns, avoid: avoid, wish: wish, ref: ref)
+            ClaudePromptBuilder.patterns(report, symptomSummary: symptomSummary, checkIns: checkIns, avoid: avoid, wish: wish, profile: profile, ref: ref)
         }
     }
 
@@ -132,7 +134,8 @@ public enum ClaudeBridgeActions {
             report: NutritionActions.triggerReport(days: days, now: now, in: context),
             symptomSummary: InsightsActions.symptomSummary(from: start, to: now.addingTimeInterval(1), in: context),
             checkIns: CheckInAverages.compute(InsightsActions.checkIns(from: calendar.startOfDay(for: start), to: now.addingTimeInterval(1), in: context).map(\.fact)),
-            avoid: NutritionActions.tolerances(in: context).filter { $0.value == .avoid }.keys.map { catalog.name(for: $0) }.sorted()
+            avoid: NutritionActions.tolerances(in: context).filter { $0.value == .avoid }.keys.map { catalog.name(for: $0) }.sorted(),
+            profile: NutritionActions.profile
         )
     }
 

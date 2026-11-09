@@ -14,7 +14,7 @@ struct ShoppingListView: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        let catalog = NutritionActions.bundledFoods.adding(customFoods.map(\.info))
+        let catalog = NutritionActions.catalog(custom: customFoods)
         let tolerances = Dictionary(preferences.map { ($0.foodID, $0.tolerance) }, uniquingKeysWith: { $1 })
         let open = items.filter { !$0.isDone }
         let done = items.filter(\.isDone)
@@ -112,7 +112,7 @@ struct ShoppingListView: View {
         return catalog.bestMatch(for: text)
     }
 
-    private func score(of item: ShoppingItem, catalog: FoodCatalog, tolerances: [String: Tolerance]) -> HistamineScore? {
+    private func score(of item: ShoppingItem, catalog: FoodCatalog, tolerances: [String: Tolerance]) -> FoodScore? {
         guard let id = item.foodID, let food = catalog.food(id: id) else { return nil }
         return (tolerances[id] ?? .unknown).effectiveScore(general: food.score)
     }
@@ -141,7 +141,7 @@ struct ShoppingListView: View {
 
 private struct ShoppingRow: View {
     let item: ShoppingItem
-    let score: HistamineScore?
+    let score: FoodScore?
 
     @Environment(\.modelContext) private var context
 

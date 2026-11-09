@@ -340,7 +340,7 @@ struct ClaudeRequestView: View {
             } header: {
                 Text("Lebensmittel")
             } footer: {
-                Text("Claude bewertet es auf der Histamin-Skala 0–3. Du kannst es danach ins Lexikon übernehmen.")
+                Text("Claude schätzt Laktose, Fruktose, Fett und Histamin ein. Du kannst es danach ins Lexikon übernehmen.")
             }
         case .recipes:
             Section("Deine Angaben") {
@@ -414,7 +414,7 @@ struct ClaudeRequestView: View {
             data.wish = trimmedWish
             data.count = recipeCount
             data.servings = servings
-            return ClaudePromptBuilder.recipes(data, ref: ref)
+            return ClaudePromptBuilder.recipes(data, profile: NutritionActions.profile, ref: ref)
         case .patterns:
             return inputs.patterns?.prompt(wish: trimmedWish, ref: ref)
         case .progress:
@@ -760,15 +760,17 @@ private struct FoodAnswerSection: View {
     @Environment(\.modelContext) private var context
 
     var body: some View {
+        // Für die aktiven Profile bewertet (Laktose, Fruktose, Fett, ggf. Histamin).
+        let shown = food.applying(NutritionActions.profile)
         Section("Bewertung") {
             HStack {
                 Text(food.name)
                     .font(.headline)
                 Spacer()
-                ScoreBadge(score: food.score, showsTitle: true)
+                ScoreBadge(score: shown.score, showsTitle: true)
             }
             LabeledContent("Kategorie", value: food.category.title)
-            ForEach(food.flags) { flag in
+            ForEach(shown.flags) { flag in
                 Label(flag.title, systemImage: "exclamationmark.circle")
                     .font(.subheadline)
             }
