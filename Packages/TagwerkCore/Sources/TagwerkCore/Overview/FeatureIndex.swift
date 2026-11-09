@@ -62,6 +62,7 @@ public enum FeatureIndex {
         Feature("agenda", "Agenda (14 Tage)", area: .planner, path: "Planer → Agenda", symbol: "list.bullet.rectangle", keywords: ["termine", "kalender", "vorschau", "nächste tage"]),
         Feature("week", "Wochenansicht", area: .planner, path: "Planer → Woche", symbol: "calendar", keywords: ["woche", "kalender", "verschieben"]),
         Feature("life", "Leben", area: .planner, path: "Planer → Leben", symbol: "leaf", keywords: ["routinen", "gewohnheiten", "verträge", "fristen", "geburtstage"]),
+        Feature("tierLists", "Ranglisten (Tier-Maker)", area: .planner, path: "Planer → Leben → Ranglisten", symbol: "list.number", keywords: ["tier", "tierlist", "tier-maker", "rangliste", "ranking", "bewerten", "top", "liste"]),
         Feature("habits", "Routinen und Gewohnheiten", area: .planner, path: "Planer → Leben", symbol: "repeat", keywords: ["routine", "gewohnheit", "serie", "streak", "morgenroutine"]),
         Feature("contracts", "Verträge und Fristen", area: .planner, path: "Planer → Leben", symbol: "doc.text", keywords: ["vertrag", "abo", "kündigung", "kosten", "tüv", "ausweis", "versicherung", "frist"]),
         Feature("birthdays", "Geburtstage", area: .planner, path: "Planer → Leben", symbol: "gift", keywords: ["geburtstag", "geschenk", "jahrestag"]),

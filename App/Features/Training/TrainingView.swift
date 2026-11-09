@@ -36,6 +36,7 @@ struct TrainingView: View {
                         if !sessions.contains(where: \.isActive) {
                             NextWorkoutCard(plan: plan)
                         }
+                        PlanDaysCard(plan: plan, canStart: !sessions.contains(where: \.isActive))
                         CycleCard(plan: plan)
                         CoachCard(refreshKey: sessions.filter { !$0.isActive }.count)
                     } else {
@@ -255,6 +256,83 @@ private struct NextWorkoutCard: View {
     }
 }
 
+/// Alle Tage des Plans in Rotationsreihenfolge, direkt antippbar.
+private struct PlanDaysCard: View {
+    let plan: WorkoutPlan
+    let canStart: Bool
+
+    @Environment(AppModel.self) private var app
+    @Environment(\.modelContext) private var context
+
+    var body: some View {
+        let days = plan.rotationDays
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                HStack {
+                    SectionHeader("Dein Plan", systemImage: "list.number", tint: ModuleAccent.training)
+                    NavigationLink(value: TrainingRoute.plan) {
+                        Text("Bearbeiten")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .accessibilityIdentifier("training.planEdit")
+                }
+                ForEach(Array(days.enumerated()), id: \.element.stableID) { index, day in
+                    let isNext = index == plan.nextDayIndex
+                    NavigationLink(value: TrainingRoute.day(day.stableID)) {
+                        HStack(spacing: Spacing.s) {
+                            PositionBadge(text: day.shortName.isEmpty ? "\(index + 1)" : day.shortName, highlighted: isNext)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(day.name)
+                                    .font(.body.weight(isNext ? .semibold : .regular))
+                                    .foregroundStyle(Color.primary)
+                                Text("\(day.sortedExercises.filter { !$0.isOptional }.count) Übungen · ca. \(day.estimatedMinutes(week: plan.currentWeek, cycle: plan.cycle)) Min." + (isNext ? " · als Nächstes" : ""))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                                .accessibilityHidden(true)
+                        }
+                        .frame(minHeight: TouchTarget.standard)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        if canStart {
+                            Button {
+                                app.startWorkout(day: day, includeModule: plan.moduleDayIndex == index)
+                            } label: {
+                                Label("Jetzt starten", systemImage: "play.fill")
+                            }
+                        }
+                        Button {
+                            TrainingActions.setNextDay(day, in: context)
+                            app.trainingChanged()
+                        } label: {
+                            Label("Als Nächstes", systemImage: "arrow.forward.circle")
+                        }
+                    }
+                    .accessibilityLabel("\(day.title)\(isNext ? ", als Nächstes" : ""), \(day.sortedExercises.count) Übungen")
+                    .accessibilityHint("Öffnet die Übungen dieses Tages")
+                    .accessibilityAction(named: "Als Nächstes") {
+                        TrainingActions.setNextDay(day, in: context)
+                        app.trainingChanged()
+                    }
+                    .accessibilityIdentifier("training.day.\(index)")
+                    if index < days.count - 1 {
+                        Divider().padding(.leading, 44)
+                    }
+                }
+                Text("Antippen: Übungen ansehen und anordnen. Lange drücken: starten oder als Nächstes setzen.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
 private struct CycleCard: View {
     let plan: WorkoutPlan
     @Environment(\.modelContext) private var context
@@ -381,7 +459,7 @@ private struct LinksCard: View {
         TipView(ProgressTip())
         Card(padding: Spacing.xs) {
             VStack(spacing: 0) {
-                link("Plan und Tage", "list.bullet.rectangle", .plan, id: "training.plan")
+                link("Plan, Zyklus und Erinnerung", "list.bullet.rectangle", .plan, id: "training.plan")
                 Divider().padding(.leading, 52)
                 link("Übungen", "books.vertical", .library, id: "training.library")
                 Divider().padding(.leading, 52)

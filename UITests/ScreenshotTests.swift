@@ -69,6 +69,7 @@ final class ScreenshotTests: XCTestCase {
         let links: [(String, String)] = [
             ("nutrition.ingredients", "32-zutaten"),
             ("nutrition.shopping", "33-einkauf"),
+            ("nutrition.weekTemplate", "94-ernaehrungsplan"),
             ("nutrition.plan", "36-wochenplan"),
             ("nutrition.patterns", "37-muster"),
             ("nutrition.settings", "38-ziele"),
@@ -201,6 +202,21 @@ final class ScreenshotTests: XCTestCase {
         let app = launch(extraArguments: ["-forceLight"])
         tapTab("Training", in: app)
         snap(app, "16-training")
+
+        // Plan-Übersicht im Tab, ein Tag mit Übungen und „Reihenfolge ändern“.
+        let firstDay = app.buttons["training.day.0"]
+        if scrollTo(firstDay, in: app, attempts: 4) {
+            snap(app, "95-plan-uebersicht")
+            if tapIfPresent(firstDay) {
+                snap(app, "96-tag-uebungen")
+                if tapIfPresent(app.buttons["day.reorder"]) {
+                    snap(app, "97-tag-anordnen")
+                    tapIfPresent(app.buttons["day.reorder"])
+                }
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+            }
+        }
+        for _ in 0..<4 { app.swipeDown() }
 
         for (identifier, name) in [("training.plan", "17-plan"), ("training.stats", "18-statistik"), ("training.library", "19-uebungen"), ("training.body", "20-koerper")] {
             let link = app.buttons[identifier]
@@ -467,6 +483,30 @@ final class ScreenshotTests: XCTestCase {
                     snap(app, detailName)
                     tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
                 }
+            }
+            tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
+        }
+        // Ranglisten: neue Liste, ein Eintrag.
+        let tiers = app.buttons["life.tierLists"]
+        if scrollTo(tiers, in: app), tapIfPresent(tiers) {
+            if tapIfPresent(app.buttons["tier.add"]) || tapIfPresent(app.buttons["Erste Rangliste anlegen"]) {
+                let field = app.alerts.textFields.firstMatch
+                if field.waitForExistence(timeout: 3) {
+                    field.typeText("Snacks")
+                    tapIfPresent(app.alerts.buttons["Anlegen"])
+                }
+            }
+            if tapIfPresent(app.buttons["tier.list.Snacks"]) {
+                if tapIfPresent(app.buttons["tier.item.add"]) {
+                    let title = app.textFields["tier.item.title"]
+                    if title.waitForExistence(timeout: 3) {
+                        title.tap()
+                        title.typeText("Chips")
+                    }
+                    tapIfPresent(app.buttons["tier.item.save"])
+                }
+                snap(app, "98-rangliste")
+                tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
             }
             tapIfPresent(app.navigationBars.buttons.element(boundBy: 0))
         }

@@ -36,6 +36,7 @@ enum SelfTest {
             run("Arzt-Tagebuch: Schmerz, Bewegung, Bericht", diaryFlow),
             run("Apple Health über Kurzbefehle", healthFlow),
             run("Ernährung: Tageslast, Muster, Einkauf", nutritionFlow),
+            run("Unverträglichkeiten, Ernährungsplan, Ranglisten", profilesPlanAndRankings),
             run("Einblicke: Check-in, Rückblick, Bericht", insightsFlow),
             run("Claude: Anfrage, Antwort, Übernahme", claudeFlow),
             run("Einnahmen und Vorrat", doseActionsAdjustStock),
@@ -563,10 +564,11 @@ enum SelfTest {
         let keys = report.findings.map(\.key)
         try check(keys.contains("tomate") && !keys.contains("haehnchenbrust"), "Muster: \(keys)")
 
-        // Eigene Einschätzung „ok“ senkt die Tageslast auf null.
-        NutritionActions.addMeal(type: .dinner, date: now.addingTimeInterval(-60), items: [(foodID: "tomate", grams: 100)], catalog: catalog, in: context)
+        // Eigene Einschätzung „ok“ senkt die Tageslast auf null (Milch: 4,8 g Laktose in 100 ml).
+        NutritionActions.setProfile(.standard)
+        NutritionActions.addMeal(type: .dinner, date: now.addingTimeInterval(-60), items: [(foodID: "milch", grams: 100)], catalog: catalog, in: context)
         let before = NutritionActions.day(now, calendar: calendar, in: context).load.points
-        NutritionActions.setTolerance(.ok, for: "tomate", in: context)
+        NutritionActions.setTolerance(.ok, for: "milch", in: context)
         let after = NutritionActions.day(now, calendar: calendar, in: context).load.points
         try check(before == 3 && after == 0, "Tageslast \(before) → \(after)")
 
@@ -586,6 +588,44 @@ enum SelfTest {
         let again = NutritionActions.addToShopping(NutritionActions.planNeeds(from: monday, to: end, in: context), source: "plan", catalog: catalog, in: context)
         try check(again == 0, "Doppelt auf der Liste: \(again)")
         return "Muster Tomate, Tageslast 3 → 0, \(added) Artikel aus dem Wochenplan"
+    }
+
+    /// Profile wirken auf das Lexikon, der Ernährungsplan füllt eine Woche, Ranglisten werden gespeichert.
+    private static func profilesPlanAndRankings() throws -> String {
+        let context = ModelContext(try TagwerkStore.makeContainer(at: nil))
+        let defaults = UserDefaults.standard
+        let savedProfile = defaults.string(forKey: SettingsKeys.sensitivities)
+        let savedTiers = defaults.string(forKey: SettingsKeys.tierLists)
+        defer {
+            defaults.set(savedProfile, forKey: SettingsKeys.sensitivities)
+            defaults.set(savedTiers, forKey: SettingsKeys.tierLists)
+        }
+
+        NutritionActions.setProfile(.standard)
+        let standard = NutritionActions.catalog(in: context)
+        try check(standard.food(id: "milch")?.score == .bad && standard.food(id: "milch-laktosefrei")?.score == .good, "Laktose-Bewertung")
+        try check(standard.food(id: "apfel")?.score == .bad && standard.food(id: "tomate")?.score == .good, "Fruktose/Histamin")
+        NutritionActions.setProfile(SensitivityProfile(active: [.histamine]))
+        try check(NutritionActions.catalog(in: context).food(id: "tomate")?.score == .poor, "Histamin-Profil")
+        NutritionActions.setProfile(.standard)
+        let report = NutritionActions.analyzer.analyze("Zucker, Magermilchpulver, Sorbit")
+        try check(report.hits.count == 2, "Zutaten-Scan: \(report.hits.map(\.rule.name))")
+
+        guard let template = NutritionActions.weekTemplate else { throw Failure(description: "Ernährungsplan fehlt") }
+        let monday = AgendaBuilder.startOfWeek(containing: .now, calendar: calendar)
+        let count = NutritionActions.applyTemplate(template, weekStart: monday, choices: [:], calendar: calendar, in: context)
+        let end = calendar.date(byAdding: .day, value: 7, to: monday) ?? monday
+        let entries = NutritionActions.planEntries(from: monday, to: end, in: context)
+        try check(count == 28 && entries.count == 28, "Plan: \(count) übernommen, \(entries.count) im Wochenplan")
+        let needs = NutritionActions.planNeeds(from: monday, to: end, in: context)
+        try check(needs.count >= 25 && !needs.contains { $0.category == .freshMeat && $0.name.contains("Lachs") }, "Einkauf: \(needs.count)")
+
+        var list = TierList(title: "Test")
+        list.addItem(title: "Chips", emoji: "🥔", tierID: list.tiers[0].id)
+        defaults.set(TierList.encode([list]), forKey: SettingsKeys.tierLists)
+        try check(TierList.decode(defaults.string(forKey: SettingsKeys.tierLists) ?? "").first?.items.count == 1, "Rangliste nicht gespeichert")
+        try check(SettingsKeys.backedUp.contains(SettingsKeys.tierLists) && SettingsKeys.backedUp.contains(SettingsKeys.sensitivities), "Nicht in der Sicherung")
+        return "Profile, \(count) Mahlzeiten geplant, \(needs.count) Einkaufsartikel, Rangliste gespeichert"
     }
 
     /// Einheit starten, Sätze abhaken, abschließen: Rotation geht weiter, beim nächsten Mal mehr Gewicht.

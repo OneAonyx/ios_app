@@ -31,7 +31,7 @@ public enum NutritionActions {
     public static let bundledRecipes = RecipeCatalog.bundled()
 
     /// Aktive Verträglichkeits-Profile (Einstellung, Standard: Laktose, Fruktose, Fett).
-    public static var profile: SensitivityProfile {
+    nonisolated public static var profile: SensitivityProfile {
         SensitivityProfile.decode(UserDefaults.standard.string(forKey: SettingsKeys.sensitivities))
     }
 
@@ -48,8 +48,8 @@ public enum NutritionActions {
         return catalog(custom: custom)
     }
 
-    public static func catalog(custom: [CustomFood], profile: SensitivityProfile = profile) -> FoodCatalog {
-        bundledFoods.adding(custom.map(\.info)).applying(profile)
+    public static func catalog(custom: [CustomFood], profile: SensitivityProfile? = nil) -> FoodCatalog {
+        bundledFoods.adding(custom.map(\.info)).applying(profile ?? self.profile)
     }
 
     public static func recipes(in context: ModelContext) -> RecipeCatalog {

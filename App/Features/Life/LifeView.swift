@@ -4,7 +4,7 @@ import TagwerkCore
 import TagwerkKit
 import TipKit
 
-/// Planer → Leben: Routinen, Gewohnheiten, Verträge und Fristen, Geburtstage, Tagebuch, Haushalt.
+/// Planer → Leben: Routinen, Gewohnheiten, Verträge und Fristen, Geburtstage, Tagebuch, Ranglisten, Haushalt.
 struct LifeView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppModel.self) private var app
@@ -15,6 +15,7 @@ struct LifeView: View {
     @State private var addingHabit = false
     @State private var writing = false
     @State private var addedChore: String?
+    @AppStorage(SettingsKeys.tierLists) private var tierText = ""
 
     var body: some View {
         TimelineView(.everyMinute) { timeline in
@@ -177,6 +178,31 @@ struct LifeView: View {
                         .accessibilityIdentifier("life.journal")
                     }
                 }
+
+                // Ranglisten (Tier-Maker)
+                NavigationLink {
+                    TierListsView()
+                } label: {
+                    Card {
+                        VStack(alignment: .leading, spacing: Spacing.s) {
+                            HStack {
+                                SectionHeader("Ranglisten", systemImage: "list.number", tint: .purple)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            let lists = TierList.decode(tierText)
+                            Text(lists.isEmpty
+                                 ? "Tier-Maker: Snacks, Filme, Übungen oder Restaurants in Stufen von S bis D ordnen."
+                                 : lists.sorted { $0.updatedAt > $1.updatedAt }.prefix(3).map(\.title).joined(separator: " · "))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .foregroundStyle(Color.primary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("life.tierLists")
 
                 // Haushalt
                 Card {

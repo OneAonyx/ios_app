@@ -253,6 +253,45 @@ public enum TrainingActions {
         return item
     }
 
+    /// Übung um eine Stelle nach oben (−1) oder unten (+1) schieben.
+    public static func moveExercise(_ item: PlanExercise, by offset: Int, in context: ModelContext) {
+        guard let day = item.day else { return }
+        let items = day.sortedExercises
+        guard let index = items.firstIndex(where: { $0.stableID == item.stableID }) else { return }
+        let target = index + offset
+        guard items.indices.contains(target), offset != 0 else { return }
+        moveExercises(in: day, from: IndexSet(integer: index), to: offset > 0 ? target + 1 : target, in: context)
+    }
+
+    /// Tag in der Rotation um eine Stelle verschieben. Die Kürzel (A, B, C …) bleiben beim Tag.
+    public static func moveDay(_ day: PlanDay, by offset: Int, in context: ModelContext) {
+        guard let plan = day.plan else { return }
+        let days = plan.rotationDays
+        guard let index = days.firstIndex(where: { $0.stableID == day.stableID }) else { return }
+        let target = index + offset
+        guard days.indices.contains(target), offset != 0 else { return }
+        let next = plan.nextDay?.stableID
+        moveDays(in: plan, from: IndexSet(integer: index), to: offset > 0 ? target + 1 : target, in: context)
+        // „Als Nächstes“ bleibt derselbe Tag.
+        if let next, let newIndex = plan.rotationDays.firstIndex(where: { $0.stableID == next }) {
+            plan.nextDayIndex = newIndex
+            save(context)
+        }
+    }
+
+    /// Diesen Tag als nächste Einheit setzen.
+    public static func setNextDay(_ day: PlanDay, in context: ModelContext) {
+        guard let plan = day.plan, let index = plan.rotationDays.firstIndex(where: { $0.stableID == day.stableID }) else { return }
+        plan.nextDayIndex = index
+        save(context)
+    }
+
+    /// Übung im Plan durch eine andere ersetzen; Sätze, Wiederholungen und Pause bleiben.
+    public static func swapExercise(_ item: PlanExercise, to exercise: ExerciseInfo, in context: ModelContext) {
+        item.exerciseID = exercise.id
+        save(context)
+    }
+
     public static func moveExercises(in day: PlanDay, from source: IndexSet, to destination: Int, in context: ModelContext) {
         var items = day.sortedExercises
         items.move(fromOffsets: source, toOffset: destination)

@@ -29,7 +29,7 @@ enum FeatureDestination {
         case "tasks": .planner("Aufgaben")
         case "agenda": .planner("Agenda")
         case "week": .planner("Woche")
-        case "life", "habits", "contracts", "birthdays": .life
+        case "life", "habits", "contracts", "birthdays", "tierLists": .life
         case "reminderImport": .settings(.data)
 
         // Training

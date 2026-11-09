@@ -151,3 +151,65 @@ extension Date {
         DueFormatter.dayLabel(for: self, now: now, calendar: AppModel.calendar)
     }
 }
+
+// MARK: - Anordnen
+
+/// Schaltet eine Liste in den Modus „Reihenfolge ändern“ (Ziehgriffe und Pfeile).
+struct ReorderToggle: View {
+    @Binding var editMode: EditMode
+
+    var body: some View {
+        Button {
+            withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+        } label: {
+            Label(editMode.isEditing ? "Fertig" : "Reihenfolge ändern", systemImage: editMode.isEditing ? "checkmark" : "arrow.up.arrow.down")
+                .font(.subheadline.weight(.semibold))
+        }
+        .buttonStyle(.bordered)
+        .tint(ModuleAccent.training)
+        .textCase(nil)
+        .accessibilityHint(editMode.isEditing ? "Beendet das Anordnen" : "Zeigt Pfeile und Ziehgriffe zum Verschieben")
+    }
+}
+
+/// Nummer oder Kürzel in einem Kreis (Position in Plan oder Tag).
+struct PositionBadge: View {
+    let text: String
+    var highlighted = false
+
+    var body: some View {
+        Text(text)
+            .font(.subheadline.weight(.bold).monospacedDigit())
+            .frame(minWidth: 32, minHeight: 32)
+            .foregroundStyle(highlighted ? Color.white : ModuleAccent.training)
+            .background(highlighted ? ModuleAccent.training : ModuleAccent.training.opacity(0.14), in: Circle())
+            .accessibilityHidden(true)
+    }
+}
+
+/// Große Pfeile zum Verschieben um eine Stelle (im Modus „Reihenfolge ändern“).
+struct MoveButtons: View {
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let onUp: () -> Void
+    let onDown: () -> Void
+
+    var body: some View {
+        HStack(spacing: Spacing.xs) {
+            Button(action: onUp) {
+                Image(systemName: "arrow.up")
+                    .frame(width: 28, height: 28)
+            }
+            .disabled(!canMoveUp)
+            .accessibilityLabel("Nach oben")
+            Button(action: onDown) {
+                Image(systemName: "arrow.down")
+                    .frame(width: 28, height: 28)
+            }
+            .disabled(!canMoveDown)
+            .accessibilityLabel("Nach unten")
+        }
+        .buttonStyle(.bordered)
+        .tint(ModuleAccent.training)
+    }
+}

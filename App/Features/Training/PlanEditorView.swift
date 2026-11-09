@@ -15,6 +15,7 @@ struct PlanEditorView: View {
     @State private var confirmReset = false
     @State private var newDayName = ""
     @State private var addingDay = false
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         let days = plan.rotationDays
@@ -43,16 +44,59 @@ struct PlanEditorView: View {
                 Text("Die Rotation geht A → B → C → D. Nach dem letzten Tag beginnt die nächste Woche, nach Woche \(plan.mesoLength) (Deload) ein neuer Zyklus.")
             }
 
-            Section("Tage") {
-                ForEach(days) { day in
-                    NavigationLink(value: TrainingRoute.day(day.stableID)) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(day.title)
-                            Text("\(day.sortedExercises.count) Übungen · ca. \(day.estimatedMinutes(week: plan.currentWeek, cycle: plan.cycle)) Min.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+            Section {
+                ForEach(Array(days.enumerated()), id: \.element.stableID) { index, day in
+                    let isNext = index == plan.nextDayIndex
+                    let move = { (offset: Int) in
+                        withAnimation { TrainingActions.moveDay(day, by: offset, in: context) }
+                        changed()
+                    }
+                    HStack(spacing: Spacing.s) {
+                        PositionBadge(text: day.shortName.isEmpty ? "\(index + 1)" : day.shortName, highlighted: isNext)
+                        NavigationLink(value: TrainingRoute.day(day.stableID)) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: Spacing.xs) {
+                                    Text(day.name)
+                                    if isNext {
+                                        Text("Als Nächstes")
+                                            .font(.caption2.weight(.bold))
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .foregroundStyle(ModuleAccent.training)
+                                            .background(ModuleAccent.training.opacity(0.14), in: Capsule())
+                                    }
+                                }
+                                Text("\(day.sortedExercises.count) Übungen · ca. \(day.estimatedMinutes(week: plan.currentWeek, cycle: plan.cycle)) Min.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .disabled(editMode.isEditing)
+                        if editMode.isEditing {
+                            MoveButtons(canMoveUp: index > 0, canMoveDown: index < days.count - 1, onUp: { move(-1) }, onDown: { move(1) })
                         }
                     }
+                    .frame(minHeight: TouchTarget.standard)
+                    .contextMenu {
+                        Button {
+                            TrainingActions.setNextDay(day, in: context)
+                            changed()
+                        } label: {
+                            Label("Als Nächstes", systemImage: "arrow.forward.circle")
+                        }
+                        if index > 0 {
+                            Button { move(-1) } label: { Label("Nach oben", systemImage: "arrow.up") }
+                        }
+                        if index < days.count - 1 {
+                            Button { move(1) } label: { Label("Nach unten", systemImage: "arrow.down") }
+                        }
+                    }
+                    .accessibilityAction(named: "Als Nächstes") {
+                        TrainingActions.setNextDay(day, in: context)
+                        changed()
+                    }
+                    .accessibilityAction(named: "Nach oben") { move(-1) }
+                    .accessibilityAction(named: "Nach unten") { move(1) }
                 }
                 .onMove { source, destination in
                     TrainingActions.moveDays(in: plan, from: source, to: destination, in: context)
@@ -65,8 +109,20 @@ struct PlanEditorView: View {
                 Button {
                     addingDay = true
                 } label: {
-                    Label("Tag hinzufügen", systemImage: "plus.circle")
+                    Label("Tag hinzufügen", systemImage: "plus.circle.fill")
+                        .frame(minHeight: TouchTarget.standard)
                 }
+            } header: {
+                HStack {
+                    Text("Tage in der Rotation")
+                    Spacer()
+                    if days.count > 1 {
+                        ReorderToggle(editMode: $editMode)
+                            .accessibilityIdentifier("plan.reorder")
+                    }
+                }
+            } footer: {
+                Text("Lange drücken: als nächste Einheit setzen oder verschieben. Die Kürzel (A, B, C …) bleiben beim Tag.")
             }
 
             if let module = plan.module {
@@ -129,9 +185,9 @@ struct PlanEditorView: View {
                 Text("Claude bekommt deinen Plan, deine letzten Top-Sätze und Stagnationen und schlägt einen neuen Plan vor. Ein übernommener Plan wird der aktive Plan, dein Verlauf bleibt erhalten.")
             }
         }
+        .environment(\.editMode, $editMode)
         .navigationTitle("Plan")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { EditButton() }
         .onDisappear { changed() }
         .sheet(isPresented: $importing) {
             PlanImportView()
@@ -195,6 +251,8 @@ struct DayEditorView: View {
     @Environment(AppModel.self) private var app
     @State private var adding = false
     @State private var editing: PlanExercise?
+    @State private var swapping: PlanExercise?
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         let catalog = TrainingActions.catalog(in: context)
@@ -208,23 +266,76 @@ struct DayEditorView: View {
                 TextField("Schwerpunkt (optional)", text: $day.focus)
             }
             Section {
-                ForEach(items) { item in
-                    Button {
-                        editing = item
-                    } label: {
-                        HStack {
+                ForEach(Array(items.enumerated()), id: \.element.stableID) { index, item in
+                    let name = catalog.name(for: item.exerciseID)
+                    let move = { (offset: Int) in
+                        withAnimation { TrainingActions.moveExercise(item, by: offset, in: context) }
+                        app.trainingChanged()
+                    }
+                    HStack(spacing: Spacing.s) {
+                        PositionBadge(text: item.superset.map { "\(index + 1)\($0)" } ?? "\(index + 1)")
+                        Button {
+                            editing = item
+                        } label: {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(catalog.name(for: item.exerciseID))
+                                Text(name)
                                     .foregroundStyle(Color.primary)
+                                if let muscles = catalog.exercise(id: item.exerciseID)?.muscleSummary, !muscles.isEmpty {
+                                    Text(muscles)
+                                        .font(.caption)
+                                        .foregroundStyle(ModuleAccent.training)
+                                }
                                 Text(item.template.prescription + " · Pause \(item.restSeconds) s" + (item.superset.map { " · Supersatz \($0)" } ?? "") + (item.isOptional ? " · optional" : ""))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            Spacer()
-                            Image(systemName: "slider.horizontal.3")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(editMode.isEditing)
+                        if editMode.isEditing {
+                            MoveButtons(canMoveUp: index > 0, canMoveDown: index < items.count - 1, onUp: { move(-1) }, onDown: { move(1) })
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
                                 .foregroundStyle(.tertiary)
+                                .accessibilityHidden(true)
                         }
                     }
+                    .frame(minHeight: TouchTarget.standard)
+                    .swipeActions(edge: .leading) {
+                        if index > 0 {
+                            Button { move(-1) } label: { Label("Nach oben", systemImage: "arrow.up") }
+                                .tint(.blue)
+                        }
+                        if index < items.count - 1 {
+                            Button { move(1) } label: { Label("Nach unten", systemImage: "arrow.down") }
+                                .tint(.indigo)
+                        }
+                    }
+                    .contextMenu {
+                        Button { editing = item } label: { Label("Sätze und Pause", systemImage: "slider.horizontal.3") }
+                        Button { swapping = item } label: { Label("Übung tauschen", systemImage: "arrow.triangle.2.circlepath") }
+                        if index > 0 {
+                            Button { move(-1) } label: { Label("Nach oben", systemImage: "arrow.up") }
+                        }
+                        if index < items.count - 1 {
+                            Button { move(1) } label: { Label("Nach unten", systemImage: "arrow.down") }
+                        }
+                        Button(role: .destructive) {
+                            TrainingActions.delete(item, in: context)
+                            app.trainingChanged()
+                        } label: {
+                            Label("Entfernen", systemImage: "trash")
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(index + 1). \(name), \(item.template.prescription)")
+                    .accessibilityAction(named: "Nach oben") { move(-1) }
+                    .accessibilityAction(named: "Nach unten") { move(1) }
+                    .accessibilityAction(named: "Übung tauschen") { swapping = item }
+                    .accessibilityAction(named: "Bearbeiten") { editing = item }
                 }
                 .onMove { source, destination in
                     TrainingActions.moveExercises(in: day, from: source, to: destination, in: context)
@@ -237,17 +348,26 @@ struct DayEditorView: View {
                 Button {
                     adding = true
                 } label: {
-                    Label("Übung hinzufügen", systemImage: "plus.circle")
+                    Label("Übung hinzufügen", systemImage: "plus.circle.fill")
+                        .frame(minHeight: TouchTarget.standard)
                 }
+                .accessibilityIdentifier("day.addExercise")
             } header: {
-                Text("Übungen")
+                HStack {
+                    Text("Übungen in Reihenfolge")
+                    Spacer()
+                    if items.count > 1 {
+                        ReorderToggle(editMode: $editMode)
+                            .accessibilityIdentifier("day.reorder")
+                    }
+                }
             } footer: {
-                Text("Gleiche Supersatz-Buchstaben werden im Training abwechselnd mit kurzer Pause geführt.")
+                Text("Antippen: Sätze, Wiederholungen und Pause. Lange drücken oder nach rechts wischen: verschieben, tauschen, entfernen. Gleiche Supersatz-Buchstaben werden im Training abwechselnd geführt.")
             }
         }
+        .environment(\.editMode, $editMode)
         .navigationTitle(day.title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { EditButton() }
         .onDisappear {
             TrainingActions.save(context)
             app.trainingChanged()
@@ -255,6 +375,12 @@ struct DayEditorView: View {
         .sheet(isPresented: $adding) {
             ExercisePickerView(title: "Übung hinzufügen") { exercise in
                 TrainingActions.addExercise(exercise, to: day, in: context)
+                app.trainingChanged()
+            }
+        }
+        .sheet(item: $swapping) { item in
+            ExercisePickerView(title: "Übung tauschen", alternativesTo: item.exerciseID) { exercise in
+                TrainingActions.swapExercise(item, to: exercise, in: context)
                 app.trainingChanged()
             }
         }
@@ -272,6 +398,8 @@ struct PlanExerciseEditor: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppModel.self) private var app
+    @State private var swapping = false
+    @State private var confirmRemove = false
 
     var body: some View {
         NavigationStack {
@@ -292,6 +420,34 @@ struct PlanExerciseEditor: View {
                     ))
                     Toggle("Optional", isOn: $item.isOptional)
                     TextField("Notiz", text: $item.note, axis: .vertical)
+                }
+                Section {
+                    Button {
+                        swapping = true
+                    } label: {
+                        Label("Übung tauschen", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .accessibilityIdentifier("planExercise.swap")
+                    Button(role: .destructive) {
+                        confirmRemove = true
+                    } label: {
+                        Label("Aus dem Tag entfernen", systemImage: "trash")
+                    }
+                } footer: {
+                    Text("Beim Tauschen bleiben Sätze, Wiederholungen und Pause erhalten.")
+                }
+            }
+            .sheet(isPresented: $swapping) {
+                ExercisePickerView(title: "Übung tauschen", alternativesTo: item.exerciseID) { exercise in
+                    TrainingActions.swapExercise(item, to: exercise, in: context)
+                    app.trainingChanged()
+                }
+            }
+            .confirmationDialog("\(name) entfernen?", isPresented: $confirmRemove, titleVisibility: .visible) {
+                Button("Entfernen", role: .destructive) {
+                    TrainingActions.delete(item, in: context)
+                    app.trainingChanged()
+                    dismiss()
                 }
             }
             .navigationTitle(name)
